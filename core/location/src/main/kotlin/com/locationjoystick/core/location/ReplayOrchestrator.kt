@@ -12,6 +12,7 @@ import com.locationjoystick.core.common.util.stitchRingsWithoutConnectors
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
@@ -52,7 +53,7 @@ private const val TAG = "ReplayOrchestrator"
  * straight walk.
  *
  * Communicates back to the service via lambdas:
- * - [onSpoofingEvent]: sends a transition to the service's [SpoofingStateMachine]
+ * - [onSpoofingEvent]: sends a transition to the repository's spoofing state machine
  * - [onPositionChange]: updates `currentLat` / `currentLon` @Volatile fields
  * - [onSpeedChange]: updates `currentSpeedMs` @Volatile field
  * - [pushLocationUpdate]: pushes a GPS tick via the test provider
@@ -269,7 +270,7 @@ internal class ReplayOrchestrator(
             state?.let { lifecycle.setPaused(it, true) }
             if (state == null || state.engineStarted) activeReplayer.pause()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
+            onSpoofingEvent(SpoofingEvent.PAUSE)
             publishProgress()
             Log.i(TAG, "Replay paused")
         }
@@ -280,7 +281,7 @@ internal class ReplayOrchestrator(
             val state = lifecycle.current
             val isStarting = lifecycle.isStarting()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
+            onSpoofingEvent(SpoofingEvent.START)
             state?.let { lifecycle.setPaused(it, false) }
             // Planning and walk-to-start already have a suspended job. Resuming an empty
             // replay engine here would signal completion and discard that pending route.
@@ -447,11 +448,8 @@ internal class ReplayOrchestrator(
         persistMetadata?.invoke()
         // A pause requested while OSRM or the route lookup was pending must survive setup.
         lifecycle.locked {
-            if (state.paused) {
-                if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
-            } else {
-                if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
-            }
+            onSpoofingEvent(SpoofingEvent.START)
+            if (state.paused) onSpoofingEvent(SpoofingEvent.PAUSE)
         }
 
         lifecycle.awaitResume(state)

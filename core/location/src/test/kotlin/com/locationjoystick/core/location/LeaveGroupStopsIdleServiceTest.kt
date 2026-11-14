@@ -5,7 +5,6 @@ import com.locationjoystick.core.model.MockLocationState
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Test
 
 /** Leaving a group while idle must end the service the group kept alive; leaving while spoofing must not. */
@@ -18,9 +17,7 @@ class LeaveGroupStopsIdleServiceTest {
                 groupRepository = mockk(relaxed = true)
             }
 
-        @Suppress("UNCHECKED_CAST")
-        val field = MockLocationService::class.java.getDeclaredField("_state").apply { isAccessible = true }
-        (field.get(service) as MutableStateFlow<MockLocationState>).value = state
+        if (state == MockLocationState.RUNNING) service.locationRepository.startSpoofing()
         service.stubGroupMode()
         return service
     }

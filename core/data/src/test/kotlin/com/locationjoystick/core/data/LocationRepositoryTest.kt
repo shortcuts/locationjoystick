@@ -299,7 +299,42 @@ class LocationRepositoryTest {
             }
         }
 
-    // reportError
+    @Test
+    fun `pauseSpoofing from IDLE is rejected`() {
+        repository.pauseSpoofing()
+
+        assertEquals(MockLocationState.IDLE, repository.mockLocationState.value)
+    }
+
+    @Test
+    fun `pauseSpoofing in ERROR keeps ERROR`() {
+        repository.sendSpoofingEvent(SpoofingEvent.FAIL)
+
+        repository.pauseSpoofing()
+
+        assertEquals(MockLocationState.ERROR, repository.mockLocationState.value)
+    }
+
+    @Test
+    fun `START sets the default position when none is set`() {
+        assertTrue(repository.sendSpoofingEvent(SpoofingEvent.START))
+
+        assertEquals(
+            LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON),
+            repository.currentPosition.value,
+        )
+    }
+
+    @Test
+    fun `STOP zeroes the reported speed`() {
+        repository.setReportedSpeed(3f)
+
+        repository.sendSpoofingEvent(SpoofingEvent.STOP)
+
+        assertEquals(0f, repository.reportedSpeedMps.value)
+    }
+
+    // sendSpoofingEvent FAIL
 
     @Test
     fun `reportError sets state to ERROR`() =
@@ -309,7 +344,7 @@ class LocationRepositoryTest {
             repository.observeState().test {
                 assertEquals(MockLocationState.RUNNING, awaitItem())
 
-                repository.reportError()
+                repository.sendSpoofingEvent(SpoofingEvent.FAIL)
 
                 assertEquals(MockLocationState.ERROR, awaitItem())
                 cancelAndIgnoreRemainingEvents()
@@ -401,6 +436,7 @@ class LocationRepositoryTest {
     @Test
     fun `route replay pause follows mockLocationState`() =
         runTest {
+            repository.startSpoofing()
             repository.pauseSpoofing()
             repository.setMockMode(MockMode.ROUTE_REPLAY)
             assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, true), repository.movement.first())
@@ -583,7 +619,7 @@ class LocationRepositoryTest {
                 repository.startSpoofing()
                 assertEquals(MockLocationState.RUNNING, awaitItem())
 
-                repository.reportError()
+                repository.sendSpoofingEvent(SpoofingEvent.FAIL)
                 assertEquals(MockLocationState.ERROR, awaitItem())
 
                 repository.stopSpoofing()

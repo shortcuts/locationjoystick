@@ -22,16 +22,12 @@ class ServiceErrorPropagationTest {
     private val locationManager = mockk<LocationManager>(relaxed = true)
     private val locationRepository = LocationRepository()
     private val holder = SpoofingWakeLockHolder { powerManager }
-    private var state = MockLocationState.IDLE
     private val walk = mockk<WalkCoordinator>(relaxed = true)
     private val orchestrator = mockk<ReplayOrchestrator>(relaxed = true)
     private val roaming = mockk<RoamingRepository>(relaxed = true)
     private val handler =
         SpoofingErrorHandler(
-            send = {
-                if (it == SpoofingEvent.FAIL) state = MockLocationState.ERROR
-                true
-            },
+            send = locationRepository::sendSpoofingEvent,
             locationRepository = locationRepository,
             wakeLock = holder,
             walkCoordinator = walk,
@@ -52,7 +48,6 @@ class ServiceErrorPropagationTest {
 
         provider.setup()
 
-        assertEquals(MockLocationState.ERROR, state)
         assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
         verify(exactly = 1) { wakeLock.release() }
     }
@@ -64,7 +59,6 @@ class ServiceErrorPropagationTest {
 
         provider.applyFix(fix, 1L)
 
-        assertEquals(MockLocationState.ERROR, state)
         assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
         provider.setup()
         verify(exactly = 2) { locationManager.setTestProviderEnabled("gps", true) }

@@ -1,12 +1,14 @@
-package com.locationjoystick.core.location
+package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.model.MockLocationState
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "SpoofingStateMachine"
 
-internal enum class SpoofingEvent { START, PAUSE, STOP, FAIL, CLEAR_ERROR }
+enum class SpoofingEvent { START, PAUSE, STOP, FAIL, CLEAR_ERROR }
 
 /** Returns the next state, or null when [event] is rejected in [current]. */
 internal fun nextSpoofingState(
@@ -14,7 +16,15 @@ internal fun nextSpoofingState(
     event: SpoofingEvent,
 ): MockLocationState? =
     when (current) {
-        MockLocationState.IDLE, MockLocationState.RUNNING, MockLocationState.PAUSED ->
+        MockLocationState.IDLE ->
+            when (event) {
+                SpoofingEvent.START -> MockLocationState.RUNNING
+                SpoofingEvent.PAUSE -> null
+                SpoofingEvent.STOP -> MockLocationState.IDLE
+                SpoofingEvent.FAIL -> MockLocationState.ERROR
+                SpoofingEvent.CLEAR_ERROR -> null
+            }
+        MockLocationState.RUNNING, MockLocationState.PAUSED ->
             when (event) {
                 SpoofingEvent.START -> MockLocationState.RUNNING
                 SpoofingEvent.PAUSE -> MockLocationState.PAUSED
@@ -34,8 +44,11 @@ internal fun nextSpoofingState(
     }
 
 internal class SpoofingStateMachine(
-    private val flow: MutableStateFlow<MockLocationState>,
+    initial: MockLocationState = MockLocationState.IDLE,
 ) {
+    private val flow = MutableStateFlow(initial)
+    val state: StateFlow<MockLocationState> = flow.asStateFlow()
+
     fun send(event: SpoofingEvent): Boolean {
         while (true) {
             val current = flow.value

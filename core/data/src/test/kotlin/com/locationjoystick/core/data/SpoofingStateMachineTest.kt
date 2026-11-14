@@ -1,7 +1,6 @@
-package com.locationjoystick.core.location
+package com.locationjoystick.core.data
 
 import com.locationjoystick.core.model.MockLocationState
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -18,7 +17,7 @@ class SpoofingStateMachineTest {
     fun `IDLE start goes to RUNNING`() = assertEquals(running, nextSpoofingState(idle, SpoofingEvent.START))
 
     @Test
-    fun `IDLE pause goes to PAUSED`() = assertEquals(paused, nextSpoofingState(idle, SpoofingEvent.PAUSE))
+    fun `IDLE pause is rejected`() = assertNull(nextSpoofingState(idle, SpoofingEvent.PAUSE))
 
     @Test
     fun `IDLE stop stays IDLE`() = assertEquals(idle, nextSpoofingState(idle, SpoofingEvent.STOP))
@@ -76,30 +75,35 @@ class SpoofingStateMachineTest {
 
     @Test
     fun `send returns false and keeps ERROR for a late start`() {
-        val flow = MutableStateFlow(error)
-        val accepted = SpoofingStateMachine(flow).send(SpoofingEvent.START)
+        val machine = SpoofingStateMachine(error)
 
-        assertFalse(accepted)
-        assertEquals(error, flow.value)
+        assertFalse(machine.send(SpoofingEvent.START))
+        assertEquals(error, machine.state.value)
     }
 
     @Test
     fun `send keeps ERROR for a late pause`() {
-        val flow = MutableStateFlow(error)
-        val accepted = SpoofingStateMachine(flow).send(SpoofingEvent.PAUSE)
+        val machine = SpoofingStateMachine(error)
 
-        assertFalse(accepted)
-        assertEquals(error, flow.value)
+        assertFalse(machine.send(SpoofingEvent.PAUSE))
+        assertEquals(error, machine.state.value)
     }
 
     @Test
     fun `send retry path reaches RUNNING through IDLE`() {
-        val flow = MutableStateFlow(error)
-        val machine = SpoofingStateMachine(flow)
+        val machine = SpoofingStateMachine(error)
 
         assertTrue(machine.send(SpoofingEvent.CLEAR_ERROR))
-        assertEquals(idle, flow.value)
+        assertEquals(idle, machine.state.value)
         assertTrue(machine.send(SpoofingEvent.START))
-        assertEquals(running, flow.value)
+        assertEquals(running, machine.state.value)
+    }
+
+    @Test
+    fun `send pause in IDLE is rejected and keeps IDLE`() {
+        val machine = SpoofingStateMachine()
+
+        assertFalse(machine.send(SpoofingEvent.PAUSE))
+        assertEquals(idle, machine.state.value)
     }
 }

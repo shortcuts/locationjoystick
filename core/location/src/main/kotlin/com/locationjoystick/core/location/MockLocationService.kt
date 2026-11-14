@@ -26,6 +26,7 @@ import com.locationjoystick.core.data.RealPositionSnapshotter
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.GroupRole
@@ -52,9 +53,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -190,9 +189,7 @@ class MockLocationService : Service() {
 
     @Volatile private var updateJob: Job? = null
 
-    private val _state = MutableStateFlow(MockLocationState.IDLE)
-    private val stateMachine = SpoofingStateMachine(_state)
-    val state: StateFlow<MockLocationState> = _state.asStateFlow()
+    val state: StateFlow<MockLocationState> get() = locationRepository.mockLocationState
 
     private val positionRef = AtomicReference(LatLng(0.0, 0.0))
 
@@ -284,7 +281,7 @@ class MockLocationService : Service() {
                 osrmClient = osrmClient,
                 routingErrorReporter = routingErrorReporter,
                 scope = serviceScope,
-                onSpoofingEvent = stateMachine::send,
+                onSpoofingEvent = locationRepository::sendSpoofingEvent,
                 onPositionChange = { lat, lon ->
                     writeCurrentPosition(lat, lon)
                 },
@@ -300,7 +297,7 @@ class MockLocationService : Service() {
         testProvider = TestProviderController(locationManager, onError = ::reportError)
         errorHandler =
             SpoofingErrorHandler(
-                send = stateMachine::send,
+                send = locationRepository::sendSpoofingEvent,
                 locationRepository = locationRepository,
                 wakeLock = wakeLock,
                 walkCoordinator = walkCoordinator,
@@ -338,7 +335,7 @@ class MockLocationService : Service() {
 
     private fun observeLocationState() {
         serviceScope.launch {
-            _state.collect { state ->
+            locationRepository.mockLocationState.collect { state ->
                 when (state) {
                     MockLocationState.RUNNING -> {
                         updateJobMutex.withLock {
@@ -449,7 +446,7 @@ class MockLocationService : Service() {
         altitudeAnchor.observe(serviceScope)
         // Keeps the foreground notification and widget overlay in sync with live setting
         // changes mid-session (see OverlayNotificationReactor's class doc for why).
-        overlayNotificationReactor.observe(serviceScope, _state)
+        overlayNotificationReactor.observe(serviceScope, locationRepository.mockLocationState)
         // Keeps the tap-to-walk ground map fitted from the walks the app already makes (AutoFitCoordinator).
         autoFit.observe(serviceScope)
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
@@ -716,7 +713,7 @@ class MockLocationService : Service() {
         // Persist last location on external kill (process killed, OOM, etc.)
         // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
-        if (_state.value == MockLocationState.RUNNING || _state.value == MockLocationState.PAUSED) {
+        if (state.value == MockLocationState.RUNNING || state.value == MockLocationState.PAUSED) {
             val pos = positionRef.get()
             CoroutineScope(NonCancellable + Dispatchers.IO).launch { settingsRepository.setLastLocation(pos) }
         }
@@ -740,15 +737,15 @@ class MockLocationService : Service() {
         lat: Double,
         lon: Double,
     ) {
-        if (_state.value == MockLocationState.RUNNING) {
+        if (state.value == MockLocationState.RUNNING) {
             Log.i(TAG, "Spoofing already running; ignoring duplicate startSpoofing()")
             return
         }
         serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(false) }
         // Reset ERROR state so a retry attempt can proceed cleanly.
-        if (_state.value == MockLocationState.ERROR) {
+        if (state.value == MockLocationState.ERROR) {
             Log.i(TAG, "Clearing ERROR state before retry")
-            stateMachine.send(SpoofingEvent.CLEAR_ERROR)
+            locationRepository.sendSpoofingEvent(SpoofingEvent.CLEAR_ERROR)
         }
 
         writeCurrentPosition(lat, lon, syncRepository = true)
@@ -783,13 +780,13 @@ class MockLocationService : Service() {
         // testProvider.setup() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
         wakeLock.acquire()
-        if (stateMachine.send(SpoofingEvent.START)) locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
     // The crash handler can fire before onCreate builds the handler.
     private fun reportError() {
-        if (::errorHandler.isInitialized) errorHandler.setError() else stateMachine.send(SpoofingEvent.FAIL)
+        if (::errorHandler.isInitialized) errorHandler.setError() else locationRepository.sendSpoofingEvent(SpoofingEvent.FAIL)
     }
 
     fun updatePosition(
@@ -916,9 +913,8 @@ class MockLocationService : Service() {
         serviceScope.launch { settingsRepository.setLastLocation(pos) }
         testProvider.remove()
         wakeLock.release()
-        stateMachine.send(SpoofingEvent.STOP)
+        locationRepository.sendSpoofingEvent(SpoofingEvent.STOP)
         locationRepository.setMockMode(MockMode.TELEPORT)
-        locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
         if (stopService) {
             stopSelf()
@@ -933,8 +929,7 @@ class MockLocationService : Service() {
      */
     private fun pauseFollowerForInactiveLeader() {
         wakeLock.release()
-        locationRepository.stopSpoofing()
-        stateMachine.send(SpoofingEvent.STOP)
+        locationRepository.sendSpoofingEvent(SpoofingEvent.STOP)
         Log.i(TAG, "Leader stopped spoofing — pausing follower mirror")
     }
 
@@ -972,7 +967,7 @@ class MockLocationService : Service() {
                     followerCatchUp.setTarget(LatLng(lat, lon), bearing, speedMs)
                     groupRepository.setLeaderPosition(LatLng(lat, lon))
                 }
-                when (followerCatchUp.handleLeaderActiveUpdate(active, _state.value)) {
+                when (followerCatchUp.handleLeaderActiveUpdate(active, state.value)) {
                     FollowerActiveAction.BOOTSTRAP -> {
                         // Leader stop, move, start again counts as a teleport; the very first bootstrap
                         // (nothing reported yet) always snaps.
@@ -1017,7 +1012,7 @@ class MockLocationService : Service() {
 
     /** A leader's Stop or a paused follower keeps the service alive for the group; leaving must end it. */
     private fun stopSelfIfIdle() {
-        if (_state.value == MockLocationState.IDLE) stopSelf()
+        if (state.value == MockLocationState.IDLE) stopSelf()
     }
 
     /** Manual override: snap straight to the last-known leader position instead of walking there. */
@@ -1196,7 +1191,7 @@ class MockLocationService : Service() {
     }
 
     internal fun publishReportedSpeed(speedMs: Float) {
-        val running = locationRepository.mockLocationState.value == MockLocationState.RUNNING
+        val running = state.value == MockLocationState.RUNNING
         locationRepository.setReportedSpeed(if (running) speedMs else 0f)
     }
 
@@ -1246,7 +1241,7 @@ class MockLocationService : Service() {
                         speedMs = fix.speedMs,
                         bearing = fix.bearing,
                         seq = 0,
-                        active = _state.value != MockLocationState.IDLE && _state.value != MockLocationState.ERROR,
+                        active = state.value != MockLocationState.IDLE && state.value != MockLocationState.ERROR,
                         teleportSeq = teleportSeq.get(),
                     ),
                 )

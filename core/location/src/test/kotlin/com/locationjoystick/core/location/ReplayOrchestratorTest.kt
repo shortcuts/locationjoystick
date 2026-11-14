@@ -10,6 +10,7 @@ import com.locationjoystick.core.common.util.stitchRingsWithoutConnectors
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -89,7 +90,7 @@ class ReplayOrchestratorTest {
                 scope = kotlinx.coroutines.CoroutineScope(dispatcher),
                 onSpoofingEvent = {
                     events.add(it)
-                    acceptEvents
+                    acceptEvents && locationRepository.sendSpoofingEvent(it)
                 },
                 onPositionChange = { _, _ -> },
                 onSpeedChange = { speedChanges.add(it) },
@@ -103,6 +104,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handlePause_pausesEngine_and_emitsState() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.startSpoofing()
         orchestrator.handlePause()
 
         verify { routeReplayEngine.pause() }
@@ -124,6 +126,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handleResume_whenServiceRejectsStart_keepsRepositoryState() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.startSpoofing()
         locationRepository.pauseSpoofing()
         acceptEvents = false
 
@@ -475,6 +478,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handleStop_whenPaused_doesNotCallStartUpdateLoop() =
         runTest {
+            locationRepository.startSpoofing()
             locationRepository.pauseSpoofing()
             assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
 

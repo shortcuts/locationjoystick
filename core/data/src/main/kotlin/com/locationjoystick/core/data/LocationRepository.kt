@@ -127,8 +127,8 @@ class LocationRepository
             _debugStats.value = stats
         }
 
-        private val _mockLocationState = MutableStateFlow(MockLocationState.IDLE)
-        val mockLocationState: StateFlow<MockLocationState> = _mockLocationState.asStateFlow()
+        private val spoofingMachine = SpoofingStateMachine()
+        val mockLocationState: StateFlow<MockLocationState> = spoofingMachine.state
 
         private val _activeRouteId = MutableStateFlow<String?>(null)
         val activeRouteId: StateFlow<String?> = _activeRouteId.asStateFlow()
@@ -186,10 +186,10 @@ class LocationRepository
         val currentMode: StateFlow<MockMode> = _movement.mapState { it.mode }
 
         /** Mode and pause state, with replay pause read from [mockLocationState]. */
-        val movement: Flow<MovementState> = combine(_movement, _mockLocationState) { m, state -> m.withReplayPause(state) }
+        val movement: Flow<MovementState> = combine(_movement, mockLocationState) { m, state -> m.withReplayPause(state) }
 
         /** Synchronous snapshot of [movement]. */
-        fun currentMovement(): MovementState = _movement.value.withReplayPause(_mockLocationState.value)
+        fun currentMovement(): MovementState = _movement.value.withReplayPause(mockLocationState.value)
 
         private fun MovementState.withReplayPause(state: MockLocationState): MovementState =
             if (isActive(MockMode.ROUTE_REPLAY)) MovementState.Active(MockMode.ROUTE_REPLAY, state == MockLocationState.PAUSED) else this
@@ -224,31 +224,34 @@ class LocationRepository
         fun observePosition(): Flow<LatLng?> = _currentPosition.asStateFlow()
 
         /** Returns the mock location state as a [Flow]. Prefer [mockLocationState] StateFlow for new code. */
-        fun observeState(): Flow<MockLocationState> = _mockLocationState.asStateFlow()
+        fun observeState(): Flow<MockLocationState> = mockLocationState
+
+        /** The only way to change the spoofing state. Returns false when the transition table rejects [event]. */
+        fun sendSpoofingEvent(event: SpoofingEvent): Boolean {
+            val accepted = spoofingMachine.send(event)
+            if (!accepted) return false
+            when (event) {
+                SpoofingEvent.START ->
+                    if (_currentPosition.value == null) {
+                        _currentPosition.value =
+                            LatLng(latitude = AppConstants.MapConstants.DEFAULT_LAT, longitude = AppConstants.MapConstants.DEFAULT_LON)
+                    }
+                SpoofingEvent.STOP -> _reportedSpeedMps.value = 0f
+                SpoofingEvent.PAUSE, SpoofingEvent.FAIL, SpoofingEvent.CLEAR_ERROR -> Unit
+            }
+            return true
+        }
 
         fun startSpoofing() {
-            Log.d(TAG, "startSpoofing requested")
-            if (_currentPosition.value == null) {
-                _currentPosition.value =
-                    LatLng(latitude = AppConstants.MapConstants.DEFAULT_LAT, longitude = AppConstants.MapConstants.DEFAULT_LON)
-            }
-            _mockLocationState.value = MockLocationState.RUNNING
+            sendSpoofingEvent(SpoofingEvent.START)
         }
 
         fun stopSpoofing() {
-            Log.d(TAG, "stopSpoofing requested")
-            _reportedSpeedMps.value = 0f
-            _mockLocationState.value = MockLocationState.IDLE
+            sendSpoofingEvent(SpoofingEvent.STOP)
         }
 
         fun pauseSpoofing() {
-            Log.d(TAG, "pauseSpoofing requested")
-            _mockLocationState.value = MockLocationState.PAUSED
-        }
-
-        fun reportError() {
-            Log.e(TAG, "MockLocationService reported an error")
-            _mockLocationState.value = MockLocationState.ERROR
+            sendSpoofingEvent(SpoofingEvent.PAUSE)
         }
 
         fun setActiveRouteId(id: String?) {

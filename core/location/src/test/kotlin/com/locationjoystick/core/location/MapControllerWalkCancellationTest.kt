@@ -9,6 +9,7 @@ import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
@@ -433,6 +434,20 @@ class MapControllerWalkCancellationTest {
                 assertNotEquals(manualPosition, repo.currentPosition.value)
                 assertEquals(target, repo.walkTarget.value)
             }
+        }
+
+    @Test
+    fun `joystick input during a route replay in ERROR keeps ERROR`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = buildHarness(backgroundScope, mockk(relaxed = true))
+            val repo = harness.locationRepository
+            repo.setMockMode(MockMode.ROUTE_REPLAY)
+            repo.startSpoofing()
+            repo.sendSpoofingEvent(SpoofingEvent.FAIL)
+
+            harness.mapController.pauseAutomatedMovement()
+
+            assertEquals(MockLocationState.ERROR, repo.mockLocationState.value)
         }
 
     @Test

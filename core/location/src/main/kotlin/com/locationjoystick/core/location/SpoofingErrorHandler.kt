@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.model.MockMode
 
@@ -16,7 +17,6 @@ internal class SpoofingErrorHandler(
 ) {
     fun setError() {
         send(SpoofingEvent.FAIL)
-        locationRepository.reportError()
         wakeLock.release()
     }
 

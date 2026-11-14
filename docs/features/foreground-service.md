@@ -14,7 +14,7 @@ The service restarts itself with no intent after the system kills it, so the spo
 
 - The update loop runs in a coroutine scope that one failed child cannot cancel. A tick error must not stop the whole loop.
 - On destroy, the scope is cancelled and the test provider is removed. See [mock-location.md](mock-location.md), "Core mechanics", for why removal is mandatory.
-- Spoofing state changes only through the transition table in `SpoofingStateMachine.kt`. Error is left only by Stop or the retry clear, so a late replay or start callback cannot hide a failed provider.
+- Spoofing state changes only through the transition table in `SpoofingStateMachine.kt` (`:core:data`). `LocationRepository` exposes its one flow and no code writes state around it. A pause in IDLE is rejected, so "paused but not running" cannot occur. Error is left only by Stop or the retry clear, so a late replay or start callback cannot hide a failed provider.
 
 ## Wake lock
 
