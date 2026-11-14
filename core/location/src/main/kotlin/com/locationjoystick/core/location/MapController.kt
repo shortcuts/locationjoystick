@@ -15,7 +15,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
-import com.locationjoystick.core.data.isWalkFetching
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -25,7 +24,6 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.isActive
-import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.sortedBySavedItemMode
 import com.locationjoystick.core.model.speedProfileIdForKind
@@ -520,7 +518,7 @@ class MapController
                         _sharedState.update { if (it.walkMode == walking) it.copy(walkMode = WalkMode.Idle) else it }
                     }
                 }
-            locationRepository.beginRoadRouteFetch(position, job)
+            locationRepository.beginRoadRouteFetch(job)
             job.invokeOnCompletion { locationRepository.endRoadRouteFetch(job) }
             job.start()
         }
@@ -545,9 +543,15 @@ class MapController
          * turning it off on the Group Sync screen; the device stays in the group).
          */
         fun pauseAutomatedMovement() {
-            val mode = locationRepository.currentMode.value
-            when {
-                mode == MockMode.FOLLOWER -> {
+            val action =
+                pauseActionFor(
+                    locationRepository.currentMovement(),
+                    locationRepository.roadRouteFetch.value,
+                    locationRepository.mockLocationState.value,
+                )
+            when (action) {
+                PauseAction.None -> Unit
+                PauseAction.LeaveFollower ->
                     if (followerExitJob?.isActive != true) {
                         followerExitJob =
                             appScope.launch {
@@ -556,19 +560,12 @@ class MapController
                                 followerResume.resumeAfterIdle()
                             }
                     }
-                }
-                mode == MockMode.WALK_TO || locationRepository.roadRouteFetch.value.isWalkFetching -> {
-                    if (!locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) pauseWalk()
-                }
-                locationRepository.currentMovement().isActive(MockMode.ROAMING) -> {
-                    if (!locationRepository.currentMovement().isPaused(MockMode.ROAMING)) roamingRepository.pauseRoaming()
-                }
-                mode == MockMode.ROUTE_REPLAY || locationRepository.isRoadRouteFetchInFlight.value -> {
-                    if (locationRepository.mockLocationState.value != MockLocationState.PAUSED) {
-                        // Mark this synchronously so repeated touch events do not queue more pause commands.
-                        locationRepository.pauseSpoofing()
-                        pauseRouteReplay()
-                    }
+                PauseAction.PauseWalk -> pauseWalk()
+                PauseAction.PauseRoaming -> roamingRepository.pauseRoaming()
+                PauseAction.PauseReplay -> {
+                    // Mark this synchronously so repeated touch events do not queue more pause commands.
+                    locationRepository.pauseSpoofing()
+                    pauseRouteReplay()
                 }
             }
         }

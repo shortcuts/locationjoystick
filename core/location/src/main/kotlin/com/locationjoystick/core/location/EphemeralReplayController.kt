@@ -101,7 +101,7 @@ class EphemeralReplayController
                         var targetIndex = 0
                         val initial =
                             if (followRoads) {
-                                locationRepository.beginRoadRouteFetch(newPoint)
+                                locationRepository.beginRoadRouteFetch()
                                 try {
                                     val (toTarget, toNewPoint) =
                                         coroutineScope {
@@ -157,7 +157,7 @@ class EphemeralReplayController
                     ) {
                         val appendSegment =
                             if (followRoads && currentWaypoints.isNotEmpty()) {
-                                locationRepository.beginRoadRouteFetch(newPoint)
+                                locationRepository.beginRoadRouteFetch()
                                 try {
                                     val from = currentWaypoints.last()
                                     osrmClient

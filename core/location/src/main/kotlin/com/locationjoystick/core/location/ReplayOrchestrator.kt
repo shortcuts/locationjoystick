@@ -147,7 +147,7 @@ internal class ReplayOrchestrator(
                 activeReplayer = routeReplayEngine
                 val latLngs = orderedWaypoints.map { it.position }
                 try {
-                    if (config.followRoadsToStart) locationRepository.beginRoadRouteFetch(latLngs.last())
+                    if (config.followRoadsToStart) locationRepository.beginRoadRouteFetch()
                     val (replayWaypoints, boundaryIndices) =
                         when {
                             isPlanting ->

@@ -34,13 +34,12 @@ private const val TAG = "LocationRepository"
 sealed interface RoadRouteFetch {
     data object Idle : RoadRouteFetch
 
-    data class Fetching(
-        val target: LatLng,
-        val walkJob: Job? = null,
+    data class WalkFetch(
+        val job: Job,
     ) : RoadRouteFetch
-}
 
-val RoadRouteFetch.isWalkFetching: Boolean get() = this is RoadRouteFetch.Fetching && walkJob != null
+    data object ReplayFetch : RoadRouteFetch
+}
 
 /** Live per-tick snapshot for the debug overlay. [tickIntervalMs] is wall-clock time since the previous tick. */
 data class DebugStats(
@@ -151,28 +150,33 @@ class LocationRepository
          * the UI. Lets any surface show a loading/disabled state instead of going silent for up to
          * [AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS].
          */
-        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _roadRouteFetch.mapState { it is RoadRouteFetch.Fetching }
+        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _roadRouteFetch.mapState { it !is RoadRouteFetch.Idle }
 
         val roadRouteFetch: StateFlow<RoadRouteFetch> = _roadRouteFetch.asStateFlow()
 
-        /** Starts a fetch toward [target]. A [walkJob] makes it cancellable through [cancelWalkRoadRouteFetch]. */
-        fun beginRoadRouteFetch(
-            target: LatLng,
-            walkJob: Job? = null,
-        ) {
-            _roadRouteFetch.value = RoadRouteFetch.Fetching(target, walkJob)
+        /** Starts a fetch. A [walkJob] makes it a walk fetch, cancellable through [cancelWalkRoadRouteFetch]. */
+        fun beginRoadRouteFetch(walkJob: Job? = null) {
+            _roadRouteFetch.value = if (walkJob != null) RoadRouteFetch.WalkFetch(walkJob) else RoadRouteFetch.ReplayFetch
         }
 
         /** Releases the fetch started with the same [walkJob]. Any other owner's fetch stays, so this is safe to call twice. */
         fun endRoadRouteFetch(walkJob: Job? = null) {
-            _roadRouteFetch.update { if (it is RoadRouteFetch.Fetching && it.walkJob == walkJob) RoadRouteFetch.Idle else it }
+            _roadRouteFetch.update {
+                val owned =
+                    when (it) {
+                        is RoadRouteFetch.WalkFetch -> it.job == walkJob
+                        RoadRouteFetch.ReplayFetch -> walkJob == null
+                        RoadRouteFetch.Idle -> false
+                    }
+                if (owned) RoadRouteFetch.Idle else it
+            }
         }
 
         /** Cancels the in-flight walk fetch. Ignored when idle or when the fetch belongs to a replay. */
         fun cancelWalkRoadRouteFetch() {
             _roadRouteFetch.update { current ->
-                if (current is RoadRouteFetch.Fetching && current.walkJob != null) {
-                    current.walkJob.cancel()
+                if (current is RoadRouteFetch.WalkFetch) {
+                    current.job.cancel()
                     RoadRouteFetch.Idle
                 } else {
                     Log.w(TAG, "ignored walk fetch cancel from $current")

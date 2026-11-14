@@ -123,7 +123,7 @@ class RoutesViewModelUiStateTest {
         runTest {
             viewModel.uiState.test {
                 assertFalse(awaitItem().isRoadRouteFetchInFlight)
-                locationRepository.beginRoadRouteFetch(LatLng(0.0, 0.0))
+                locationRepository.beginRoadRouteFetch()
                 assertTrue(awaitItem().isRoadRouteFetchInFlight)
                 cancelAndIgnoreRemainingEvents()
             }
@@ -248,6 +248,7 @@ class RoutesViewModelUiStateTest {
     fun playbackState_isPaused_when_active_route_and_paused() =
         runTest {
             locationRepository.setActiveRouteId("r1")
+            locationRepository.startSpoofing()
             locationRepository.pauseSpoofing()
 
             viewModel.playbackState.test {
