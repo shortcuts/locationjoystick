@@ -393,31 +393,7 @@ internal class WidgetPanelPresenter(
             RoutesFloatingView(
                 routes = routes,
                 onDismiss = { hidePanelView() },
-                onStartRoute = {
-                    routeId,
-                    isLooping,
-                    isReverse,
-                    isReturnToLocation,
-                    followRoadsToStart,
-                    isPlanting,
-                    teleportBetweenWaypoints,
-                    teleportBetweenDelaySeconds,
-                    loopWalksBack,
-                    ->
-                    callbacks.startRouteReplayWithMode(
-                        routeId,
-                        RouteStartConfig(
-                            isLooping = isLooping,
-                            isReverse = isReverse,
-                            isReturnToLocation = isReturnToLocation,
-                            followRoadsToStart = followRoadsToStart,
-                            isPlanting = isPlanting,
-                            teleportBetweenWaypoints = teleportBetweenWaypoints,
-                            teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
-                            loopWalksBack = loopWalksBack,
-                        ),
-                    )
-                },
+                onStartRoute = { routeId, config -> callbacks.startRouteReplayWithMode(routeId, config) },
                 onTeleport = { pos -> callbacks.teleport(pos) },
                 onRename = { route, name ->
                     serviceScope.launch { routeRepository.renameRoute(route.id, name) }

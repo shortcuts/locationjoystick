@@ -91,30 +91,9 @@ internal fun RoutesPickerSheet(
                     onTeleport = { reverse ->
                         route?.startWaypoint(reverse)?.let { onAction(MapAction.ConfirmTeleport(it.position)) }
                     },
-                    onStart = {
-                        loop,
-                        reverse,
-                        returnToLocation,
-                        followRoads,
-                        planting,
-                        teleportBetweenWaypoints,
-                        delaySeconds,
-                        loopWalksBack,
-                        ->
-                        onAction(
-                            MapAction.StartRouteReplay(
-                                routeId,
-                                loop,
-                                reverse,
-                                returnToLocation,
-                                followRoads,
-                                planting,
-                                teleportBetweenWaypoints,
-                                delaySeconds,
-                                loopWalksBack,
-                            ),
-                        )
-                        if (!followRoads) selectedRouteId = null
+                    onStart = { config ->
+                        onAction(MapAction.StartRouteReplay(routeId, config))
+                        if (!config.followRoadsToStart) selectedRouteId = null
                     },
                     onCancel = {
                         selectedRouteId = null

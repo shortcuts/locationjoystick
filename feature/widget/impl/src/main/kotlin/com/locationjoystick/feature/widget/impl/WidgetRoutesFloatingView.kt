@@ -26,6 +26,8 @@ import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.startWaypoint
 import com.locationjoystick.feature.widget.impl.R
@@ -35,17 +37,7 @@ import kotlinx.coroutines.flow.Flow
 internal fun RoutesFloatingView(
     routes: List<com.locationjoystick.core.model.Route>,
     onDismiss: () -> Unit,
-    onStartRoute: (
-        routeId: String,
-        isLooping: Boolean,
-        isReverse: Boolean,
-        isReturnToLocation: Boolean,
-        followRoadsToStart: Boolean,
-        isPlanting: Boolean,
-        teleportBetweenWaypoints: Boolean,
-        teleportBetweenDelaySeconds: Int,
-        loopWalksBack: Boolean,
-    ) -> Unit,
+    onStartRoute: (routeId: String, config: RouteStartConfig) -> Unit,
     onTeleport: (LatLng) -> Unit,
     onRename: (com.locationjoystick.core.model.Route, String) -> Unit,
     onDelete: (com.locationjoystick.core.model.Route) -> Unit,
@@ -166,16 +158,23 @@ internal fun RoutesFloatingView(
                         onDismiss()
                     },
                     onStart = {
+                        val loopMode =
+                            when {
+                                !loop && !(planting && !isTeleportRoute) -> LoopMode.OFF
+                                loop && !planting && walkBack && !isTeleportRoute -> LoopMode.WALK_BACK
+                                else -> LoopMode.RESTART
+                            }
                         onStartRoute(
                             routeId,
-                            loop || (planting && !isTeleportRoute),
-                            reverse,
-                            returnToLocation && !loop && !planting,
-                            followRoads && !isTeleportRoute,
-                            planting && !isTeleportRoute,
-                            teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
-                            parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
-                            loop && !planting && walkBack && !isTeleportRoute,
+                            RouteStartConfig(
+                                loopMode = loopMode,
+                                isReverse = reverse,
+                                isReturnToLocation = returnToLocation && !loop && !planting,
+                                followRoadsToStart = followRoads && !isTeleportRoute,
+                                isPlanting = planting && !isTeleportRoute,
+                                teleportBetweenWaypoints = teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
+                                teleportBetweenDelaySeconds = parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
+                            ),
                         )
                         selectedRouteId = null
                         onDismiss()

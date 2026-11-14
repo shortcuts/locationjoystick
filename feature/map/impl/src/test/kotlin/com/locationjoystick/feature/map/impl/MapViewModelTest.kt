@@ -19,6 +19,7 @@ import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
@@ -868,19 +869,14 @@ class MapViewModelTest {
             assertEquals(true, viewModel.uiState.value.showRoutesSheet)
 
             viewModel.onAction(
-                MapAction.StartRouteReplay(
-                    routeId = "route-1",
-                    isLooping = false,
-                    isReverse = false,
-                    isReturnToLocation = false,
-                ),
+                MapAction.StartRouteReplay(routeId = "route-1", config = RouteStartConfig()),
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
             coVerify {
                 startRouteReplayUseCase.execute(
                     "route-1",
-                    RouteStartConfig(isLooping = false, isReverse = false, isReturnToLocation = false, followRoadsToStart = false),
+                    RouteStartConfig(),
                 )
             }
             assertEquals(false, viewModel.uiState.value.showRoutesSheet)
@@ -892,12 +888,13 @@ class MapViewModelTest {
             viewModel.onAction(
                 MapAction.StartRouteReplay(
                     routeId = "route-1",
-                    isLooping = true,
-                    isReverse = true,
-                    isReturnToLocation = false,
-                    followRoadsToStart = true,
-                    teleportBetweenDelaySeconds = 12,
-                    loopWalksBack = true,
+                    config =
+                        RouteStartConfig(
+                            loopMode = LoopMode.WALK_BACK,
+                            isReverse = true,
+                            followRoadsToStart = true,
+                            teleportBetweenDelaySeconds = 12,
+                        ),
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
@@ -905,11 +902,10 @@ class MapViewModelTest {
             coVerify {
                 settingsRepository.setRouteStartConfig(
                     RouteStartConfig(
-                        isLooping = true,
+                        loopMode = LoopMode.WALK_BACK,
                         isReverse = true,
                         followRoadsToStart = true,
                         teleportBetweenDelaySeconds = 12,
-                        loopWalksBack = true,
                     ),
                 )
             }
@@ -933,20 +929,14 @@ class MapViewModelTest {
             assertEquals(true, viewModel.uiState.value.showRoutesSheet)
 
             viewModel.onAction(
-                MapAction.StartRouteReplay(
-                    routeId = "route-1",
-                    isLooping = false,
-                    isReverse = false,
-                    isReturnToLocation = false,
-                    followRoadsToStart = true,
-                ),
+                MapAction.StartRouteReplay(routeId = "route-1", config = RouteStartConfig(followRoadsToStart = true)),
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
             coVerify {
                 startRouteReplayUseCase.execute(
                     "route-1",
-                    RouteStartConfig(isLooping = false, isReverse = false, isReturnToLocation = false, followRoadsToStart = true),
+                    RouteStartConfig(followRoadsToStart = true),
                 )
             }
             assertEquals(true, viewModel.uiState.value.showRoutesSheet)
@@ -1467,7 +1457,7 @@ class MapViewModelTest {
 
             viewModel.startPastedRoute(
                 points,
-                RouteStartConfig(isLooping = true, followRoadsToStart = true, teleportBetweenWaypoints = true),
+                RouteStartConfig(loopMode = LoopMode.RESTART, followRoadsToStart = true, teleportBetweenWaypoints = true),
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1478,7 +1468,7 @@ class MapViewModelTest {
                     routeId = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID,
                     config =
                         RouteStartConfig(
-                            isLooping = true,
+                            loopMode = LoopMode.RESTART,
                             isReverse = false,
                             isReturnToLocation = false,
                             followRoadsToStart = true,

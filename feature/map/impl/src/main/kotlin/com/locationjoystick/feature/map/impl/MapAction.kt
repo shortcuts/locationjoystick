@@ -1,9 +1,9 @@
 package com.locationjoystick.feature.map.impl
 
-import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingKind
+import com.locationjoystick.core.model.RouteStartConfig
 
 sealed interface MapAction {
     data class TapToTeleport(
@@ -159,14 +159,7 @@ sealed interface MapAction {
 
     data class StartRouteReplay(
         val routeId: String,
-        val isLooping: Boolean = false,
-        val isReverse: Boolean = false,
-        val isReturnToLocation: Boolean = false,
-        val followRoadsToStart: Boolean = false,
-        val isPlanting: Boolean = false,
-        val teleportBetweenWaypoints: Boolean = false,
-        val teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
-        val loopWalksBack: Boolean = false,
+        val config: RouteStartConfig = RouteStartConfig(),
     ) : MapAction
 
     data object PauseRouteReplay : MapAction

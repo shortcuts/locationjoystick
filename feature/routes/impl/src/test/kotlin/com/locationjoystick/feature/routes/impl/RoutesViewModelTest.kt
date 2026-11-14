@@ -12,6 +12,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
@@ -174,7 +175,7 @@ class RoutesViewModelUiStateTest {
             viewModel.startReplay(
                 routeWithProfile,
                 RouteStartConfig(
-                    isLooping = true,
+                    loopMode = LoopMode.RESTART,
                     isReverse = true,
                     followRoadsToStart = true,
                     isPlanting = true,
@@ -187,7 +188,7 @@ class RoutesViewModelUiStateTest {
                     routeId = "r1",
                     config =
                         RouteStartConfig(
-                            isLooping = true,
+                            loopMode = LoopMode.RESTART,
                             isReverse = true,
                             isReturnToLocation = false,
                             followRoadsToStart = true,
@@ -202,7 +203,7 @@ class RoutesViewModelUiStateTest {
     @Test
     fun startReplay_remembers_the_start_config() =
         runTest {
-            val config = RouteStartConfig(isLooping = true, followRoadsToStart = true, teleportBetweenDelaySeconds = 12)
+            val config = RouteStartConfig(loopMode = LoopMode.RESTART, followRoadsToStart = true, teleportBetweenDelaySeconds = 12)
             viewModel.startReplay(route("r1", "A", createdAt = 1000L), config)
 
             coVerify { settingsRepository.setRouteStartConfig(config) }

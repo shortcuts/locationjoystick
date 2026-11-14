@@ -11,6 +11,7 @@ import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
@@ -351,11 +352,10 @@ class AppPreferencesDataSourceTest {
             assertNull(dataSource.getRouteStartConfig().first())
             val config =
                 RouteStartConfig(
-                    isLooping = true,
+                    loopMode = LoopMode.WALK_BACK,
                     isReverse = true,
                     followRoadsToStart = true,
                     isPlanting = true,
-                    loopWalksBack = true,
                     teleportToStart = true,
                     teleportBetweenWaypoints = true,
                     teleportBetweenDelaySeconds = 15,
@@ -369,7 +369,13 @@ class AppPreferencesDataSourceTest {
             fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|8|2" }
             assertNull(dataSource.getRouteStartConfig().first())
             fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|8" }
-            assertEquals(RouteStartConfig(isLooping = true), dataSource.getRouteStartConfig().first())
+            assertEquals(RouteStartConfig(loopMode = LoopMode.RESTART), dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "2|0|0|0|0|8" }
+            assertEquals(RouteStartConfig(loopMode = LoopMode.WALK_BACK), dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|8|1" }
+            assertEquals(RouteStartConfig(loopMode = LoopMode.WALK_BACK), dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "3|0|0|0|0|8" }
+            assertNull(dataSource.getRouteStartConfig().first())
         }
 
     @Test

@@ -5,6 +5,7 @@ import android.content.Intent
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.RouteStartConfig
 
 /**
@@ -70,8 +71,7 @@ object MockLocationIntentBuilder {
             putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
             putExtra(MockLocationService.EXTRA_IS_BACKWARD, config.isReverse)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
-            putExtra(MockLocationService.EXTRA_IS_LOOPING, config.isLooping)
-            putExtra(MockLocationService.EXTRA_LOOP_WALKS_BACK, config.loopWalksBack)
+            putExtra(MockLocationService.EXTRA_LOOP_MODE, config.loopMode.name)
             putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, config.followRoadsToStart)
             putExtra(MockLocationService.EXTRA_TELEPORT_TO_START, config.teleportToStart)
             putExtra(MockLocationService.EXTRA_IS_PLANTING, config.isPlanting)
@@ -164,8 +164,8 @@ internal fun Intent.toRouteStartConfig(): RouteStartConfig {
     val d = RouteStartConfig()
     val teleportToStart = getBooleanExtra(MockLocationService.EXTRA_TELEPORT_TO_START, d.teleportToStart)
     return RouteStartConfig(
-        isLooping = getBooleanExtra(MockLocationService.EXTRA_IS_LOOPING, d.isLooping),
-        loopWalksBack = getBooleanExtra(MockLocationService.EXTRA_LOOP_WALKS_BACK, d.loopWalksBack),
+        loopMode =
+            getStringExtra(MockLocationService.EXTRA_LOOP_MODE)?.let { runCatching { LoopMode.valueOf(it) }.getOrNull() } ?: d.loopMode,
         isReverse = getBooleanExtra(MockLocationService.EXTRA_IS_BACKWARD, d.isReverse),
         followRoadsToStart = getBooleanExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, d.followRoadsToStart),
         teleportToStart = teleportToStart,

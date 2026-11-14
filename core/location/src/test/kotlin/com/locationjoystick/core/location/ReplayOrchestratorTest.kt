@@ -13,6 +13,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.Route
@@ -214,7 +215,7 @@ class ReplayOrchestratorTest {
             locationRepository.setPositionInternal(first)
             coEvery { routeRepository.getRouteWithWaypoints("loop") } returns flowOf(route)
 
-            orchestrator.handleStart("loop", 1.4, RouteStartConfig(isLooping = true, teleportToStart = true))
+            orchestrator.handleStart("loop", 1.4, RouteStartConfig(loopMode = LoopMode.RESTART, teleportToStart = true))
 
             verify {
                 routeReplayEngine.start(
@@ -238,7 +239,7 @@ class ReplayOrchestratorTest {
             locationRepository.setPositionInternal(first)
             coEvery { routeRepository.getRouteWithWaypoints("loop") } returns flowOf(route)
 
-            orchestrator.handleStart("loop", 1.4, RouteStartConfig(isLooping = true, loopWalksBack = true, teleportToStart = true))
+            orchestrator.handleStart("loop", 1.4, RouteStartConfig(loopMode = LoopMode.WALK_BACK, teleportToStart = true))
 
             verify {
                 routeReplayEngine.start(
@@ -987,7 +988,7 @@ class ReplayOrchestratorTest {
             coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns listOf(w1, LatLng(2.5, 2.5), w2)
             coEvery { osrmClient.resolveRoute(any(), w2, w1, true, any()) } returns listOf(w2, LatLng(2.5, 3.0), w1)
 
-            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(followRoadsToStart = true, isLooping = true))
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(followRoadsToStart = true, loopMode = LoopMode.RESTART))
 
             verify {
                 routeReplayEngine.start(
@@ -1010,7 +1011,7 @@ class ReplayOrchestratorTest {
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns
                 kotlinx.coroutines.flow.flowOf(twoStopRoute(w1, w2))
 
-            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(isLooping = true))
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(loopMode = LoopMode.RESTART))
 
             coVerify(exactly = 0) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
             verify {
@@ -1039,7 +1040,7 @@ class ReplayOrchestratorTest {
             orchestrator.handleStart(
                 "route-1",
                 1.4,
-                RouteStartConfig(followRoadsToStart = true, isLooping = true, loopWalksBack = true),
+                RouteStartConfig(followRoadsToStart = true, loopMode = LoopMode.WALK_BACK),
             )
 
             coVerify(exactly = 0) { osrmClient.resolveRoute(any(), w2, w1, any(), any()) }

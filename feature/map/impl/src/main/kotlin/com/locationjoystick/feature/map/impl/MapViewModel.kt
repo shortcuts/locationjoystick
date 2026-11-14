@@ -409,20 +409,9 @@ class MapViewModel
                 }
 
                 is MapAction.StartRouteReplay -> {
-                    val config =
-                        RouteStartConfig(
-                            isLooping = action.isLooping,
-                            isReverse = action.isReverse,
-                            isReturnToLocation = action.isReturnToLocation,
-                            followRoadsToStart = action.followRoadsToStart,
-                            isPlanting = action.isPlanting,
-                            teleportBetweenWaypoints = action.teleportBetweenWaypoints,
-                            teleportBetweenDelaySeconds = action.teleportBetweenDelaySeconds,
-                            loopWalksBack = action.loopWalksBack,
-                        )
-                    viewModelScope.launch { settingsRepository.setRouteStartConfig(config) }
-                    mapController.startRouteReplay(action.routeId, config)
-                    if (!action.followRoadsToStart) {
+                    viewModelScope.launch { settingsRepository.setRouteStartConfig(action.config) }
+                    mapController.startRouteReplay(action.routeId, action.config)
+                    if (!action.config.followRoadsToStart) {
                         _uiState.update { it.copy(showRoutesSheet = false) }
                     }
                 }

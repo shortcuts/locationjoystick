@@ -11,6 +11,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.RouteStartConfig
@@ -164,10 +165,18 @@ class ControlApiRoutes
                 return apiError(404, "route_not_found", "Route not found")
             }
             val d = RouteStartConfig()
+            val loopMode =
+                if (json.has("loopMode")) {
+                    runCatching { LoopMode.valueOf(json.optString("loopMode")) }.getOrNull()
+                        ?: return apiError(400, "bad_request", "Unknown loopMode")
+                } else if (json.optBoolean("loop", false)) {
+                    LoopMode.RESTART
+                } else {
+                    d.loopMode
+                }
             val config =
                 RouteStartConfig(
-                    isLooping = json.optBoolean("loop", d.isLooping),
-                    loopWalksBack = json.optBoolean("loopWalksBack", d.loopWalksBack),
+                    loopMode = loopMode,
                     isReverse = json.optBoolean("reverse", d.isReverse),
                     isReturnToLocation = json.optBoolean("returnToLocation", d.isReturnToLocation),
                     followRoadsToStart = json.optBoolean("followRoadsToStart", d.followRoadsToStart),

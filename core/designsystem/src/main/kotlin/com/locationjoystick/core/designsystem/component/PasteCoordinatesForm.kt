@@ -51,6 +51,7 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.RouteStartConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -393,7 +394,7 @@ fun PasteCoordinatesForm(
                             onStartRoute(
                                 points,
                                 RouteStartConfig(
-                                    isLooping = loop || planting,
+                                    loopMode = if (loop || planting) LoopMode.RESTART else LoopMode.OFF,
                                     isReverse = reverse,
                                     isReturnToLocation = returnToLocation && !loop && !planting,
                                     followRoadsToStart = followRoads,

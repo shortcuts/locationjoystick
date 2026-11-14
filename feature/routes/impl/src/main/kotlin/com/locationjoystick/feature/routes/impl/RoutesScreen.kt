@@ -574,30 +574,9 @@ private fun RouteCard(
                     },
                     startWaypointFor = { reverse -> route.startWaypoint(reverse)?.position },
                     cooldownFor = cooldownFor,
-                    onStart = {
-                        loop,
-                        reverse,
-                        returnToLocation,
-                        followRoads,
-                        planting,
-                        teleportBetweenWaypoints,
-                        delaySeconds,
-                        loopWalksBack,
-                        ->
-                        onStartReplay(
-                            route,
-                            RouteStartConfig(
-                                isLooping = loop,
-                                isReverse = reverse,
-                                isReturnToLocation = returnToLocation,
-                                followRoadsToStart = followRoads,
-                                isPlanting = planting,
-                                teleportBetweenWaypoints = teleportBetweenWaypoints,
-                                teleportBetweenDelaySeconds = delaySeconds,
-                                loopWalksBack = loopWalksBack,
-                            ),
-                        )
-                        if (!followRoads) showStartDialog = false
+                    onStart = { config ->
+                        onStartReplay(route, config)
+                        if (!config.followRoadsToStart) showStartDialog = false
                     },
                     onCancel = { showStartDialog = false },
                     hideTeleport = hideTeleportFeatures,

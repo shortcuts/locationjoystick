@@ -12,6 +12,7 @@ import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
 import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.RouteStartConfig
 import kotlinx.coroutines.flow.Flow
 
@@ -24,16 +25,7 @@ import kotlinx.coroutines.flow.Flow
 fun RouteStartSheetContent(
     key: Any?,
     onTeleport: (reverse: Boolean) -> Unit,
-    onStart: (
-        loop: Boolean,
-        reverse: Boolean,
-        returnToLocation: Boolean,
-        followRoads: Boolean,
-        planting: Boolean,
-        teleportBetweenWaypoints: Boolean,
-        teleportBetweenDelaySeconds: Int,
-        loopWalksBack: Boolean,
-    ) -> Unit,
+    onStart: (RouteStartConfig) -> Unit,
     onCancel: () -> Unit,
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
@@ -48,14 +40,14 @@ fun RouteStartSheetContent(
     startWaypointFor: (reverse: Boolean) -> LatLng? = { null },
     cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
-    var loop by remember(key) { mutableStateOf(remembered?.isLooping ?: true) }
+    var loop by remember(key) { mutableStateOf(remembered?.loopMode?.let { it != LoopMode.OFF } ?: true) }
     var reverse by remember(key) { mutableStateOf(remembered?.isReverse ?: false) }
     var returnToLocation by remember(key) { mutableStateOf(remembered?.isReturnToLocation == true && !isPlantedRoute) }
     var followRoads by remember(key) {
         mutableStateOf((isPlantedRoute && isRoadRoute) || (remembered?.followRoadsToStart == true && !isTeleportRoute))
     }
     var planting by remember(key) { mutableStateOf(isPlantedRoute) }
-    var walkBack by remember(key) { mutableStateOf(remembered?.loopWalksBack == true) }
+    var walkBack by remember(key) { mutableStateOf(remembered?.loopMode == LoopMode.WALK_BACK) }
     var teleportBetweenWaypoints by remember(key) {
         mutableStateOf(remembered?.teleportBetweenWaypoints == true && !isTeleportRoute)
     }
@@ -111,14 +103,20 @@ fun RouteStartSheetContent(
             val effectiveFollowRoads = followRoads && !isTeleportRoute
             if (effectiveFollowRoads) isAwaitingRoadStart = true
             onStart(
-                loop || planting,
-                reverse,
-                returnToLocation && !loop && !planting,
-                effectiveFollowRoads,
-                planting && !isTeleportRoute,
-                teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
-                parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
-                loop && !planting && walkBack && !isTeleportRoute,
+                RouteStartConfig(
+                    loopMode =
+                        when {
+                            !loop && !planting -> LoopMode.OFF
+                            loop && !planting && walkBack && !isTeleportRoute -> LoopMode.WALK_BACK
+                            else -> LoopMode.RESTART
+                        },
+                    isReverse = reverse,
+                    isReturnToLocation = returnToLocation && !loop && !planting,
+                    followRoadsToStart = effectiveFollowRoads,
+                    isPlanting = planting && !isTeleportRoute,
+                    teleportBetweenWaypoints = teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
+                    teleportBetweenDelaySeconds = parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
+                ),
             )
         },
         hideTeleport = hideTeleport,

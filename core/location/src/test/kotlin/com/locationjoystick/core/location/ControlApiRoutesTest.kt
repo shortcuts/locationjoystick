@@ -6,6 +6,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
@@ -152,17 +153,26 @@ class ControlApiRoutesTest {
     @Test
     fun `route start maps the body and bypasses hide teleport, unknown route is 404`() {
         assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"teleportBetweenWaypoints":true}""").first)
-        verify { mapController.startRouteReplay("r1", RouteStartConfig(isLooping = true, teleportBetweenWaypoints = true), true) }
-        assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"loopWalksBack":true}""").first)
-        verify { mapController.startRouteReplay("r1", RouteStartConfig(isLooping = true, loopWalksBack = true), true) }
+        verify {
+            mapController.startRouteReplay(
+                "r1",
+                RouteStartConfig(loopMode = LoopMode.RESTART, teleportBetweenWaypoints = true),
+                true,
+            )
+        }
+        assertEquals(200, call("route/start", body = """{"routeId":"r1","loopMode":"WALK_BACK"}""").first)
+        verify { mapController.startRouteReplay("r1", RouteStartConfig(loopMode = LoopMode.WALK_BACK), true) }
+        assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"loopMode":"OFF"}""").first)
+        verify { mapController.startRouteReplay("r1", RouteStartConfig(loopMode = LoopMode.OFF), true) }
         assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":9999}""").first)
         verify { mapController.startRouteReplay("r1", RouteStartConfig(teleportBetweenDelaySeconds = 600), true) }
         assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":-5}""").first)
         verify { mapController.startRouteReplay("r1", RouteStartConfig(teleportBetweenDelaySeconds = 0), true) }
+        assertEquals(400, call("route/start", body = """{"routeId":"r1","loopMode":"SIDEWAYS"}""").first)
         val (code, body) = call("route/start", body = """{"routeId":"nope"}""")
         assertEquals(404, code)
         assertTrue(body.contains("route_not_found"))
-        verify(exactly = 4) { mapController.startRouteReplay(any(), any(), any()) }
+        verify(exactly = 5) { mapController.startRouteReplay(any(), any(), any()) }
     }
 
     @Test

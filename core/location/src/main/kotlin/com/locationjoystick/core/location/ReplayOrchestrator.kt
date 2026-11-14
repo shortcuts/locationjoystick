@@ -16,6 +16,7 @@ import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RouteStartConfig
@@ -128,7 +129,7 @@ internal class ReplayOrchestrator(
                 val isPlanting = config.isPlanting || isPlanted
                 if (!isPlanting && route.waypoints.size < 2) return@launch
                 val orderedWaypoints = if (config.isReverse) route.waypoints.reversed() else route.waypoints
-                val isLooping = isPlanting || config.isLooping
+                val isLooping = isPlanting || config.loopMode != LoopMode.OFF
 
                 if (route.routeType == RouteType.TELEPORT && !isPlanted && config.teleportBetweenWaypoints) {
                     activeReplayer = teleportRouteEngine
@@ -158,7 +159,7 @@ internal class ReplayOrchestrator(
                                 )
                             config.teleportBetweenWaypoints -> latLngs to null
                             config.followRoadsToStart ->
-                                expandWaypointsForFollowRoads(latLngs, closeLoop = config.isLooping && !config.loopWalksBack)
+                                expandWaypointsForFollowRoads(latLngs, closeLoop = config.loopMode == LoopMode.RESTART)
                             else -> latLngs to null
                         }
 
@@ -171,7 +172,7 @@ internal class ReplayOrchestrator(
                         waypoints = replayWaypoints,
                         speedMs = speedMs,
                         isLooping = isLooping,
-                        bounceAtEnds = !isPlanting && config.isLooping && config.loopWalksBack,
+                        bounceAtEnds = !isPlanting && config.loopMode == LoopMode.WALK_BACK,
                         followRoadsToStart = config.followRoadsToStart,
                         boundaryIndices = boundaryIndices,
                         persistMetadata = buildPersistMetadata(routeId, config.isReverse, replayWaypoints),
