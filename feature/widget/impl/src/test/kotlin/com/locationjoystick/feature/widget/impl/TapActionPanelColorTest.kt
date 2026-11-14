@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.TapToWalkMove
+import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -100,7 +101,7 @@ class TapActionPanelColorTest {
     }
 
     @Test
-    fun chosenMoveDismissesTheChooser() {
+    fun chosenMoveLeavesDismissalToTheController() {
         val moves = mutableListOf<TapToWalkMove>()
         var dismissed = 0
         val tap = GroundTap(LatLng(0.0, 0.0), 0.0, 0.0)
@@ -108,7 +109,12 @@ class TapActionPanelColorTest {
             MaterialTheme {
                 Box {
                     TapMoveChooser(
-                        chooser = PendingChoice(tap, TapDecision.Choose(LatLng(1.0, 1.0), listOf(TapToWalkMove.WALK))),
+                        chooser =
+                            TapToWalkState.Choosing(
+                                mockk(relaxed = true),
+                                tap,
+                                TapDecision.Choose(LatLng(1.0, 1.0), listOf(TapToWalkMove.WALK)),
+                            ),
                         cooldownForPosition = { flowOf(CooldownState.Ready) },
                         onMove = { _, move -> moves += move },
                         onDismiss = { dismissed++ },
@@ -118,6 +124,6 @@ class TapActionPanelColorTest {
         }
         composeRule.onNodeWithText("Walk here").performClick()
         assertEquals(listOf(TapToWalkMove.WALK), moves)
-        assertEquals(1, dismissed)
+        assertEquals(0, dismissed)
     }
 }

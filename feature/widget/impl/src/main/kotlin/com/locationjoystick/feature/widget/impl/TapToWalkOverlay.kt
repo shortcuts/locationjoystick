@@ -24,10 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +60,7 @@ import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.atan2
 import kotlin.math.hypot
 
@@ -74,6 +72,7 @@ internal class TapToWalkOverlay(
     /** A tap in full-display pixels with the position read at tap time; the caller resolves it against the ground map. */
     private val onGroundTap: (GroundTap) -> TapDecision,
     private val onMove: (GroundTap, TapToWalkMove) -> Unit,
+    private val chooser: StateFlow<TapToWalkState.Choosing?>,
     private val cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     private val getPosition: () -> LatLng?,
     private val onDismissed: () -> Unit,
@@ -92,10 +91,9 @@ internal class TapToWalkOverlay(
                 setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
                 setContent {
                     LjTheme(guidedPath = GuidedPath.DEFAULT) {
-                        var chooser by remember { mutableStateOf<PendingChoice?>(null) }
                         TapToWalkOverlayContent(
                             hint = hint,
-                            chooser = chooser,
+                            chooser = chooser.collectAsState().value,
                             cooldownForPosition = cooldownForPosition,
                             onTap = { x, y ->
                                 val pos = getPosition()
@@ -103,10 +101,7 @@ internal class TapToWalkOverlay(
                                     // The map is fitted on full-display frames; system bars may inset the overlay window.
                                     val origin = IntArray(2).also { overlayView?.getLocationOnScreen(it) }
                                     val tap = GroundTap(pos, (origin[0] + x).toDouble(), (origin[1] + y).toDouble())
-                                    when (val decision = onGroundTap(tap)) {
-                                        TapDecision.Done -> dismiss()
-                                        is TapDecision.Choose -> chooser = PendingChoice(tap, decision)
-                                    }
+                                    onGroundTap(tap)
                                 } else {
                                     if (pos != null) {
                                         Toast.makeText(context, R.string.tap_to_walk_overlay_unavailable_hint, Toast.LENGTH_LONG).show()
@@ -209,7 +204,7 @@ internal class TapToWalkOverlay(
 @Composable
 private fun TapToWalkOverlayContent(
     @StringRes hint: Int,
-    chooser: PendingChoice?,
+    chooser: TapToWalkState.Choosing?,
     cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     onTap: (x: Float, y: Float) -> Unit,
     onMove: (GroundTap, TapToWalkMove) -> Unit,
@@ -254,7 +249,7 @@ private fun TapToWalkOverlayContent(
 
 @Composable
 internal fun BoxScope.TapMoveChooser(
-    chooser: PendingChoice,
+    chooser: TapToWalkState.Choosing,
     cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     onMove: (GroundTap, TapToWalkMove) -> Unit,
     onDismiss: () -> Unit,
@@ -288,10 +283,7 @@ internal fun BoxScope.TapMoveChooser(
         Spacer(Modifier.height(LjSpacing.sm))
         TeleportCooldownBadge(target, cooldownForPosition.asAdvisory())
         Spacer(Modifier.height(LjSpacing.md))
-        MoveButtons(chooser.decision.moves) {
-            onMove(chooser.tap, it)
-            onDismiss()
-        }
+        MoveButtons(chooser.decision.moves) { onMove(chooser.tap, it) }
         Spacer(Modifier.height(LjSpacing.xs))
         LjTextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.map_floating_do_nothing))
@@ -320,12 +312,6 @@ private fun BoxScope.CancelButton(onDismiss: () -> Unit) {
         )
     }
 }
-
-/** A tap waiting for the user's choice of move; the overlay stays up meanwhile. */
-internal data class PendingChoice(
-    val tap: GroundTap,
-    val decision: TapDecision.Choose,
-)
 
 /** A Tap to Walk tap: the position at tap time and the full-display pixel, kept so the tap can be re-aimed under a newer map. */
 internal data class GroundTap(

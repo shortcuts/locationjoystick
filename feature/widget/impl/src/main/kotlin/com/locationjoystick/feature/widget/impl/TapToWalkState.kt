@@ -17,6 +17,14 @@ internal sealed interface TapToWalkState {
         val target: LatLng,
         val move: TapToWalkMove = TapToWalkMove.WALK,
     ) : TapToWalkState
+
+    /** [walking] keeps the walk the overlay was open over, so closing without a choice restores it. */
+    data class Choosing(
+        val overlay: TapToWalkOverlay,
+        val tap: GroundTap,
+        val decision: TapDecision.Choose,
+        val walking: Walking? = null,
+    ) : TapToWalkState
 }
 
 internal sealed interface TapToWalkEvent {
@@ -25,6 +33,11 @@ internal sealed interface TapToWalkEvent {
     ) : TapToWalkEvent
 
     data object OverlayClosed : TapToWalkEvent
+
+    data class ChoiceOffered(
+        val tap: GroundTap,
+        val decision: TapDecision.Choose,
+    ) : TapToWalkEvent
 
     data class Aimed(
         val tap: GroundTap,
@@ -41,6 +54,7 @@ internal val TapToWalkState.overlay: TapToWalkOverlay?
             TapToWalkState.Hidden -> null
             is TapToWalkState.Shown -> overlay
             is TapToWalkState.Walking -> overlay
+            is TapToWalkState.Choosing -> overlay
         }
 
 internal val TapToWalkState.isActive: Boolean get() = overlay != null
@@ -52,19 +66,28 @@ internal fun TapToWalkState.next(event: TapToWalkEvent): TapToWalkState? =
             when (this) {
                 TapToWalkState.Hidden -> TapToWalkState.Shown(event.overlay)
                 is TapToWalkState.Walking -> if (overlay == null) copy(overlay = event.overlay) else null
-                is TapToWalkState.Shown -> null
+                is TapToWalkState.Shown, is TapToWalkState.Choosing -> null
+            }
+        is TapToWalkEvent.ChoiceOffered ->
+            when (this) {
+                is TapToWalkState.Shown -> TapToWalkState.Choosing(overlay, event.tap, event.decision)
+                is TapToWalkState.Walking ->
+                    overlay?.let { TapToWalkState.Choosing(it, event.tap, event.decision, walking = this) }
+                else -> null
             }
         TapToWalkEvent.OverlayClosed ->
             when (this) {
                 TapToWalkState.Hidden -> null
                 is TapToWalkState.Shown -> TapToWalkState.Hidden
                 is TapToWalkState.Walking -> copy(overlay = null)
+                is TapToWalkState.Choosing -> walking?.copy(overlay = null) ?: TapToWalkState.Hidden
             }
         is TapToWalkEvent.Aimed ->
             when (this) {
                 TapToWalkState.Hidden -> TapToWalkState.Walking(null, event.tap, event.target, event.move)
                 is TapToWalkState.Shown -> TapToWalkState.Walking(overlay, event.tap, event.target, event.move)
                 is TapToWalkState.Walking -> copy(tap = event.tap, target = event.target, move = event.move)
+                is TapToWalkState.Choosing -> TapToWalkState.Walking(overlay, event.tap, event.target, event.move)
             }
         TapToWalkEvent.WalkEnded ->
             when (this) {

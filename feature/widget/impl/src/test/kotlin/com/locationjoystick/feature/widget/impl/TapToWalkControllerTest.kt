@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,6 +52,7 @@ class TapToWalkControllerTest {
     private val hideTeleportFlow = MutableStateFlow(false)
     private val sharedStateFlow = MutableStateFlow(MapSharedState())
     private val mapController = mockk<MapController>(relaxed = true) { every { sharedState } returns sharedStateFlow }
+    private val overlay = mockk<TapToWalkOverlay>(relaxed = true)
     private lateinit var controller: TapToWalkController
 
     @Before
@@ -223,5 +226,55 @@ class TapToWalkControllerTest {
         verify(exactly = 1) { mapController.teleportTo(any()) }
         verify(exactly = 0) { mapController.walkTo(any()) }
         verify(exactly = 0) { mapController.walkViaRoads(any()) }
+    }
+
+    private fun twoMoves() {
+        movesFlow.value = setOf(TapToWalkMove.WALK, TapToWalkMove.TELEPORT)
+    }
+
+    @Test
+    fun onGroundTap_twoMoves_leavesTheStateChoosing() {
+        controller.state.value = TapToWalkState.Shown(overlay)
+        twoMoves()
+
+        controller.onGroundTap(tapAbove(300.0))
+
+        assertTrue(controller.state.value is TapToWalkState.Choosing)
+    }
+
+    @Test
+    fun moveTo_fromChoosing_walksAndDismissesTheOverlay() {
+        controller.state.value = TapToWalkState.Shown(overlay)
+        twoMoves()
+        val tap = tapAbove(300.0)
+        controller.onGroundTap(tap)
+
+        controller.moveTo(tap, TapToWalkMove.WALK)
+
+        assertTrue(controller.state.value is TapToWalkState.Walking)
+        verify(exactly = 1) { overlay.dismiss() }
+    }
+
+    @Test
+    fun moveTo_teleportFromChoosing_dismissesWithoutWalking() {
+        controller.state.value = TapToWalkState.Shown(overlay)
+        twoMoves()
+        val tap = tapAbove(300.0)
+        controller.onGroundTap(tap)
+
+        controller.moveTo(tap, TapToWalkMove.TELEPORT)
+
+        assertFalse(controller.state.value is TapToWalkState.Walking)
+        verify(exactly = 1) { overlay.dismiss() }
+    }
+
+    @Test
+    fun onGroundTap_oneMove_dismissesTheOverlay() {
+        controller.state.value = TapToWalkState.Shown(overlay)
+        movesFlow.value = setOf(TapToWalkMove.WALK)
+
+        controller.onGroundTap(tapAbove(300.0))
+
+        verify(exactly = 1) { overlay.dismiss() }
     }
 }

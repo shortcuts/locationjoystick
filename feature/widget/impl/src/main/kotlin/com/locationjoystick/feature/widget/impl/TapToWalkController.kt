@@ -47,9 +47,12 @@ internal class TapToWalkController(
         private const val TAG = "TapToWalkController"
     }
 
-    private val state = MutableStateFlow<TapToWalkState>(TapToWalkState.Hidden)
+    internal val state = MutableStateFlow<TapToWalkState>(TapToWalkState.Hidden)
     val isActive: StateFlow<Boolean> =
         state.map { it.isActive }.stateIn(scope, SharingStarted.Eagerly, false)
+
+    private val chooser: StateFlow<TapToWalkState.Choosing?> =
+        state.map { it as? TapToWalkState.Choosing }.stateIn(scope, SharingStarted.Eagerly, null)
 
     val visible: StateFlow<Boolean> =
         combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
@@ -102,6 +105,7 @@ internal class TapToWalkController(
                 savedStateRegistryOwner = savedStateRegistryOwner,
                 onGroundTap = ::onGroundTap,
                 onMove = ::moveTo,
+                chooser = chooser,
                 cooldownForPosition = mapController::cooldownForPosition,
                 getPosition = { mapController.sharedState.value.currentPosition },
                 onDismissed = { transition(TapToWalkEvent.OverlayClosed) },
@@ -110,12 +114,21 @@ internal class TapToWalkController(
         view.show()
     }
 
-    /** One effective move runs at once; two or more return [TapDecision.Choose] and start nothing. */
+    /** One effective move runs at once; two or more offer a choice and start nothing. */
     internal fun onGroundTap(tap: GroundTap): TapDecision {
-        val target = resolveOrWarn(tap) ?: return TapDecision.Done
+        val target = resolveOrWarn(tap)
+        if (target == null) {
+            dismiss()
+            return TapDecision.Done
+        }
         val moves = effectiveMoves.value
-        if (moves.size > 1) return TapDecision.Choose(target, moves)
+        if (moves.size > 1) {
+            val choice = TapDecision.Choose(target, moves)
+            transition(TapToWalkEvent.ChoiceOffered(tap, choice))
+            return choice
+        }
         moveTo(tap, moves.single())
+        dismiss()
         return TapDecision.Done
     }
 
@@ -124,14 +137,29 @@ internal class TapToWalkController(
         tap: GroundTap,
         move: TapToWalkMove,
     ) {
-        val target = resolveOrWarn(tap) ?: return
+        val wasChoosing = state.value is TapToWalkState.Choosing
+        val target = resolveOrWarn(tap)
+        if (target != null) {
+            dispatch(move, target)
+            if (move != TapToWalkMove.TELEPORT) transition(TapToWalkEvent.Aimed(tap, target, move))
+        }
+        if (wasChoosing) dismiss()
+    }
+
+    private fun dispatch(
+        move: TapToWalkMove,
+        target: LatLng,
+    ) {
         when (move) {
             TapToWalkMove.WALK -> mapController.walkTo(target)
             TapToWalkMove.VIA_ROADS -> mapController.walkViaRoads(target)
             TapToWalkMove.TELEPORT -> mapController.teleportTo(target)
         }
-        if (move != TapToWalkMove.TELEPORT) transition(TapToWalkEvent.Aimed(tap, target, move))
     }
+
+    // A road walk's route end can be snapped off the tap by the router, so compare the tap target the walk mode keeps.
+    private fun liveWalkTarget(move: TapToWalkMove): LatLng? =
+        if (move == TapToWalkMove.VIA_ROADS) mapController.sharedState.value.walkTarget else locationRepository.walkTarget.value
 
     private fun resolveOrWarn(tap: GroundTap): LatLng? =
         resolveGroundTap(tap).also {
@@ -154,9 +182,7 @@ internal class TapToWalkController(
     private fun reaimOnNewMap() {
         val walking = state.value as? TapToWalkState.Walking ?: return
         val (tap, target) = walking.tap to walking.target
-        // A road walk's route end can be snapped off the tap by the router, so compare the tap target the walk mode keeps.
-        val walkTarget =
-            if (walking.move == TapToWalkMove.VIA_ROADS) mapController.sharedState.value.walkTarget else locationRepository.walkTarget.value
+        val walkTarget = liveWalkTarget(walking.move)
         if (walkTarget != target) {
             transition(TapToWalkEvent.WalkEnded)
             return
@@ -164,7 +190,7 @@ internal class TapToWalkController(
         val next = TapToWalkOverlay.reaimedTarget(tap, target, walkTarget, groundMapNow()) ?: return
         Log.d(TAG, "tap re-aimed under the new map")
         transition(TapToWalkEvent.Aimed(tap, next, walking.move))
-        if (walking.move == TapToWalkMove.VIA_ROADS) mapController.walkViaRoads(next) else mapController.walkTo(next)
+        dispatch(walking.move, next)
     }
 
     /**

@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.locationjoystick.core.data.CooldownState
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -29,6 +30,7 @@ class TapToWalkOverlayTest {
             savedStateRegistryOwner = mockk<SavedStateRegistryOwner>(relaxed = true),
             onGroundTap = { TapDecision.Done },
             onMove = { _, _ -> },
+            chooser = MutableStateFlow(null),
             cooldownForPosition = { flowOf(CooldownState.Ready) },
             getPosition = { null },
             onDismissed = {},
