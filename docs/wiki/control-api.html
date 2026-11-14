@@ -77,8 +77,16 @@
     <h2 id="state-and-status">State and status</h2>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-status"><span class="method method-get">GET</span><code class="endpoint-path">/status</code></h3>
-      <p>Returns the API version, the device's role (always <code>"leader"</code>), and the number of active followers.</p>
-      <p class="endpoint-returns">Returns <code>{"apiVersion":1,"role":"leader","followers":N}</code>.</p>
+      <p>Returns the API version, the device's role (always <code>"leader"</code>), the number of active followers, and one entry per follower in <code>followerStates</code>, sorted by <code>id</code>.</p>
+      <dl class="params">
+        <div class="param"><dt><code>id</code></dt><dd>The follower's IP address.</dd></div>
+        <div class="param"><dt><code>spoofing</code></dt><dd><code>true</code> while the follower is spoofing.</dd></div>
+        <div class="param"><dt><code>following</code></dt><dd><code>true</code> while the follower follows the leader. It turns <code>false</code> when the follower moves on its own.</dd></div>
+        <div class="param"><dt><code>distanceM</code></dt><dd>Whole metres from the follower to the leader. It is approximate by a few metres, because followers add jitter. <code>null</code> when the leader is paused or the follower sent no position.</dd></div>
+        <div class="param"><dt><code>lastPollAgeMs</code></dt><dd>Milliseconds since the follower last polled.</dd></div>
+      </dl>
+      <p>A follower on an older app version sends no state. It still counts and appears with <code>spoofing</code>, <code>following</code> and <code>distanceM</code> set to <code>null</code>.</p>
+      <p class="endpoint-returns">Returns <code>{"apiVersion":1,"role":"leader","followers":N,"followerStates":[{"id","spoofing","following","distanceM","lastPollAgeMs"}]}</code>.</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-state"><span class="method method-get">GET</span><code class="endpoint-path">/state</code></h3>

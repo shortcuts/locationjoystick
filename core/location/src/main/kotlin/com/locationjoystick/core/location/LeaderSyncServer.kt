@@ -2,6 +2,8 @@ package com.locationjoystick.core.location
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.haversineDistance
+import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +49,16 @@ private val REASONS =
         500 to "Internal Server Error",
     )
 
+/** Null fields mean an old follower sent no state, or sent a value the leader cannot read. */
+private data class FollowerEntry(
+    val lastPollMs: Long,
+    val spoofing: Boolean?,
+    val following: Boolean?,
+    val distanceM: Long?,
+)
+
+private fun Boolean?.toJson(): String = this?.toString() ?: "null"
+
 /** The API key lives only in [Running], so "API enabled without a running server" cannot exist. */
 sealed interface LeaderServerState {
     data object Stopped : LeaderServerState
@@ -66,7 +78,7 @@ class LeaderSyncServer
         private val latestUpdate = AtomicReference<SyncPositionUpdate?>(null)
         private val seq = AtomicLong(0L)
 
-        private val activeFollowers = ConcurrentHashMap<String, Long>()
+        private val activeFollowers = ConcurrentHashMap<String, FollowerEntry>()
         private val _followerCount = MutableStateFlow(0)
         val followerCount: StateFlow<Int> = _followerCount.asStateFlow()
 
@@ -85,7 +97,18 @@ class LeaderSyncServer
 
         init {
             registerApiRoute("GET", "/api/v1/status") {
-                ApiResponse(200, "{\"apiVersion\":1,\"role\":\"leader\",\"followers\":${_followerCount.value}}")
+                val now = System.currentTimeMillis()
+                val states =
+                    activeFollowers.entries
+                        .sortedBy { it.key }
+                        .joinToString(",") { (id, e) ->
+                            "{\"id\":\"$id\",\"spoofing\":${e.spoofing.toJson()},\"following\":${e.following.toJson()}," +
+                                "\"distanceM\":${e.distanceM ?: "null"},\"lastPollAgeMs\":${now - e.lastPollMs}}"
+                        }
+                ApiResponse(
+                    200,
+                    "{\"apiVersion\":1,\"role\":\"leader\",\"followers\":${_followerCount.value},\"followerStates\":[$states]}",
+                )
             }
         }
 
@@ -137,7 +160,7 @@ class LeaderSyncServer
 
         private fun pruneStaleFollowers() {
             val threshold = System.currentTimeMillis() - AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
-            activeFollowers.entries.removeIf { it.value < threshold }
+            activeFollowers.entries.removeIf { it.value.lastPollMs < threshold }
             _followerCount.value = activeFollowers.size
         }
 
@@ -195,6 +218,27 @@ class LeaderSyncServer
             }
         }
 
+        private fun followerEntry(
+            path: String,
+            leader: SyncPositionUpdate?,
+        ): FollowerEntry {
+            fun flag(name: String) =
+                when (extractQueryParam(path, name)) {
+                    "1" -> true
+                    "0" -> false
+                    else -> null
+                }
+            val lat = extractQueryParam(path, "lat")?.toDoubleOrNull()
+            val lon = extractQueryParam(path, "lon")?.toDoubleOrNull()
+            val distance =
+                if (lat != null && lon != null && leader != null && leader.active) {
+                    Math.round(haversineDistance(LatLng(lat, lon), LatLng(leader.latitude, leader.longitude)))
+                } else {
+                    null
+                }
+            return FollowerEntry(System.currentTimeMillis(), flag("spoofing"), flag("following"), distance)
+        }
+
         override fun handleRequest(
             path: String,
             socket: Socket,
@@ -209,10 +253,10 @@ class LeaderSyncServer
                 }
 
                 path.startsWith("/position") -> {
-                    val ip = socket.inetAddress.hostAddress ?: "unknown"
-                    activeFollowers[ip] = System.currentTimeMillis()
-                    _followerCount.value = activeFollowers.size
+                    val ip = (socket.inetAddress.hostAddress ?: "unknown").substringBefore('%')
                     val update = latestUpdate.get()
+                    activeFollowers[ip] = followerEntry(path, update)
+                    _followerCount.value = activeFollowers.size
                     if (update == null) {
                         writer.print("HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
                     } else {

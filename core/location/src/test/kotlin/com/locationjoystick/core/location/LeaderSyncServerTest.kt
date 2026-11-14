@@ -151,6 +151,71 @@ class LeaderSyncServerTest {
         }
     }
 
+    private fun pushLeader(active: Boolean = true) =
+        server.push(
+            SyncPositionUpdate(
+                timestamp = System.currentTimeMillis(),
+                latitude = 0.0,
+                longitude = 0.0,
+                speedMs = 0f,
+                bearing = 0f,
+                seq = 0,
+                active = active,
+            ),
+        )
+
+    private fun pollWith(
+        port: Int,
+        query: String,
+    ) = (URL("http://localhost:$port/position?token=gid$query").openConnection() as HttpURLConnection).also {
+        it.responseCode
+        it.disconnect()
+    }
+
+    private fun followerStates(port: Int): org.json.JSONArray =
+        org.json.JSONObject(call(port, "/api/v1/status").second).getJSONArray("followerStates")
+
+    @Test
+    fun `status lists follower state and distance to leader`() {
+        val port = server.start("gid")
+        server.enableApi("k")
+        pushLeader()
+        pollWith(port, "&spoofing=1&following=0&lat=0.0&lon=0.001")
+        val states = followerStates(port)
+        assertEquals(1, states.length())
+        val f = states.getJSONObject(0)
+        assertTrue(f.getBoolean("spoofing"))
+        assertEquals(false, f.getBoolean("following"))
+        assertEquals(111L, f.getLong("distanceM"))
+        assertTrue(f.getLong("lastPollAgeMs") >= 0)
+        assertTrue(f.getString("id").isNotEmpty())
+    }
+
+    @Test
+    fun `follower that sends no state is listed with null fields`() {
+        val port = server.start("gid")
+        server.enableApi("k")
+        pushLeader()
+        pollWith(port, "")
+        val f = followerStates(port).getJSONObject(0)
+        assertTrue(f.isNull("spoofing"))
+        assertTrue(f.isNull("following"))
+        assertTrue(f.isNull("distanceM"))
+        assertEquals(1, org.json.JSONObject(call(port, "/api/v1/status").second).getInt("followers"))
+    }
+
+    @Test
+    fun `malformed flag is null and inactive leader gives null distance`() {
+        val port = server.start("gid")
+        server.enableApi("k")
+        pushLeader(active = false)
+        pollWith(port, "&spoofing=x&following=1&lat=0.0&lon=0.001")
+        val f = followerStates(port).getJSONObject(0)
+        assertTrue(f.isNull("spoofing"))
+        assertTrue(f.getBoolean("following"))
+        assertTrue(f.isNull("distanceM"))
+    }
+
     private fun call(
         port: Int,
         path: String,
@@ -240,7 +305,7 @@ class LeaderSyncServerTest {
         server.enableApi("k")
         val (code, body, _) = call(port, "/api/v1/status")
         assertEquals(200, code)
-        assertEquals("{\"apiVersion\":1,\"role\":\"leader\",\"followers\":0}", body)
+        assertEquals("{\"apiVersion\":1,\"role\":\"leader\",\"followers\":0,\"followerStates\":[]}", body)
     }
 
     @Test

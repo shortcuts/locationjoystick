@@ -85,6 +85,7 @@ Rules:
 - Teleport and route start from the API bypass the hide-teleport setting for teleport-between-waypoints only. Plain teleport and walk never read that setting.
 - A joystick request is a timed hold, not one step. HTTP cannot keep a finger down, so the server holds a stick position for the requested time, with the same release rules as the on-screen joystick.
 - A teleport inside the suggested cooldown still runs. The response carries a warning instead of refusing. The cooldown is advisory because an integrator may know better.
+- Each follower sends its own spoofing flag, follow flag and position as query parameters on its poll, so `/api/v1/status` can list followers. The leader turns the position into a distance to its own latest position and stores only that distance; the API never serves coordinates. This is a privacy change: a follower's position now reaches the leader, inside the user's own local group, over plain HTTP. Old peers work both ways: an old follower shows `null` fields, and an old leader ignores the parameters.
 - Transport is plain HTTP on the local network only. There is no TLS and no internet exposure.
 
 Errors use one shape everywhere, so an integrator parses one format.

@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,13 @@ data class FollowerPositionUpdate(
     val teleportSeq: Long = 0L,
 )
 
+/** The follower's own state, sent on each poll so the leader's status can list it. */
+data class FollowerSelfState(
+    val spoofing: Boolean,
+    val following: Boolean,
+    val position: LatLng?,
+)
+
 @Singleton
 class FollowerSyncClient
     @Inject
@@ -61,6 +69,7 @@ class FollowerSyncClient
             groupId: String,
             pollIntervalMs: Long = AppConstants.SyncConstants.POLL_INTERVAL_MS,
             onGroupLost: () -> Unit = {},
+            selfState: () -> FollowerSelfState? = { null },
             onPosition: (FollowerPositionUpdate) -> Unit,
         ) {
             stopPolling()
@@ -70,7 +79,7 @@ class FollowerSyncClient
                 scope.launch {
                     while (isActive) {
                         try {
-                            when (val result = fetchPosition(host, port, groupId)) {
+                            when (val result = fetchPosition(host, port, groupId, selfState())) {
                                 FetchResult.GroupGone -> {
                                     Log.w(TAG, "Group $groupId no longer recognized by leader $host:$port")
                                     onGroupLost()
@@ -170,11 +179,17 @@ class FollowerSyncClient
             host: String,
             port: Int,
             groupId: String,
+            self: FollowerSelfState? = null,
         ): FetchResult {
+            val state =
+                self?.let {
+                    "&spoofing=${if (it.spoofing) 1 else 0}&following=${if (it.following) 1 else 0}" +
+                        (it.position?.let { p -> "&lat=${p.latitude}&lon=${p.longitude}" } ?: "")
+                } ?: ""
             val request =
                 Request
                     .Builder()
-                    .url("http://$host:$port/position?token=$groupId")
+                    .url("http://$host:$port/position?token=$groupId$state")
                     .get()
                     .build()
             client.newCall(request).execute().use { response ->

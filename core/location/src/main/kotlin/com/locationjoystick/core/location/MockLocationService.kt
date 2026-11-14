@@ -957,6 +957,13 @@ class MockLocationService : Service() {
                     Log.w(TAG, "Group $groupId lost — attempting NSD re-discovery before giving up")
                     groupMode.rediscoverFollowerGroup(groupId)
                 },
+                selfState = {
+                    FollowerSelfState(
+                        spoofing = locationRepository.mockLocationState.value == MockLocationState.RUNNING,
+                        following = locationRepository.currentMode.value == MockMode.FOLLOWER,
+                        position = locationRepository.currentPosition.value,
+                    )
+                },
             ) { update ->
                 val (lat, lon, speedMs, bearing, active) = update
                 val leaderTeleported = followerCatchUp.observeTeleportSeq(update.teleportSeq)

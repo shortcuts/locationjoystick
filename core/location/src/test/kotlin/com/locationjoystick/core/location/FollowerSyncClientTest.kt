@@ -64,6 +64,39 @@ class FollowerSyncClientTest {
     }
 
     @Test
+    fun `poll reports follower state to the leader status`() {
+        server.push(freshUpdate())
+        server.enableApi("k")
+        client.startPolling(
+            "127.0.0.1",
+            serverPort,
+            "test-group",
+            selfState = {
+                FollowerSelfState(
+                    spoofing = true,
+                    following = true,
+                    position =
+                        com.locationjoystick.core.model
+                            .LatLng(1.0, 2.001),
+                )
+            },
+        ) {}
+
+        val deadline = System.currentTimeMillis() + 3000
+        var f: org.json.JSONObject? = null
+        while (f == null && System.currentTimeMillis() < deadline) {
+            val conn = java.net.URL("http://127.0.0.1:$serverPort/api/v1/status").openConnection() as java.net.HttpURLConnection
+            conn.setRequestProperty("Authorization", "Bearer k")
+            val arr = org.json.JSONObject(conn.inputStream.bufferedReader().readText()).getJSONArray("followerStates")
+            conn.disconnect()
+            if (arr.length() > 0) f = arr.getJSONObject(0) else Thread.sleep(50)
+        }
+        assertNotNull(f)
+        assertTrue(f!!.getBoolean("spoofing"))
+        assertEquals(111L, f.getLong("distanceM"))
+    }
+
+    @Test
     fun `poll delivers speedMs and bearing to callback unchanged`() {
         server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(speedMs = 2.5f, bearing = 90f))
         val results = LinkedBlockingQueue<Pair<Float, Float>>()
