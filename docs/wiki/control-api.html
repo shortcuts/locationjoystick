@@ -108,6 +108,14 @@
       <p>Current position only.</p>
       <p class="endpoint-returns">Returns <code>{"lat":double,"lon":double}</code>. Returns <code>409 no_position</code> if the device has no position.</p>
     </div>
+    <div class="endpoint">
+      <h3 class="endpoint-head" id="ep-get-search"><span class="method method-get">GET</span><code class="endpoint-path">/search</code></h3>
+      <p>Search for a place by name. It returns the same results as the map search bar, in the same order. It moves nothing.</p>
+      <dl class="params">
+        <div class="param"><dt><code>q</code></dt><dd><span class="param-type">string</span> <span class="param-flag">required</span> Query parameter, URL-encoded, such as <code>/search?q=paris%20les%20tuileries</code>.</dd></div>
+      </dl>
+      <p class="endpoint-returns">Returns <code>{"results":[{"name":string,"lat":double,"lon":double}]}</code>. The list is empty when nothing matches. Returns <code>400 bad_request</code> when <code>q</code> is missing or blank. Returns <code>502 geocoding_failed</code> when the search service fails.</p>
+    </div>
     <h2 id="movement-commands">Movement commands</h2>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-teleport"><span class="method method-post">POST</span><code class="endpoint-path">/teleport</code></h3>

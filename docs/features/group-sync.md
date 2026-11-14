@@ -83,6 +83,7 @@ Rules:
 - A separate persistent API key is used, not the group code. It survives leaving a group and is never exported.
 - Every command calls the same controller method as the UI. A follower then sees the same signals whether a human or the API drove the leader, so followers need no API-specific handling.
 - Teleport and route start from the API bypass the hide-teleport setting for teleport-between-waypoints only. Plain teleport and walk never read that setting.
+- `GET /search` calls the same geocoding provider chain as the map search bar. An integrator gets the app's results and the app's rate limits and cooldown.
 - A joystick request is a timed hold, not one step. HTTP cannot keep a finger down, so the server holds a stick position for the requested time, with the same release rules as the on-screen joystick.
 - A teleport inside the suggested cooldown still runs. The response carries a warning instead of refusing. The cooldown is advisory because an integrator may know better.
 - Each follower sends its own spoofing flag, follow flag and position as query parameters on its poll, so `/api/v1/status` can list followers. The leader turns the position into a distance to its own latest position and stores only that distance; the API never serves coordinates. This is a privacy change: a follower's position now reaches the leader, inside the user's own local group, over plain HTTP. Old peers work both ways: an old follower shows `null` fields, and an old leader ignores the parameters.

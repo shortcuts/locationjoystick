@@ -1,6 +1,9 @@
 package com.locationjoystick.core.location
 
 import android.content.Context
+import com.locationjoystick.core.common.geocoding.GeocodeResult
+import com.locationjoystick.core.common.geocoding.Geocoding
+import com.locationjoystick.core.common.geocoding.GeocodingProvider
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -17,6 +20,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -249,6 +254,45 @@ class ControlApiRoutesTest {
         assertEquals(MockLocationState.RUNNING.name, state.getString("spoofState"))
         assertEquals("walk", state.getString("speedProfileId"))
         assertEquals(8.0, state.getJSONObject("position").getDouble("lon"), 0.0)
+    }
+
+    @Test
+    fun `search returns the provider results in order and decodes q`() {
+        val provider: GeocodingProvider = mockk()
+        coEvery { provider.search("paris les tuileries") } returns
+            listOf(GeocodeResult(48.86, 2.33, "Jardin des Tuileries"), GeocodeResult(1.0, 2.0, "Second"))
+        mockkObject(Geocoding)
+        try {
+            every { Geocoding.provider } returns provider
+            val (code, text) = call("search?q=paris%20les%20tuileries", method = "GET")
+            assertEquals(200, code)
+            val results = JSONObject(text).getJSONArray("results")
+            assertEquals(2, results.length())
+            assertEquals("Jardin des Tuileries", results.getJSONObject(0).getString("name"))
+            assertEquals(48.86, results.getJSONObject(0).getDouble("lat"), 0.0)
+            assertEquals(2.0, results.getJSONObject(1).getDouble("lon"), 0.0)
+        } finally {
+            unmockkObject(Geocoding)
+        }
+    }
+
+    @Test
+    fun `search without q is 400`() {
+        assertEquals(400, call("search", method = "GET").first)
+        assertEquals(400, call("search?q=", method = "GET").first)
+    }
+
+    @Test
+    fun `search is 502 when the provider throws`() {
+        val provider: GeocodingProvider = mockk()
+        coEvery { provider.search(any()) } throws java.io.IOException("down")
+        mockkObject(Geocoding)
+        try {
+            every { Geocoding.provider } returns provider
+            assertEquals(502, call("search?q=x", method = "GET").first)
+        } finally {
+            unmockkObject(Geocoding)
+        }
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.di.ApplicationScope
+import com.locationjoystick.core.common.geocoding.Geocoding
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.common.util.normalizePlantingRadii
@@ -27,8 +28,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.net.URLDecoder
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,6 +62,7 @@ class ControlApiRoutes
                 val p = locationRepository.currentPosition.value ?: return@get NO_POSITION
                 ApiResponse(200, latLngJson(p).toString())
             }
+            get("search") { request -> search(request.query) }
             post("teleport") { json ->
                 val target = parseLatLng(json) ?: return@post BAD_COORDS
                 // Read before teleporting: teleportTo overwrites the last-teleport time.
@@ -105,6 +109,22 @@ class ControlApiRoutes
             command("spoofing/start") { mapController.startSpoofing() }
             command("spoofing/stop") { mapController.stopSpoofing() }
             post("joystick") { json -> joystick(json) }
+        }
+
+        private fun search(rawQuery: String): ApiResponse {
+            val q =
+                rawQuery
+                    .split("&")
+                    .firstOrNull { it.startsWith("q=") }
+                    ?.substringAfter("=")
+                    ?.let { runCatching { URLDecoder.decode(it, "UTF-8") }.getOrNull() }
+            if (q.isNullOrBlank()) return apiError(400, "bad_request", "Missing q")
+            val hits =
+                runCatching { runBlocking { Geocoding.provider.search(q) } }
+                    .getOrElse { return apiError(502, "geocoding_failed", "Geocoding failed") }
+            val results = JSONArray()
+            hits.forEach { results.put(JSONObject().put("name", it.displayName).put("lat", it.lat).put("lon", it.lon)) }
+            return ApiResponse(200, JSONObject().put("results", results).toString())
         }
 
         private fun get(

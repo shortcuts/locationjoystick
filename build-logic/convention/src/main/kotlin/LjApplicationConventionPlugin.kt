@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
@@ -14,6 +15,20 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                 apply("org.jetbrains.kotlinx.kover")
             }
 
+            // Debug builds carry the commit so tooling can tell a stale install. Lazy: git must not run at configuration time.
+            val gitSuffix =
+                providers
+                    .exec {
+                        commandLine("git", "rev-parse", "--short=8", "HEAD")
+                        isIgnoreExitValue = true
+                    }.standardOutput.asText
+                    .zip(
+                        providers
+                            .exec {
+                                commandLine("git", "status", "--porcelain", "--untracked-files=no")
+                                isIgnoreExitValue = true
+                            }.standardOutput.asText,
+                    ) { head, status -> head.trim().ifEmpty { "nogit" } + if (status.isBlank()) "" else "-dirty" }
             extensions.configure<ApplicationExtension> {
                 compileSdk = 37
 
@@ -94,6 +109,16 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                     error += "HardcodedComposeString"
                     // The project logs with android.util.Log, not Timber (docs/code-style.md).
                     disable += "LogNotTimber"
+                }
+            }
+
+            extensions.configure<ApplicationAndroidComponentsExtension> {
+                onVariants(selector().withBuildType("debug")) { variant ->
+                    variant.outputs.forEach { output ->
+                        // Read the plain value first: zipping the property with itself is a circular reference.
+                        val base = output.versionName.get()
+                        output.versionName.set(gitSuffix.map { suffix -> "$base-$suffix" })
+                    }
                 }
             }
 
