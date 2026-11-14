@@ -484,7 +484,6 @@ class MapController
                         return@launch
                     }
                     val routeResult = osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
-                    locationRepository.endRoadRouteFetch(coroutineContext.job)
                     ensureActive()
                     val waypoints = routeResult.getOrNull()
                     if (waypoints.isNullOrEmpty()) {

@@ -52,24 +52,24 @@ class WalkCoordinator
 
         @Volatile private var waypointIndex = 0
 
-        // A pause can arrive while a road route is still being fetched, before any walk exists.
-        private var pauseOnStart = false
-
-        /** Pauses the walk, or holds the next walk paused when none has started yet. */
+        /** Pauses the walk, or holds the pause in the pending road fetch when the walk has not started. */
         fun pause() {
             synchronized(lock) {
                 if (locationRepository.currentMovement().isActive(MockMode.WALK_TO)) {
                     locationRepository.pauseMovement()
-                } else {
-                    pauseOnStart = true
+                } else if (!locationRepository.pauseWalkFetch()) {
+                    Log.w(TAG, "ignored pause: no walk or walk fetch")
                 }
             }
         }
 
         fun resume() {
             synchronized(lock) {
-                if (locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) locationRepository.resumeMovement()
-                pauseOnStart = false
+                if (locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) {
+                    locationRepository.resumeMovement()
+                } else {
+                    locationRepository.resumeWalkFetch()
+                }
             }
         }
 
@@ -122,8 +122,7 @@ class WalkCoordinator
                 val finalTarget = waypoints.last()
                 locationRepository.setWalkTarget(finalTarget)
                 locationRepository.setMockMode(MockMode.WALK_TO)
-                if (pauseOnStart) locationRepository.pauseMovement()
-                pauseOnStart = false
+                if (locationRepository.roadRouteFetch.value.walkFetchPaused) locationRepository.pauseMovement()
 
                 var lastBearing = 0f
                 with(walkToEngine) {
@@ -168,7 +167,6 @@ class WalkCoordinator
         fun cancel() {
             synchronized(lock) {
                 generation++
-                pauseOnStart = false
                 activeWalkJob?.cancel()
                 activeWalkJob = null
                 locationRepository.setWalkTarget(null)

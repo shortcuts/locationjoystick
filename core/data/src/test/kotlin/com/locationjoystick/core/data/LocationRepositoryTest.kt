@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -388,7 +389,7 @@ class LocationRepositoryTest {
         listOf(MockMode.WALK_TO, MockMode.ROAMING).forEach {
             repository.setMockMode(it)
             repository.pauseMovement()
-            assertEquals(MovementState.Active(it, true), repository.currentMovement())
+            assertEquals(MovementState.Paused(ActiveMode.valueOf(it.name)), repository.currentMovement())
         }
     }
 
@@ -398,7 +399,7 @@ class LocationRepositoryTest {
             repository.setMockMode(it)
             repository.pauseMovement()
             repository.resumeMovement()
-            assertEquals(MovementState.Active(it, false), repository.currentMovement())
+            assertEquals(MovementState.Running(ActiveMode.valueOf(it.name)), repository.currentMovement())
         }
     }
 
@@ -415,14 +416,14 @@ class LocationRepositoryTest {
     fun `pauseMovement is rejected for route replay`() {
         repository.setMockMode(MockMode.ROUTE_REPLAY)
         repository.pauseMovement()
-        assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, false), repository.currentMovement())
+        assertEquals(MovementState.Running(ActiveMode.ROUTE_REPLAY), repository.currentMovement())
     }
 
     @Test
     fun `resumeMovement is rejected when not paused`() {
         repository.setMockMode(MockMode.WALK_TO)
         repository.resumeMovement()
-        assertEquals(MovementState.Active(MockMode.WALK_TO, false), repository.currentMovement())
+        assertEquals(MovementState.Running(ActiveMode.WALK_TO), repository.currentMovement())
     }
 
     @Test
@@ -430,7 +431,7 @@ class LocationRepositoryTest {
         repository.setMockMode(MockMode.ROAMING)
         repository.pauseMovement()
         repository.setMockMode(MockMode.ROAMING)
-        assertEquals(MovementState.Active(MockMode.ROAMING, false), repository.currentMovement())
+        assertEquals(MovementState.Running(ActiveMode.ROAMING), repository.currentMovement())
     }
 
     @Test
@@ -439,10 +440,10 @@ class LocationRepositoryTest {
             repository.startSpoofing()
             repository.pauseSpoofing()
             repository.setMockMode(MockMode.ROUTE_REPLAY)
-            assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, true), repository.movement.first())
+            assertEquals(MovementState.Paused(ActiveMode.ROUTE_REPLAY), repository.movement.first())
 
             repository.startSpoofing()
-            assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, false), repository.movement.first())
+            assertEquals(MovementState.Running(ActiveMode.ROUTE_REPLAY), repository.movement.first())
         }
 
     // setMockMode
@@ -699,5 +700,40 @@ class LocationRepositoryTest {
         repository.beginRoadRouteFetch()
         repository.endRoadRouteFetch(Job())
         assertEquals(RoadRouteFetch.ReplayFetch, repository.roadRouteFetch.value)
+    }
+
+    @Test
+    fun `pauseWalkFetch and resumeWalkFetch toggle the held pause`() {
+        val job = Job()
+        repository.beginRoadRouteFetch(job)
+        assertFalse(repository.isWalkPaused())
+
+        assertTrue(repository.pauseWalkFetch())
+        assertEquals(RoadRouteFetch.WalkFetch(job, pausedOnStart = true), repository.roadRouteFetch.value)
+        assertTrue(repository.isWalkPaused())
+
+        assertTrue(repository.resumeWalkFetch())
+        assertEquals(RoadRouteFetch.WalkFetch(job), repository.roadRouteFetch.value)
+        assertFalse(repository.isWalkPaused())
+    }
+
+    @Test
+    fun `walk fetch pause is rejected from idle and replay fetch`() {
+        assertFalse(repository.pauseWalkFetch())
+        assertEquals(RoadRouteFetch.Idle, repository.roadRouteFetch.value)
+        repository.beginRoadRouteFetch()
+        assertFalse(repository.pauseWalkFetch())
+        assertFalse(repository.resumeWalkFetch())
+        assertEquals(RoadRouteFetch.ReplayFetch, repository.roadRouteFetch.value)
+    }
+
+    @Test
+    fun `pausing twice is rejected and ending the fetch clears isWalkPaused`() {
+        val job = Job()
+        repository.beginRoadRouteFetch(job)
+        repository.pauseWalkFetch()
+        assertFalse(repository.pauseWalkFetch())
+        repository.endRoadRouteFetch(job)
+        assertFalse(repository.isWalkPaused())
     }
 }

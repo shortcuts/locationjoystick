@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -10,6 +11,7 @@ import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.enterMode
 import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.pausedOrNull
 import com.locationjoystick.core.model.resumedOrNull
 import kotlinx.coroutines.Job
@@ -30,16 +32,19 @@ import javax.inject.Singleton
 
 private const val TAG = "LocationRepository"
 
-/** The OSRM road fetch for one movement action. A walk fetch carries its job so a stop can cancel it. */
+/** The OSRM road fetch for one movement action. A walk fetch carries its job so a stop can cancel it, and a pause requested before the walk exists. */
 sealed interface RoadRouteFetch {
     data object Idle : RoadRouteFetch
 
     data class WalkFetch(
         val job: Job,
+        val pausedOnStart: Boolean = false,
     ) : RoadRouteFetch
 
     data object ReplayFetch : RoadRouteFetch
 }
+
+val RoadRouteFetch.walkFetchPaused: Boolean get() = this is RoadRouteFetch.WalkFetch && pausedOnStart
 
 /** Live per-tick snapshot for the debug overlay. [tickIntervalMs] is wall-clock time since the previous tick. */
 data class DebugStats(
@@ -185,6 +190,31 @@ class LocationRepository
             }
         }
 
+        /** Holds a pause for the walk this fetch will start. Ignored when no walk fetch is pending. */
+        fun pauseWalkFetch(): Boolean = setWalkFetchPaused(from = false, to = true)
+
+        fun resumeWalkFetch(): Boolean = setWalkFetchPaused(from = true, to = false)
+
+        private fun setWalkFetchPaused(
+            from: Boolean,
+            to: Boolean,
+        ): Boolean {
+            var changed = false
+            _roadRouteFetch.update { current ->
+                if (current is RoadRouteFetch.WalkFetch && current.pausedOnStart == from) {
+                    changed = true
+                    current.copy(pausedOnStart = to)
+                } else {
+                    Log.w(TAG, "ignored walk fetch pause=$to from $current")
+                    current
+                }
+            }
+            return changed
+        }
+
+        /** Whether the walk is paused, either running or still being fetched. */
+        fun isWalkPaused(): Boolean = currentMovement().isPaused(MockMode.WALK_TO) || _roadRouteFetch.value.walkFetchPaused
+
         private val _movement = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.TELEPORT))
 
         val currentMode: StateFlow<MockMode> = _movement.mapState { it.mode }
@@ -196,7 +226,11 @@ class LocationRepository
         fun currentMovement(): MovementState = _movement.value.withReplayPause(mockLocationState.value)
 
         private fun MovementState.withReplayPause(state: MockLocationState): MovementState =
-            if (isActive(MockMode.ROUTE_REPLAY)) MovementState.Active(MockMode.ROUTE_REPLAY, state == MockLocationState.PAUSED) else this
+            when {
+                !isActive(MockMode.ROUTE_REPLAY) -> this
+                state == MockLocationState.PAUSED -> MovementState.Paused(ActiveMode.ROUTE_REPLAY)
+                else -> MovementState.Running(ActiveMode.ROUTE_REPLAY)
+            }
 
         private inline fun transition(next: (MovementState) -> MovementState?) {
             _movement.update { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }

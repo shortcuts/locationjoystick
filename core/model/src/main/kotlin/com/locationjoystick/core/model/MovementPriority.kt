@@ -27,7 +27,8 @@ fun canStartRoaming(
 fun shouldIgnoreJoystickInput(movement: MovementState): Boolean =
     when (movement) {
         is MovementState.Manual -> movement.mode == MockMode.FOLLOWER
-        is MovementState.Active -> !movement.paused
+        is MovementState.Running -> true
+        is MovementState.Paused -> false
     }
 
 // Modes where another engine owns position updates for its own tick — a joystick drag must not

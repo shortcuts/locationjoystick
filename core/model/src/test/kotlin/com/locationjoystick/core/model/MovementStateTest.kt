@@ -9,9 +9,9 @@ import org.junit.Test
 class MovementStateTest {
     @Test
     fun `enterMode builds Active for engine modes and Manual otherwise`() {
-        assertEquals(MovementState.Active(MockMode.WALK_TO, false), enterMode(MockMode.WALK_TO))
-        assertEquals(MovementState.Active(MockMode.ROAMING, false), enterMode(MockMode.ROAMING))
-        assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, false), enterMode(MockMode.ROUTE_REPLAY))
+        assertEquals(MovementState.Running(ActiveMode.WALK_TO), enterMode(MockMode.WALK_TO))
+        assertEquals(MovementState.Running(ActiveMode.ROAMING), enterMode(MockMode.ROAMING))
+        assertEquals(MovementState.Running(ActiveMode.ROUTE_REPLAY), enterMode(MockMode.ROUTE_REPLAY))
         assertEquals(MovementState.Manual(MockMode.TELEPORT), enterMode(MockMode.TELEPORT))
         assertEquals(MovementState.Manual(MockMode.JOYSTICK), enterMode(MockMode.JOYSTICK))
         assertEquals(MovementState.Manual(MockMode.FOLLOWER), enterMode(MockMode.FOLLOWER))
@@ -21,8 +21,8 @@ class MovementStateTest {
     fun `pause and resume round-trip for walk and roam`() {
         listOf(MockMode.WALK_TO, MockMode.ROAMING).forEach {
             val paused = enterMode(it).pausedOrNull()
-            assertEquals(MovementState.Active(it, true), paused)
-            assertEquals(MovementState.Active(it, false), paused!!.resumedOrNull())
+            assertEquals(MovementState.Paused(ActiveMode.valueOf(it.name)), paused)
+            assertEquals(MovementState.Running(ActiveMode.valueOf(it.name)), paused!!.resumedOrNull())
         }
     }
 
@@ -31,19 +31,19 @@ class MovementStateTest {
         assertNull(enterMode(MockMode.TELEPORT).pausedOrNull())
         assertNull(enterMode(MockMode.JOYSTICK).pausedOrNull())
         assertNull(enterMode(MockMode.ROUTE_REPLAY).pausedOrNull())
-        assertNull(MovementState.Active(MockMode.ROAMING, true).pausedOrNull())
+        assertNull(MovementState.Paused(ActiveMode.ROAMING).pausedOrNull())
     }
 
     @Test
     fun `resume is rejected when not paused`() {
         assertNull(enterMode(MockMode.WALK_TO).resumedOrNull())
         assertNull(enterMode(MockMode.TELEPORT).resumedOrNull())
-        assertNull(MovementState.Active(MockMode.ROUTE_REPLAY, true).resumedOrNull())
+        assertNull(MovementState.Paused(ActiveMode.ROUTE_REPLAY).resumedOrNull())
     }
 
     @Test
     fun `derived properties follow the state`() {
-        val paused = MovementState.Active(MockMode.ROAMING, true)
+        val paused = MovementState.Paused(ActiveMode.ROAMING)
         assertTrue(paused.isActive)
         assertTrue(paused.isPaused)
         assertTrue(paused.isActive(MockMode.ROAMING))

@@ -148,7 +148,7 @@ class ControlApiRoutes
                         "walk",
                         JSONObject()
                             .put("target", walkTarget?.let(::latLngJson) ?: JSONObject.NULL)
-                            .put("paused", locationRepository.currentMovement().isPaused(MockMode.WALK_TO)),
+                            .put("paused", locationRepository.isWalkPaused()),
                     ).put(
                         "roaming",
                         JSONObject()

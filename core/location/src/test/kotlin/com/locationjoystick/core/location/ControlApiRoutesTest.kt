@@ -20,6 +20,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.flowOf
@@ -248,6 +249,15 @@ class ControlApiRoutesTest {
         assertEquals(MockLocationState.RUNNING.name, state.getString("spoofState"))
         assertEquals("walk", state.getString("speedProfileId"))
         assertEquals(8.0, state.getJSONObject("position").getDouble("lon"), 0.0)
+    }
+
+    @Test
+    fun `state walk paused is true while a walk fetch holds a pause`() {
+        val job = Job()
+        locationRepository.beginRoadRouteFetch(job)
+        assertFalse(JSONObject(call("state", method = "GET").second).getJSONObject("walk").getBoolean("paused"))
+        locationRepository.pauseWalkFetch()
+        assertTrue(JSONObject(call("state", method = "GET").second).getJSONObject("walk").getBoolean("paused"))
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
@@ -307,27 +308,27 @@ class LocationLoopActionTest {
     @Test
     fun `updatePositionWithVector applies for joystick and walk-to`() {
         assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Manual(MockMode.JOYSTICK)))
-        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Active(MockMode.WALK_TO, paused = false)))
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Running(ActiveMode.WALK_TO)))
     }
 
     @Test
     fun `updatePositionWithVector is a no-op while route replay is running`() {
-        assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Active(MockMode.ROUTE_REPLAY, paused = false)))
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Running(ActiveMode.ROUTE_REPLAY)))
     }
 
     @Test
     fun `updatePositionWithVector applies while route replay is paused`() {
-        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Active(MockMode.ROUTE_REPLAY, paused = true)))
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Paused(ActiveMode.ROUTE_REPLAY)))
     }
 
     @Test
     fun `updatePositionWithVector applies while roaming is paused`() {
-        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Active(MockMode.ROAMING, paused = true)))
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MovementState.Paused(ActiveMode.ROAMING)))
     }
 
     @Test
     fun `updatePositionWithVector is a no-op for running roam follower and teleport`() {
-        assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Active(MockMode.ROAMING, paused = false)))
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Running(ActiveMode.ROAMING)))
         assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Manual(MockMode.FOLLOWER)))
         assertEquals(false, shouldApplyUpdatePositionWithVector(MovementState.Manual(MockMode.TELEPORT)))
     }

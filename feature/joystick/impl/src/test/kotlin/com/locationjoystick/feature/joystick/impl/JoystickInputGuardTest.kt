@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.joystick.impl
 
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.shouldIgnoreJoystickInput
@@ -11,12 +12,12 @@ import org.junit.Test
 class JoystickInputGuardTest {
     @Test
     fun `ignores joystick while route replay is running`() {
-        assertTrue(shouldIgnoreJoystickInput(MovementState.Active(MockMode.ROUTE_REPLAY, paused = false)))
+        assertTrue(shouldIgnoreJoystickInput(MovementState.Running(ActiveMode.ROUTE_REPLAY)))
     }
 
     @Test
     fun `allows joystick while route replay is paused`() {
-        assertFalse(shouldIgnoreJoystickInput(MovementState.Active(MockMode.ROUTE_REPLAY, paused = true)))
+        assertFalse(shouldIgnoreJoystickInput(MovementState.Paused(ActiveMode.ROUTE_REPLAY)))
     }
 
     @Test
@@ -27,17 +28,17 @@ class JoystickInputGuardTest {
 
     @Test
     fun `ignores joystick while roaming is running`() {
-        assertTrue(shouldIgnoreJoystickInput(MovementState.Active(MockMode.ROAMING, paused = false)))
+        assertTrue(shouldIgnoreJoystickInput(MovementState.Running(ActiveMode.ROAMING)))
     }
 
     @Test
     fun `allows joystick while roaming is paused`() {
-        assertFalse(shouldIgnoreJoystickInput(MovementState.Active(MockMode.ROAMING, paused = true)))
+        assertFalse(shouldIgnoreJoystickInput(MovementState.Paused(ActiveMode.ROAMING)))
     }
 
     @Test
     fun `ignores joystick during walk-to and follower`() {
-        assertTrue(shouldIgnoreJoystickInput(MovementState.Active(MockMode.WALK_TO, paused = false)))
+        assertTrue(shouldIgnoreJoystickInput(MovementState.Running(ActiveMode.WALK_TO)))
         assertTrue(shouldIgnoreJoystickInput(MovementState.Manual(MockMode.FOLLOWER)))
     }
 

@@ -20,14 +20,14 @@ class MovementPriorityTest {
     @Test
     fun `joystick is ignored while an active mode runs`() {
         listOf(MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO).forEach {
-            assertTrue(shouldIgnoreJoystickInput(MovementState.Active(it, paused = false)))
+            assertTrue(shouldIgnoreJoystickInput(MovementState.Running(ActiveMode.valueOf(it.name))))
         }
     }
 
     @Test
     fun `joystick works while an active mode is paused`() {
         listOf(MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO).forEach {
-            assertFalse(shouldIgnoreJoystickInput(MovementState.Active(it, paused = true)))
+            assertFalse(shouldIgnoreJoystickInput(MovementState.Paused(ActiveMode.valueOf(it.name))))
         }
     }
 

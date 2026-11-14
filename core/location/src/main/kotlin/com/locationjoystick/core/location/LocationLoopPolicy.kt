@@ -1,6 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
@@ -99,7 +100,8 @@ internal fun computeRunningLoopAction(
 internal fun shouldApplyUpdatePositionWithVector(movement: MovementState): Boolean =
     when (movement) {
         is MovementState.Manual -> movement.mode == MockMode.JOYSTICK
-        is MovementState.Active -> movement.mode == MockMode.WALK_TO || movement.paused
+        is MovementState.Running -> movement.active == ActiveMode.WALK_TO
+        is MovementState.Paused -> true
     }
 
 /**

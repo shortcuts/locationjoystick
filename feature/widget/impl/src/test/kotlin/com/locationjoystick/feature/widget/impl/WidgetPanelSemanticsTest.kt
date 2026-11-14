@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
@@ -34,7 +35,7 @@ class WidgetPanelSemanticsTest {
                 routeControls =
                     RouteControlsState(
                         expanded = false,
-                        movement = MovementState.Active(MockMode.WALK_TO, paused = routePaused),
+                        movement = if (routePaused) MovementState.Paused(ActiveMode.WALK_TO) else MovementState.Running(ActiveMode.WALK_TO),
                         hideTeleportFeatures = false,
                         showRouteJumpButtons = false,
                         onIconClick = {},

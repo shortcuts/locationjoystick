@@ -17,6 +17,7 @@ import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.location.EphemeralReplayController
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.StartRouteReplayUseCase
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LoopMode
@@ -423,7 +424,7 @@ class MapViewModelTest {
             assertEquals(target, viewModel.uiState.value.walkTarget)
 
             // Pause externally (widget)
-            movementFlow.value = MovementState.Active(MockMode.WALK_TO, paused = true)
+            movementFlow.value = MovementState.Paused(ActiveMode.WALK_TO)
             testDispatcher.scheduler.advanceTimeBy(100)
 
             // Walk must still be active — not terminated

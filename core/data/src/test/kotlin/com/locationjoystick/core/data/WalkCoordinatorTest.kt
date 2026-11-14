@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
@@ -9,6 +10,7 @@ import com.locationjoystick.core.model.SpeedProfile
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -395,38 +397,67 @@ class WalkCoordinatorTest {
         }
 
     @Test
-    fun `pause before start holds the walk paused after start`() =
+    fun `pause during a road fetch holds the walk paused after start`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            locationRepository.beginRoadRouteFetch(Job())
+
+            walkCoordinator.pause()
+            assertTrue(locationRepository.isWalkPaused())
+            walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
+
+            assertEquals(MovementState.Paused(ActiveMode.WALK_TO), locationRepository.currentMovement())
+        }
+
+    @Test
+    fun `pause with no walk and no fetch does not pause the next walk`() =
         runTest {
             locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
 
             walkCoordinator.pause()
             walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
 
-            assertEquals(MovementState.Active(MockMode.WALK_TO, true), locationRepository.currentMovement())
+            assertEquals(MovementState.Running(ActiveMode.WALK_TO), locationRepository.currentMovement())
         }
 
     @Test
-    fun `cancel clears pause-on-start`() =
+    fun `cancelling the fetch clears the held pause`() =
         runTest {
             locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            locationRepository.beginRoadRouteFetch(Job())
 
             walkCoordinator.pause()
-            walkCoordinator.cancel()
+            locationRepository.cancelWalkRoadRouteFetch()
             walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
 
-            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
+            assertEquals(MovementState.Running(ActiveMode.WALK_TO), locationRepository.currentMovement())
         }
 
     @Test
-    fun `resume clears pause-on-start`() =
+    fun `resume during a road fetch clears the held pause`() =
         runTest {
             locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            locationRepository.beginRoadRouteFetch(Job())
 
             walkCoordinator.pause()
             walkCoordinator.resume()
             walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
 
-            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
+            assertEquals(MovementState.Running(ActiveMode.WALK_TO), locationRepository.currentMovement())
+        }
+
+    @Test
+    fun `a stale start applies no held pause`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            locationRepository.beginRoadRouteFetch(Job())
+            val token = walkCoordinator.currentGeneration()
+
+            walkCoordinator.pause()
+            walkCoordinator.cancel()
+
+            assertFalse(walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope, expectedGeneration = token))
+            assertEquals(MovementState.Manual(MockMode.TELEPORT), locationRepository.currentMovement())
         }
 
     @Test
@@ -436,9 +467,9 @@ class WalkCoordinatorTest {
             walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
 
             walkCoordinator.pause()
-            assertEquals(MovementState.Active(MockMode.WALK_TO, true), locationRepository.currentMovement())
+            assertEquals(MovementState.Paused(ActiveMode.WALK_TO), locationRepository.currentMovement())
 
             walkCoordinator.resume()
-            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
+            assertEquals(MovementState.Running(ActiveMode.WALK_TO), locationRepository.currentMovement())
         }
 }
