@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.1.0](https://github.com/shortcuts/locationjoystick/compare/v1.0.2...v1.1.0) (2026-11-14)
+
+
+### Features
+
+* **control-api:** list each follower's state in leader status ([06ba1cb](https://github.com/shortcuts/locationjoystick/commit/06ba1cb7c8630cdd77aac6cf1449604deb7ee397))
+* **privacy:** add clone builder for the github flavor ([187d997](https://github.com/shortcuts/locationjoystick/commit/187d99782e56f6f4ee9a06102c6dec4bebb8403e))
+* **privacy:** add Privacy Mode settings flow, install and wiki page ([2c4c887](https://github.com/shortcuts/locationjoystick/commit/2c4c88789d5002bc0a9d155a99090cc251735e44))
+* **settings:** reset real GPS A-GPS data on spoofing start ([72f3a9a](https://github.com/shortcuts/locationjoystick/commit/72f3a9af7881103dcd569b6239d23ff3d17b50da))
+* **teleport:** show cooldown preview on route start and paste teleports ([9f7b8f8](https://github.com/shortcuts/locationjoystick/commit/9f7b8f827acbe633e8210b2be06d0e7a344541e0))
+* **widget:** choose how a Tap to Walk tap moves ([207200e](https://github.com/shortcuts/locationjoystick/commit/207200ee968c47bdbaf50946614fb81c1c84858f))
+* **widget:** one reconnect tap per check, two failed taps per outage ([ffd90e3](https://github.com/shortcuts/locationjoystick/commit/ffd90e34f783f2a5bf47a2bd44f67c1159f398a2))
+* **widget:** resize floating map by long press and drag, scroll its icon column ([55d057e](https://github.com/shortcuts/locationjoystick/commit/55d057e35e44f7d451dc3674450848a629dd3c14))
+
+
+### Bug Fixes
+
+* **location:** count tapped stops in add-next-point chains and show counter on teleport routes ([0768fc8](https://github.com/shortcuts/locationjoystick/commit/0768fc8dd996507fa259917dfbf1727489a4fbba))
+* **location:** skip repository start when START is rejected ([557df75](https://github.com/shortcuts/locationjoystick/commit/557df7554b772e4a0518d66b12501c70925bd500))
+* **map:** draw the rest of a straight walk to its target ([e514c78](https://github.com/shortcuts/locationjoystick/commit/e514c7881bdb8c8d3061d813e7d5b6cb1bd7fc13))
+* **routes:** loop restarts at first stop, walk back is opt-in ([c57f985](https://github.com/shortcuts/locationjoystick/commit/c57f985a05cef169c64806d90ab102471a9a9907))
+* **routes:** restart loop closing leg follows roads ([71029ce](https://github.com/shortcuts/locationjoystick/commit/71029cecc5cc53b75e71edbc0d87aefb8febb80f))
+* **smoke:** reset DataStore in-process in HiltTestRunner ([981f977](https://github.com/shortcuts/locationjoystick/commit/981f9770859ec2574ca1d4dc1708daf2d2cfd334))
+* **widget:** dismiss tap to walk chooser after a move ([c010793](https://github.com/shortcuts/locationjoystick/commit/c0107931e80340ed6ecf4d5633cba1164b01c9d1))
+
+
+### Performance Improvements
+
+* **model:** cheaper phase correlation, same output ([bad115a](https://github.com/shortcuts/locationjoystick/commit/bad115a8972e97666f9b55e3f925b23014f5aa66))
+
 ## [1.0.2](https://github.com/shortcuts/locationjoystick/compare/v1.0.1...v1.0.2) (2026-11-05)
 
 
