@@ -16,7 +16,7 @@ The group code is a short uppercase code that avoids easily confused characters.
 
 ## Joining
 
-- **By QR:** the leader's QR carries the host, port and code, so no discovery is needed. Join works even where discovery fails.
+- **By QR:** the leader's QR carries the host, port and code, so no discovery is needed. Join works even where discovery fails. The QR encodes a browsable `locationjoystick://group` link, and any app or page can open it. The link joins with no confirm step, by design: scripts such as .shortcuts/pogo join followers this way. The nearby-leader rule below covers discovery only.
 - **By code:** the follower looks up the leader by its advertised name on the network, then joins with the resolved address.
 - **Nearby leader hint:** while the idle screen is visible and started, the app looks for a leader on the network every ~30 s and shows a one-tap Join. It never joins on its own, because a shared Wi-Fi can hold a stranger's group. It polls only on screen (battery), lists every leader found in one probe window sorted by code (so the list does not reshuffle under the finger), and uses the same discovery as join by code, so hotspots that block multicast show nothing (see below). It skips the QR export advertisement, which shares the service type and carries a TXT role mark (see [qr-transfer.md](qr-transfer.md)). Probed services resolve one at a time, because Android 9 to 13 allow one active resolve. Adverts register per code, so a QR export never withdraws the leader's advert.
 
