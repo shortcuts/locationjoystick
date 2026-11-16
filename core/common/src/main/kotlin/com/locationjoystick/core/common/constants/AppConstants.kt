@@ -311,6 +311,7 @@ object AppConstants {
         const val ID_RECONNECT_FAILED = 1003
         const val ID_RECONNECT_NOT_FOUND = 1004
         const val ID_RECONNECT_GATE_CLOSED = 1005
+        const val ID_EXTERNAL_TELEPORT = 1006
         const val CHANNEL_ID_ACTIVE = "location_spoof_channel"
         const val CHANNEL_ID_PERMISSION_ERROR = "location_perm_error_channel"
         const val CHANNEL_ID_ACTIVE_MINIMIZED = "location_spoof_channel_minimized"
@@ -324,6 +325,11 @@ object AppConstants {
         const val MOCK_LOCATION_SERVICE_CLASS = "com.locationjoystick.core.location.MockLocationService"
         const val JOYSTICK_SERVICE_CLASS = "com.locationjoystick.feature.joystick.impl.JoystickOverlayService"
         const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
+        const val EXTERNAL_TELEPORT_SERVICE_CLASS = "com.locationjoystick.core.location.ExternalTeleportService"
+        const val ACTION_EXTERNAL_TELEPORT = "com.locationjoystick.app.TELEPORT"
+        const val ACTION_EXTERNAL_TELEPORT_COMPAT = "theappninjas.gpsjoystick.TELEPORT"
+        const val EXTRA_EXTERNAL_LAT = "lat"
+        const val EXTRA_EXTERNAL_LNG = "lng"
         const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
         const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
         const val ACTION_PARK_KEEP_WIDGET = "com.locationjoystick.core.location.ACTION_PARK_KEEP_WIDGET"

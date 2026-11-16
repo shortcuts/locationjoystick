@@ -145,6 +145,7 @@ Working memory for long-running features: a feature doc with a "Status" line (no
 | Hide Teleport Features | docs/features/hide-teleport.md |
 | What's New Popup | docs/features/whats-new.md |
 | Update Available Check | docs/features/update-check.md |
+| External Teleport (Pokemod command) | docs/features/external-teleport.md |
 | Localization | docs/features/localization.md |
 
 ---
@@ -182,6 +183,7 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `AltitudeAnchorCoordinator` | `:core:location` | Class (not service) | Owns altitude convergence state. Same pattern as `FollowerCatchUpCoordinator`. |
 | `PositionJitterCoordinator` | `:core:location` | Class (not service) | Owns the jitter offset. Its motion model is a constraint: it must not teleport between draws. See [features/mock-location.md](docs/features/mock-location.md). |
 | `OverlayNotificationReactor` | `:core:location` | Class (not service) | Keeps the notification icon and widget overlay in sync with live settings mid-session. |
+| `ExternalTeleportService` | `:core:location` | Service (exported, disabled by default) | Takes the outside teleport command and routes it through `TeleportUseCase`. The component state is the only gate. See [features/external-teleport.md](docs/features/external-teleport.md). |
 | `ContentApiRoutes` | `:core:location` | Class (`@Singleton`) | Content CRUD routes on the local sync server, installed beside `ControlApiRoutes`. |
 | `EphemeralReplayController` | `:core:location` | Class (`@Singleton`) | Owns the walk-to-ephemeral-replay transition. Shared by the map and the widget so the state machine lives once. |
 | `BackupRepository` | `:core:data` | Repository (`@Singleton`) | Applies an import in one transaction. Throws so the caller can report failure. |

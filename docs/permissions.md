@@ -31,3 +31,4 @@
 - `BIND_ACCESSIBILITY_SERVICE`: the in-app disclosure gates it, not just the system grant. One disclosure covers the screenshots and the tap. The Reconnect switch is a separate opt-in. See docs/features/tap-to-walk.md and docs/features/bluetooth-reconnect-tap.md.
 - `POST_NOTIFICATIONS`: asked once on a fresh launch, not on recreation such as rotation. Denied, the foreground notification may not show, and reconnect notices do not show either.
 - `REQUEST_INSTALL_PACKAGES` and `REQUEST_DELETE_PACKAGES` live in `app/src/github/AndroidManifest.xml`. Play must never declare them; `scripts/check_play_strip.py` fails the bundle when it does. See docs/features/privacy-mode.md.
+- `ExternalTeleportService` is exported but ships `enabled=false`, with no caller check. The component state is the gate. See docs/features/external-teleport.md.

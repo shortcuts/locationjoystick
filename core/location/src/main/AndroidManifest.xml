@@ -17,6 +17,19 @@
             android:name=".MockLocationService"
             android:foregroundServiceType="location"
             android:exported="false" />
+
+        <!-- Exported on purpose: the component toggle is the only gate, since `am` sends no caller key. -->
+        <service
+            android:name=".ExternalTeleportService"
+            android:enabled="false"
+            android:exported="true"
+            android:foregroundServiceType="location"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="com.locationjoystick.app.TELEPORT" />
+                <action android:name="theappninjas.gpsjoystick.TELEPORT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
