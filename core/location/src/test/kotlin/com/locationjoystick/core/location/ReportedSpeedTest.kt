@@ -1,6 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.model.MockMode
 import io.mockk.mockk
 import org.junit.Assert.assertEquals

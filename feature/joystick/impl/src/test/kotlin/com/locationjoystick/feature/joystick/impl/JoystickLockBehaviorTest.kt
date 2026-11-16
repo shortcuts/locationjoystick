@@ -3,6 +3,7 @@ package com.locationjoystick.feature.joystick.impl
 import android.os.SystemClock
 import android.view.MotionEvent
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng

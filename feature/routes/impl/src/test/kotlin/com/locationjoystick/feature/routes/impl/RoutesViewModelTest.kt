@@ -9,6 +9,7 @@ import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng

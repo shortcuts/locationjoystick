@@ -9,6 +9,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState

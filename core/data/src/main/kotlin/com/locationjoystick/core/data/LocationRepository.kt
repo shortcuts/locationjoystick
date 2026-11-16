@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -150,19 +149,27 @@ class LocationRepository
          * the UI. Lets any surface show a loading/disabled state instead of going silent for up to
          * [AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS].
          */
-        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _roadRouteFetch.mapState { it !is RoadRouteFetch.Idle }
+        private val _isRoadRouteFetchInFlight = MutableStateFlow(false)
+        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _isRoadRouteFetchInFlight.asStateFlow()
+
+        // The lock keeps the mirrored flag in step with the fetch when writers race.
+        private inline fun updateRoadRouteFetch(next: (RoadRouteFetch) -> RoadRouteFetch) =
+            synchronized(this) {
+                _roadRouteFetch.update(next)
+                _isRoadRouteFetchInFlight.value = _roadRouteFetch.value !is RoadRouteFetch.Idle
+            }
 
         val roadRouteFetch: StateFlow<RoadRouteFetch> = _roadRouteFetch.asStateFlow()
 
         /** Starts a fetch. A [walkJob] makes it a walk fetch, cancellable through [cancelWalkRoadRouteFetch]. */
         fun beginRoadRouteFetch(walkJob: Job? = null) {
-            _roadRouteFetch.value = if (walkJob != null) RoadRouteFetch.WalkFetch(walkJob) else RoadRouteFetch.ReplayFetch
+            updateRoadRouteFetch { if (walkJob != null) RoadRouteFetch.WalkFetch(walkJob) else RoadRouteFetch.ReplayFetch }
         }
 
         /** Releases the fetch started with the same [walkJob]. Any other owner's fetch stays, so this is safe to call twice. */
         fun endRoadRouteFetch(walkJob: Job? = null) {
             var released = false
-            _roadRouteFetch.update {
+            updateRoadRouteFetch {
                 val owned =
                     when (it) {
                         is RoadRouteFetch.WalkFetch -> it.job == walkJob
@@ -177,7 +184,7 @@ class LocationRepository
 
         /** Cancels the in-flight walk fetch. Ignored when idle or when the fetch belongs to a replay. */
         fun cancelWalkRoadRouteFetch() {
-            _roadRouteFetch.update { current ->
+            updateRoadRouteFetch { current ->
                 if (current is RoadRouteFetch.WalkFetch) {
                     current.job.cancel()
                     RoadRouteFetch.Idle
@@ -192,7 +199,7 @@ class LocationRepository
         /** Holds a pause for the walk this fetch will start. Ignored when no walk fetch is pending. */
         fun pauseWalkFetch(): Boolean {
             var changed = false
-            _movement.update { current ->
+            updateMovement { current ->
                 if (current is MovementState.Manual && _roadRouteFetch.value is RoadRouteFetch.WalkFetch) {
                     changed = true
                     MovementState.PausePending(current.mode, ActiveMode.WALK_TO)
@@ -206,7 +213,7 @@ class LocationRepository
 
         fun resumeWalkFetch(): Boolean {
             var changed = false
-            _movement.update { current ->
+            updateMovement { current ->
                 if (current is MovementState.PausePending && current.pending == ActiveMode.WALK_TO) {
                     changed = true
                     MovementState.Manual(current.manual)
@@ -220,7 +227,7 @@ class LocationRepository
 
         /** Pauses a replay, or holds the pause while its road fetch runs. Repeating it is a quiet no-op. */
         fun pauseReplay() {
-            _movement.update { current ->
+            updateMovement { current ->
                 when {
                     current.pausesReplay -> current
                     current == MovementState.Running(ActiveMode.ROUTE_REPLAY) -> MovementState.Paused(ActiveMode.ROUTE_REPLAY)
@@ -235,11 +242,11 @@ class LocationRepository
         }
 
         private fun clearPendingPause(active: ActiveMode) {
-            _movement.update { if (it is MovementState.PausePending && it.pending == active) MovementState.Manual(it.manual) else it }
+            updateMovement { if (it is MovementState.PausePending && it.pending == active) MovementState.Manual(it.manual) else it }
         }
 
         private fun clearReplayPause() {
-            _movement.update {
+            updateMovement {
                 when {
                     it == MovementState.Paused(ActiveMode.ROUTE_REPLAY) -> MovementState.Running(ActiveMode.ROUTE_REPLAY)
                     it is MovementState.PausePending && it.pending == ActiveMode.ROUTE_REPLAY -> MovementState.Manual(it.manual)
@@ -250,7 +257,15 @@ class LocationRepository
 
         private val _movement = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.TELEPORT))
 
-        val currentMode: StateFlow<MockMode> = _movement.mapState { it.mode }
+        private val _currentMode = MutableStateFlow(_movement.value.mode)
+        val currentMode: StateFlow<MockMode> = _currentMode.asStateFlow()
+
+        // The lock keeps the mirrored mode in step with the movement when writers race.
+        private inline fun updateMovement(next: (MovementState) -> MovementState) =
+            synchronized(this) {
+                _movement.update(next)
+                _currentMode.value = _movement.value.mode
+            }
 
         /** Mode and pause state. */
         val movement: Flow<MovementState> = _movement.asStateFlow()
@@ -264,7 +279,7 @@ class LocationRepository
             }
 
         private inline fun transition(next: (MovementState) -> MovementState?) {
-            _movement.update { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
+            updateMovement { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
         }
 
         private val _completionEvents = MutableSharedFlow<CompletionKind>(extraBufferCapacity = 1)
@@ -374,19 +389,6 @@ private fun <A, B, R> combineState(
 
         override suspend fun collect(collector: FlowCollector<R>): Nothing {
             combine(a, b, transform).distinctUntilChanged().collect(collector)
-            error("StateFlow collection never completes")
-        }
-    }
-
-/** A [StateFlow] view whose value and emissions follow [transform] of this flow. */
-private fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> =
-    object : StateFlow<R> {
-        private val source = this@mapState
-        override val value: R get() = transform(source.value)
-        override val replayCache: List<R> get() = listOf(value)
-
-        override suspend fun collect(collector: FlowCollector<R>): Nothing {
-            source.map(transform).distinctUntilChanged().collect(collector)
             error("StateFlow collection never completes")
         }
     }

@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.model.CalibrationWalkMath
 import com.locationjoystick.core.model.GrayImage
 import com.locationjoystick.core.model.GroundCalibration
