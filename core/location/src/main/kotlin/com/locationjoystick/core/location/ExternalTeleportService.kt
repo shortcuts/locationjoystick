@@ -6,20 +6,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.locationjoystick.core.common.constants.AppConstants.NotificationConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
-import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.MockLocationServiceStarter
-import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.data.TeleportUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,13 +22,7 @@ private const val TAG = "ExternalTeleportService"
 /** Takes the outside teleport command. Exported, but the manifest ships it disabled. */
 @AndroidEntryPoint
 class ExternalTeleportService : Service() {
-    @Inject lateinit var teleportUseCase: TeleportUseCase
-
-    @Inject lateinit var locationRepository: LocationRepository
-
-    @Inject lateinit var settingsRepository: SettingsRepository
-
-    @Inject lateinit var serviceStarter: MockLocationServiceStarter
+    @Inject lateinit var handler: ExternalTeleportHandler
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -49,14 +37,7 @@ class ExternalTeleportService : Service() {
         // A separate notification ID keeps this service's stop from removing the real notification.
         try {
             createMockLocationNotificationChannels(this)
-            val notification =
-                NotificationCompat
-                    .Builder(this, NotificationConstants.CHANNEL_ID_ACTIVE_MINIMIZED)
-                    .setContentTitle(getString(R.string.notification_title_active))
-                    .setContentText(getString(R.string.notification_text_active))
-                    .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-                    .setSilent(true)
-                    .build()
+            val notification = buildMinimizedActiveNotification(this)
 
             // ServiceCompat ignores the type below API 29, so the inlined constant is safe.
             @SuppressLint("InlinedApi")
@@ -80,27 +61,7 @@ class ExternalTeleportService : Service() {
 
         scope.launch {
             try {
-                val decision =
-                    externalTeleportDecision(
-                        locationRepository.mockLocationState.value,
-                        settingsRepository.getHideTeleportFeatures().first(),
-                        lat,
-                        lng,
-                    )
-                when (decision) {
-                    is ExternalTeleportDecision.Teleport -> teleportUseCase.execute(decision.point)
-                    is ExternalTeleportDecision.StartAt -> {
-                        serviceStarter.start(
-                            MockLocationIntentBuilder.startSpoofing(
-                                this@ExternalTeleportService,
-                                decision.point.latitude,
-                                decision.point.longitude,
-                            ),
-                        )
-                        settingsRepository.setLastLocation(decision.point)
-                    }
-                    is ExternalTeleportDecision.Ignore -> Log.w(TAG, "ignored: ${decision.reason}")
-                }
+                handler.handle(lat, lng)
             } catch (e: Exception) {
                 Log.e(TAG, "ignored: command failed", e)
             } finally {

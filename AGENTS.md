@@ -184,6 +184,7 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `PositionJitterCoordinator` | `:core:location` | Class (not service) | Owns the jitter offset. Its motion model is a constraint: it must not teleport between draws. See [features/mock-location.md](docs/features/mock-location.md). |
 | `OverlayNotificationReactor` | `:core:location` | Class (not service) | Keeps the notification icon and widget overlay in sync with live settings mid-session. |
 | `ExternalTeleportService` | `:core:location` | Service (exported, disabled by default) | Takes the outside teleport command and routes it through `TeleportUseCase`. The component state is the only gate. See [features/external-teleport.md](docs/features/external-teleport.md). |
+| `ExternalTeleportHandler` | `:core:location` | Class (`@Singleton`) | Runs one outside teleport command: decide, then teleport or start spoofing and persist the point. The service only owns the foreground window. |
 | `ContentApiRoutes` | `:core:location` | Class (`@Singleton`) | Content CRUD routes on the local sync server, installed beside `ControlApiRoutes`. |
 | `EphemeralReplayController` | `:core:location` | Class (`@Singleton`) | Owns the walk-to-ephemeral-replay transition. Shared by the map and the widget so the state machine lives once. |
 | `BackupRepository` | `:core:data` | Repository (`@Singleton`) | Applies an import in one transaction. Throws so the caller can report failure. |

@@ -109,6 +109,20 @@ internal fun createMockLocationNotificationChannels(context: Context) {
 
 internal fun notificationChannelId(hideNotification: Boolean): String = if (hideNotification) CHANNEL_ID_MINIMIZED else CHANNEL_ID
 
+private fun activeNotificationBuilder(
+    context: Context,
+    channelId: String,
+): NotificationCompat.Builder =
+    NotificationCompat
+        .Builder(context, channelId)
+        .setContentTitle(context.getString(R.string.notification_title_active))
+        .setContentText(context.getString(R.string.notification_text_active))
+        .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+        .setSilent(true)
+
+internal fun buildMinimizedActiveNotification(context: Context): Notification =
+    activeNotificationBuilder(context, CHANNEL_ID_MINIMIZED).build()
+
 internal fun buildMockLocationNotification(
     context: Context,
     replayActive: Boolean = false,
@@ -162,14 +176,9 @@ internal fun buildMockLocationNotification(
         activityPendingIntent(context, 3, AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_FAVORITES)
 
     val builder =
-        NotificationCompat
-            .Builder(context, notificationChannelId(hideNotification))
-            .setContentTitle(context.getString(R.string.notification_title_active))
-            .setContentText(context.getString(R.string.notification_text_active))
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+        activeNotificationBuilder(context, notificationChannelId(hideNotification))
             .setContentIntent(openAppIntent)
             .setOngoing(true)
-            .setSilent(true)
 
     for (action in selectNotificationActions(replayActive, replayPaused)) {
         val pendingIntent =
