@@ -11,6 +11,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import kotlin.math.hypot
 
 private class ResizeGestureState {
@@ -50,7 +54,13 @@ internal fun Modifier.floatingMapResizeGesture(
                 currentOnResizeStart(state.lastX, state.lastY)
             }
         }
-    return pointerInteropFilter { event ->
+    return semantics(mergeDescendants = true) {
+        role = Role.Button
+        onClick {
+            currentOnTap()
+            true
+        }
+    }.pointerInteropFilter { event ->
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 state.downX = event.rawX
