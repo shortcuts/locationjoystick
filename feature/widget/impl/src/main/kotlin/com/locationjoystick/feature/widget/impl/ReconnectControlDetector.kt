@@ -45,7 +45,7 @@ object ReconnectControlDetector {
     private const val RING_WHITE_SPREAD = 45
     private const val RING_SECTOR_SHARE = 0.3f
 
-    // Measured on 2026-11-02 frames: ring frames fill 9 to 12 sectors, idle OFF frames 0.
+    // Measured on device frames: ring frames fill 9 to 12 sectors, idle OFF frames 0.
     private const val RING_MIN_SECTORS = 6
 
     /** First screen column and one past the last row of the search window; the caller crops to these. */

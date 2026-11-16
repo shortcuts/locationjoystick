@@ -120,7 +120,7 @@ def test_normalize_name_matches_companion():
 
 
 
-# Real Pixel 5 (Android 14) `dumpsys bluetooth_manager` connection-state history, newest first. The
+# Real `dumpsys bluetooth_manager` connection-state history, newest first. The
 # address is masked and lower-cased, and the line has no `[...]` and no `aclStateChangeCallback`.
 PIXEL5_HISTORY = """\
   10-13 15:25:35.623 CONNECTED    xx:xx:xx:xx:d3:24
@@ -148,7 +148,7 @@ def test_locate_control_returns_state_and_centre_inside_search_region():
     assert rm.locate_control(_png(None, size=(864, 1920))) == ("NONE", None)
 
 
-# Lines copied from a real Pixel 5 `dumpsys bluetooth_manager` btm history (address masked).
+# Lines copied from a real `dumpsys bluetooth_manager` btm history (address masked).
 BTM = """\
 shim::legacy::btm  2026-11-02 23:29:55.635 API    Create bond              : xx:xx:xx:xx:d3:24 transport:BT_TRANSPORT_AUTO
 shim::legacy::btm  2026-11-02 23:29:55.652 ACL    Connection successful    : xx:xx:xx:xx:d3:24[public] Le

@@ -58,6 +58,19 @@ Rules:
 - Wiki prose must pass the audience test in `docs/wiki/CONTRIBUTING.md`: could a non-technical user understand every sentence? If not, rewrite.
 - **README.md and the wiki are user-facing, not developer docs.** Wiki is the source of truth for feature detail; README only covers what the app does, how to install it, and how to join the Discord — for everything else, link to the wiki or to AGENTS.md/CONTRIBUTING.md. Write both in plain English: short sentences, no code symbols, no class/module names, no build steps. Assume the reader already knows how to install an app. Developer-facing detail (build steps, architecture, tech stack) goes in CONTRIBUTING.md/AGENTS.md, never README.md.
 
+### Docs carry no session data
+
+This repo is public and open source. It is not tied to any game, device or debugging session. Docs, code comments and commit messages never contain:
+
+- Device models, serial numbers, OS builds or screen sizes from a test phone. Write "the test phone".
+- Game or app versions, in-game text, usernames or account details. Write "the target app".
+- Calendar dates of a run, a decision or a measurement. Git history holds the date. A dated read of an outside source, such as a licence page, is the one exception.
+- Raw measurements from one run: timings, battery or CPU figures, error distances, logcat lines, per-city or per-row result tables. State the conclusion and the constraint it set.
+- Names of people or roles, such as "the lead" or "the owner", and "decided with" lines.
+- Investigation or debug logs. Do not commit one. Keep raw data in the git-ignored `scripts/registration-bench/` or in the scratchpad.
+
+A game name is allowed only where the product itself names it: the game setup options, their strings and tests, and the guided-path docs. Everywhere else write "the game". `docs/wiki/CONTRIBUTING.md` holds the wiki rule.
+
 ---
 
 ## Pre-Commit Validation Policy
@@ -102,7 +115,7 @@ Rules:
 
 → See docs/features/
 
-Working memory for long-running features: a feature doc that has a "Status" line (none is open today; Tap to Walk, in docs/features/tap-to-walk.md, closed on 2026-10-27) is the memory between sessions. Before work on it, read that section and its backlog epic (`radin backlog show`). Before a session ends, update the status, the measured numbers, the open work and any kill there, and update the epic's entries through `radin backlog`. Move superseded detail to the feature's investigation doc so the main doc stays short.
+Working memory for long-running features: a feature doc with a "Status" line (none is open today) is the memory between sessions. Before work on it, read that section and its backlog epic (`radin backlog show`). Before a session ends, update the status, the open work and any kill there, and update the epic's entries through `radin backlog`. Write the rationale and each constraint, not the measurements.
 
 | Feature | Doc |
 |---------|-----|

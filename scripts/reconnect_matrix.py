@@ -77,8 +77,8 @@ SHOTS = OUT / "shots"
 def parse_acl_state(dumpsys_text, mac_suffix):
     """Companion link state from the masked address's visible tail (e.g. 'D3:24').
 
-    Pixel 7 prints `[XX:..:D3:24] aclStateChangeCallback: State:X` lines, last one wins. Pixel 5
-    (Android 14) prints only a connection-history block, `CONNECTED    xx:..:d3:24` and
+    Some phones print `[XX:..:D3:24] aclStateChangeCallback: State:X` lines, last one wins. Others
+    print only a connection-history block, `CONNECTED    xx:..:d3:24` and
     `DISCONNECTED xx:..:d3:24 reason=0`, newest first, so the first such line wins.
     """
     state = None
@@ -401,8 +401,8 @@ def require_bond(serial, mac_suffix):
 def disconnect_companion(serial, mac_suffix):
     """Drop the companion link by cycling the phone's Bluetooth adapter. Returns (link dropped, method).
 
-    The game calls removeBond on the Plus after either path: tapping its connect control off, or the
-    adapter coming back on (measured 2026-11-04). The Plus then needs a physical re-pair, so a run
+    The game calls removeBond on the accessory after either path: tapping its connect control off, or the
+    adapter coming back on. The accessory then needs a physical re-pair, so a run
     aborts through require_bond after one trial. No scripted disconnect keeps the bond.
     """
     require_bond(serial, mac_suffix)

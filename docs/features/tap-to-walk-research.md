@@ -1,6 +1,6 @@
 # Tap to Walk — state-of-the-art research (automatic fit and superposition retry)
 
-Scope: what published work says about two backlog entries. Entry A is an automatic ground fit with no calibration step that adapts to camera twist and zoom. Entry B is a retry of map superposition (game screenshot against the app's own map). Date: 2026-10-17. Sources are papers, official library source and platform source. Each claim carries its URL. Claims marked "derived" are our own reasoning from a cited result, not a published result. For the measured history, see [tap-to-walk-investigation.md](tap-to-walk-investigation.md). For shipped behaviour, see [tap-to-walk.md](tap-to-walk.md).
+Scope: what published work says about two backlog entries. Entry A is an automatic ground fit with no calibration step that adapts to camera twist and zoom. Entry B is a retry of map superposition (game screenshot against the app's own map). Sources are papers, official library source and platform source. Each claim carries its URL. Claims marked "derived" are our own reasoning from a cited result, not a published result. For shipped behaviour, see [tap-to-walk.md](tap-to-walk.md).
 
 Constraints that every finding is judged against:
 

@@ -14,7 +14,7 @@ Uber and Airbnb guidance (VoltAgent `awesome-design-md`) was a reference for den
 
 ## Provenance
 
-Modernization decided 2026-11-01 with the owner. Colours stay as they are. Three aspects changed:
+The modernization kept the colours. Three aspects changed:
 
 - **Typeface:** Inter, bundled, OFL licence. Why: it has tabular figures, so coordinates, speeds and distances stay aligned. It covers Latin only; CJK locales fall back to the system font.
 - **Shape:** pill buttons and chips, soft cards, larger top corners on sheets (Uber: one pill shape for every interactive element). The 8 dp button corner of the old system is retired.

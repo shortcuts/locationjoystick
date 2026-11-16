@@ -33,7 +33,7 @@ Gesture use under an accessibility service that does not declare itself an acces
 
 A check (screenshot or tap) runs only while the screen is interactive and the foreground window belongs to the hardcoded game package (`AppConstants.GameConstants`). Without it the loop screenshotted whatever app was in front, which broke the narrow use the disclosure promises, and the shape-based detector could tap a lookalike control in another app. The foreground package comes from window-state-changed events, reading only the event's package name, never the view tree (hard rule above). The gate is re-checked before every capture and every tap, so a tap never lands after the user switched apps. Our Tap to Walk overlay also closes the reconnect gate: it takes every touch, so an injected gesture would land on it and walk the player. It does not close the foreground check that auto-fit uses, because learning runs while the overlay is up. A run cut short by the gate is neutral for the failure streak.
 
-No extra event type or window-content capability is subscribed. On a Pixel 5 (Android 14) the game raises a window-state event after the shade closes, and the lock screen raises one from the system UI, so the foreground package already follows both. Other devices are unmeasured; if one raises no event, add a keyguard check. No picker: one game, no extra setup.
+No extra event type or window-content capability is subscribed. On the test phone the game raises a window-state event after the shade closes, and the lock screen raises one from the system UI, so the foreground package already follows both. A device that raises no such event needs a keyguard check. No picker: one game, no extra setup.
 
 Limit: the foreground package is empty after a service start and stays empty until a window-state event arrives. After an app update, a crash or a service toggle while the game is already in front, the gate stays closed until the user switches away and back. Window-content access would remove this, but it is a Play review risk, so the limit stays and the wiki gives the workaround. The app cannot tell this stuck state from the user using another app, so after `ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS` with the screen on, the notice in "Failure notification" opens the game when tapped. Launching the game raises the window event that reopens the gate, so recovery needs no app switching. This was chosen over any new capability or event type: it adds nothing for the user to grant and works on any device.
 
@@ -41,9 +41,9 @@ Limit: the foreground package is empty after a service start and stays empty unt
 
 The control is located and classified from a screenshot, every run, with no fixed colours.
 
-- The control is found by shape: two stacked half-discs with a dot across the split. Its size is a fraction of the short screen side, not the width. The target app sizes the control in dp, so a width fraction drops below the minimum on an unfolded foldable or a landscape tablet and the control is never found. The short side keeps the fraction stable on phones and wide screens. Measured on a synthetic 2560x1600 landscape canvas (control about 2.3% of the width, 3.8% of the short side): not found by width, found by short side. No real foldable or tablet recording was available.
-- Its state comes from the centre dot alone, measured in that same screenshot, so theme, brightness and tint do not matter. A green dot is on. A non-green dot that is darker than the ball's lower half is off. Every accessory shares the symbol, but the half-disc colours differ between accessories, so the detector reads neither half. The off dot is dark relative to the ball, not neutral gray: on the Pixel 5 fixture it is a dark blue, so a saturation test would read it as unknown. There is no per-device calibration.
-- The game's own search draws a near-white arc that spins around an OFF ball. The detector reads it as searching, from near-white pixels in a band of 1.15 to 1.55 ball radii, counted in 24 sectors because the arc moves. Thresholds sit between 9 to 12 sectors (ring frames) and 0 (idle OFF frames), measured on one device (Pixel 5, 2026-11-02, `RING_MIN_SECTORS`). Searching is checked only on a ball that already reads OFF, so it never hides ON.
+- The control is found by shape: two stacked half-discs with a dot across the split. Its size is a fraction of the short screen side, not the width. The target app sizes the control in dp, so a width fraction drops below the minimum on an unfolded foldable or a landscape tablet and the control is never found. The short side keeps the fraction stable on phones and wide screens. A synthetic landscape canvas confirmed it: the control was not found by width and was found by short side. No real foldable or tablet recording exists.
+- Its state comes from the centre dot alone, measured in that same screenshot, so theme, brightness and tint do not matter. A green dot is on. A non-green dot that is darker than the ball's lower half is off. Every accessory shares the symbol, but the half-disc colours differ between accessories, so the detector reads neither half. The off dot is dark relative to the ball, not neutral gray: in the fixture it is a dark blue, so a saturation test would read it as unknown. There is no per-device calibration.
+- The game's own search draws a near-white arc that spins around an OFF ball. The detector reads it as searching, from near-white pixels in a band of 1.15 to 1.55 ball radii, counted in 24 sectors because the arc moves. Thresholds sit between 9 to 12 sectors (ring frames) and 0 (idle OFF frames), measured on one device (`RING_MIN_SECTORS`). Searching is checked only on a ball that already reads OFF, so it never hides ON.
 - The result is one of on, off, searching or unknown. Unknown covers "not found" and any colour set that fits neither state. **Unknown never taps.**
 
 The search region is the top-right of the screen, where the target app puts the control. The target app's HUD moves between versions, so the region must be re-measured when it changes. A moved HUD makes classification fail safely (unknown), but reconnect then stops until the region is updated.
@@ -62,23 +62,22 @@ The policy exists to avoid a tap that turns a connected companion off.
 
 ## Reliability proof
 
-**Result: incomplete.** One device passes on the current build; the multi-device target is open. Open items are in the `reconnect-stable` backlog epic.
+**Result: incomplete.** One device passed the current build. The multi-device target is open. Open items are in the `reconnect-stable` backlog epic.
 
-Current build, 2026-11-02, Pixel 5 with the original Pokemon GO Plus, debug build:
+What the proof established:
 
-- Block a, tap disconnect: 19/20. The fail was a connect that showed ON 16 s after the tap, after the post-tap read window had closed. Under the current policy (2026-11 retune: one 10 s wait, 2 reads) such a connect also ends `FAILED`; the next check reads on and resets the budget. Not re-run on a device.
-- Already on: 12/12 checks with zero taps.
-- Block c, screen off: 10/10 reconnected, but with zero taps. The game reconnects by itself when it resumes, so this block does not test the tap.
-- A typical connect reads ON 8 to 9 s after the tap.
-- A retap while the game still connects did not cancel the connect (6/6).
-- While the game searches, it draws a ring around the ball. Taps during that search right after a disconnect often did nothing, so the runner now waits the ring out (`readSettled`, `SEARCH_MAX_WAIT_MS`) and never taps or counts it. This is safe because a tap during our own ring did not cancel the connect (6/6), so the wait only costs time. Past the cap a read counts as unknown.
-- After Recents and then Back, the gate stayed closed in some attempts (it never received a new window event from the game) until the game was relaunched. The gate-closed notice in "Failure notification" covers this case.
+- The tap fixes a disconnect in nearly every cycle. The one failure was a connect that showed on after the post-tap read window closed. Under the current policy such a connect also ends `FAILED`, and the next check reads on and resets the budget.
+- With the companion already on, checks make zero taps.
+- With the screen off, the game reconnects by itself when it resumes, so that block does not test the tap.
+- A retap while the game still connects does not cancel the connect.
+- While the game searches, it draws a ring around the ball. Taps during that search right after a disconnect often did nothing, so the runner waits the ring out (`readSettled`, `SEARCH_MAX_WAIT_MS`) and never taps or counts it. This is safe because a tap during our own ring did not cancel the connect, so the wait only costs time. Past the cap a read counts as unknown.
+- After Recents and then Back, the gate can stay closed, because the game sent no new window event, until the game is relaunched. The gate-closed notice in "Failure notification" covers this case.
 
-Earlier runs (2026-10-13, Pixel 7 rows included) predate the re-read logic and the null-read fixes. Their taps-while-on failures do not apply to the current build. The target is still at least three devices, and Pokemon GO Plus + is untested.
+Older runs predate the re-read logic and the null-read fixes. Their taps-while-on failures do not apply to the current build. The target is still at least three devices. Accessory variants other than the one tested are untested.
 
-The earlier failures were diagnosed as a timing fault, not a detection fault. The first tap run read the control too soon after a tap, so a slow connection looked like a failure and was tapped again, toggling the companion away. The fix is the repeated read after a tap.
+The earlier failures were a timing fault, not a detection fault. The first tap run read the control too soon after a tap, so a slow connection looked like a failure and was tapped again, toggling the companion away. The fix is the repeated read after a tap.
 
-The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed. Each row stores the tap-to-link and tap-to-services seconds, read from the phone's Bluetooth history, because the per-cycle `logcat -c` erases the log.
+The reconnect matrix script in `scripts/` runs the proof. Its raw rows are not committed. Each row stores the tap-to-link and tap-to-services seconds, read from the phone's Bluetooth history, because the per-cycle `logcat -c` erases the log.
 
 ## Tap budget
 
@@ -91,23 +90,14 @@ The game opens a prompt after too many consecutive failed connects, and the user
 - Debug builds ignore the budget, because the reliability matrix needs hundreds of unattended cycles at a steady short interval.
 - The check interval is a flat `CHECK_INTERVAL_MS`. The old doubling backoff is gone: two taps per outage leave nothing for it to protect.
 - A late connect (over about 12 s after the tap) ends `FAILED` and counts. The next check reads on and resets the budget.
-- Prompt threshold: still not measured. The 2026-11-12 battery session had no bonded Plus accessory on the test phone, so no run could drive failed taps against the game's prompt. The budget of 2 follows the product decision, so `MAX_FAILED_TAPS_PER_OUTAGE` stays at 2 until a run with a Plus shows the prompt at 2 failed taps or fewer.
+- Prompt threshold: the failed-tap count that triggers the prompt is not measured. A controlled count needs an accessory that is physically unreachable. Every scripted way to force that (adapter off, control tap) makes the game call `removeBond` and unpair the accessory (see "Open risks"). The budget stays at 2 until such a run counts the taps before the prompt.
 
 ## Battery and CPU cost
 
-Measured 2026-11-12 on a Pixel 5 (2156 mAh), `githubRelease` build (15 s interval), Pokémon GO in front, 11 min (664 s) per run, no accessory bonded. Method and walking rows: [tap-to-walk.md](tap-to-walk.md), "Battery and CPU cost of auto-fit". Each row is one run.
+The check costs a few seconds of CPU per 10 minutes and a fraction of a percent of the battery per hour. Method and walking figures: [tap-to-walk.md](tap-to-walk.md), "Ground map: flow-measured".
 
-| Run | App CPU | UID estimate |
-|---|---|---|
-| Standing still, both features off | 3.0 s | 0.86 mAh |
-| Standing still, Reconnect on (Tap to Walk on) | 11.9 s | 1.41 mAh |
-| Walking, Tap to Walk on, Reconnect off | 47.7 s | 2.99 mAh |
-| Walking, both on | 53.7 s | 3.11 mAh |
-
-- A check runs every 25 s, not 15 s: with no control found, the first read is repeated after `UNSURE_RETRY_DELAY_MS`. The run logged 26 checks.
-- Reconnect costs about 9 s of CPU per 11 min, about 0.34 s per check, and 0.55 mAh per 11 min: about 3 mAh per hour, 0.14% of the battery per hour.
-- While walking, Reconnect adds about 6 s and 0.12 mAh on top of auto-fit. The run is within the noise of one sample.
-- The test phone had no accessory, so every check ended `NOT_FOUND`. A found control adds a second read, and an outage adds taps; neither was measured.
+- A check runs about every 25 s, not every `CHECK_INTERVAL_MS`: with no control found, the first read is repeated after `UNSURE_RETRY_DELAY_MS`.
+- A found control adds a second read, and an outage adds taps. Neither was measured.
 
 Verdict: neither feature hurts battery or performance enough to act. Any optimization needs its own backlog entry.
 
@@ -127,7 +117,7 @@ The widget's Debug stats block shows the last check's result because the loop is
 
 - Play review of the gesture capability (see above).
 - A popup that is already open and static, with the control still visible, reads OFF on both confirm reads and can be tapped. The detector reads a dimmed control as OFF by design, and no popup detector is planned.
-- Heads-up notification over the ball: the ball sits where heads-up banners slide in, and the service listens only to window-state events, which a banner may not raise. A tap between the last read and the gesture could open the banner. Not measured yet: `scripts/reconnect_matrix.py headsup` (debug build, `HeadsUpProbeReceiver`) posts a banner at 0 to 2 s after the first OFF read and records hits. Run it before deciding on a fix. The run is blocked: the game calls `removeBond` on the Plus (pid of the game, logcat `BluetoothDevice: removeBond()`) about 0.1 s after the adapter returns from an off-on cycle, and also when its connect control is tapped off. Every scripted way to drop the link therefore unpairs the Plus, and a physical button press re-pairs it, so the script aborts after one trial.
+- Heads-up notification over the ball: the ball sits where heads-up banners slide in, and the service listens only to window-state events, which a banner may not raise. A tap between the last read and the gesture could open the banner. Not measured yet: `scripts/reconnect_matrix.py headsup` (debug build, `HeadsUpProbeReceiver`) posts a banner at 0 to 2 s after the first OFF read and records hits. Run it before deciding on a fix. The run is blocked: the game calls `removeBond` on the accessory (logcat `BluetoothDevice: removeBond()`) about 0.1 s after the adapter returns from an off-on cycle, and also when its connect control is tapped off. Every scripted way to drop the link therefore unpairs the Plus, and a physical button press re-pairs it, so the script aborts after one trial.
 - Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed; the not-found notification (see "Failure notification") tells the user.
 
 Both features share one screenshot budget ([tap-to-walk.md](tap-to-walk.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together. Reconnect reads only the detector's search region, off the main thread.

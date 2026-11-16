@@ -335,7 +335,7 @@ def candidate_taps(serial, cal):
     import registration_bench as rb
 
     w, h = rb._device_size(serial)
-    # Dense on purpose: a 50 px grid found no 5 to 40 m point for the 2026-10-25 New York ruler (about 3 px per m).
+    # Dense on purpose: a 50 px grid found no 5 to 40 m point for a ruler at about 3 px per m.
     pts = [(rb._sx(x, w), rb._sy(y, h)) for x in np.arange(150, 931, 20) for y in np.arange(1000, 1901, 10)]
     random.Random(0).shuffle(pts)
     return [p for p in pts if rb.TRIAL_MIN_M <= math.hypot(*rb.tap_to_ground_persp(cal, p)) <= MAX_M]

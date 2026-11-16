@@ -3,8 +3,7 @@
 
 Step 1 of the investigation: pure geometry helpers plus one registration method (log-polar phase
 correlation on the FFT magnitude, rotation and scale in one step). Annotate/run/report subcommands are
-added once a device-captured dataset exists (see docs/features/tap-to-walk-investigation.md, "Bearing registration
-investigation"). The `motion` subcommand scores the motion-calibrated heading prototype (content_flow,
+added once a device-captured dataset exists. The `motion` subcommand scores the motion-calibrated heading prototype (content_flow,
 heading_from_moves) on stored walk frames. `varycap` captures walk legs under varied zoom and orientation.
 `chamfer` scores entry B (road and water masks against OSM tiles, heading-only chamfer search) on the stored smoke frames.
 
@@ -1162,12 +1161,12 @@ def cmd_multileg(args):
 # game camera is pitched: px per metre falls with distance. Model: ground_to_game(cam, theta) with cam =
 # {s, sy, a, px, py}, fitted to per-band content flow of the walked legs.
 # Band grid as fractions of the frame (no device pixels): 7 row bands over 0.21h..0.70h x 3 column thirds.
-# The full 0.12h..0.88h x 14 grid measured worse on the wide Pixel 7 legs (p90 13.4 m vs 9.7 m).
+# The full 0.12h..0.88h x 14 grid measured worse on wide legs.
 FLOW_ROWS = [(0.21 + i * 0.49 / 7, 0.21 + (i + 1) * 0.49 / 7) for i in range(7)]
 FLOW_COLS = [(0.0, 1 / 3), (1 / 3, 2 / 3), (2 / 3, 1.0)]
 
 
-PRIOR_FEET_FRAC, PRIOR_TOLERANCE, PRIOR_FEET_X = 0.6415, 0.03, 0.5  # feet row as a fraction of height (wide-zoom Pixel 7 runs: 0.635-0.648)
+PRIOR_FEET_FRAC, PRIOR_TOLERANCE, PRIOR_FEET_X = 0.6415, 0.03, 0.5  # feet row as a fraction of height (wide-zoom runs: 0.635-0.648)
 
 
 def detect_feet(legs, thr=30.0, gap=0.05):

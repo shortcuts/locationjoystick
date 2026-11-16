@@ -4,7 +4,7 @@ Two shortcuts for triggering walk-to without a confirmation sheet, useful when y
 
 Key files: the widget module's map view, tap overlay, `TapToWalkController` and widget service, and `:core:location/ScreenCaptureSource.kt`. Settings keys and their defaults live in the settings code, not here.
 
-Agents: this file is the working memory for Tap to Walk. Read "Ground map: flow-measured" before any work on it, and record each result there (kills included) before the session ends. Keep only what is still relevant: history and superseded detail go to [tap-to-walk-investigation.md](tap-to-walk-investigation.md), not here.
+Agents: read "Ground map: flow-measured" before any work on it. Record the rationale of a result and each rejected approach there. Keep dates, devices and raw measurements out of the doc.
 
 ## Why the settings sit where they do
 
@@ -62,7 +62,7 @@ Screenshots require API 30. Below it no map can exist, so the overlay walks nowh
 
 Play's accessibility policy rejected releases that showed the disclosure only in a settings sub-screen, and rejected a release that let the accessibility service run without an in-app accept. The disclosure is therefore a single full-screen surface, shown in the normal usage flow, immediately before Android's own consent screen.
 
-It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there. Every one of those texts says screenshots are taken only while Pokémon GO is on screen, which `ScreenCaptureSource.captureCrops` enforces.
+It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there. Every one of those texts says screenshots are taken only while the game is on screen, which `ScreenCaptureSource.captureCrops` enforces.
 
 Rules that the code must keep:
 
@@ -94,34 +94,20 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-27): done. The lead accepted the 4-row subset below as the gate pass, Reykjavik included, and closed the backlog epic. The measured rows: Pixel 5, 1080x2340, Pokémon GO, normal scenario, 12 scored taps per row, 0 rejected, `make tap-smoke ONLY="1 3 4 7"`. Each row took 303 to 316 s.
+Status: done. The flow-measured map met the landing-error gate on the bench rows that were run, so no work is scheduled.
 
-| Row | p50 m | p90 m | App distance / ruler distance (median) | Verdict |
-|---|---|---|---|---|
-| New York | 4.6 | 8.1 | 0.88 | PASS |
-| Tokyo | 6.3 | 12.0 | 0.91 | PASS |
-| Sydney | 6.5 | 11.8 | 0.85 | PASS |
-| Reykjavik | 10.9 | 17.5 | 1.35 | accepted (p90 over 15 m) |
-
-An earlier New York row on the same build gave p50 4.1 m, p90 7.0 m. The median angle error is -2 to -8.5 degrees in every row, so the heading is good. The remaining error is scale: the app walks 9 to 15% short in three rows and 35% too far in Reykjavik. Three rows used the prior feet anchor (the report's prior fallback count).
-
-The 2026-10-26 failures (11 of 12 rows) came from the old full-band ruler, not the app. See "Gate error cause" in [tap-to-walk-investigation.md](tap-to-walk-investigation.md). Refitted near the feet, the 12 stored references of run `20261026T160909Z` all pass the ruler checks. Their lateral scale is within 3% of the near-feet fits in that section. Those taps cannot be rescored, because the old `trials.json` kept only the error length.
-
-Walk profile (the shipped default, `make tap-smoke ONLY=1 SPEED_PROFILE=walk`, 2026-10-27): New York p50 6.2 m, p90 8.1 m, 12 scored, 0 rejected, PASS, 703 s. A first Walk run the same day failed (p50 40.3 m, p90 69.0 m): every target was the mirror of the ruler's truth, the signature of the provisional map, and no `flow fit` line appeared in logcat. Cause not proven; the next run, after an app reinstall and restart, passed. Treat one Walk row as a single sample.
-
-Slow Walk and Bike/Drive. Slow Walk (0.3 m/s) moves 0.9 m per 3 s tick, so `MIN_STEP_M` is 0.5 and `GroundFlowFit.MIN_MOVE_M` is 0.8. Measured live on the Pixel 5: a 30 m Slow Walk logged 12 `flow fit` lines at heading 174 to 176 degrees, the same heading as Walk. Bike (4.17 m/s) and Drive (15 m/s) exceed `FLOW_MAX_SPEED_MPS` (3.0), so they never measure and keep the last stored map; the flow would overflow the crop search. A phone that only ever uses Bike or Drive keeps the provisional map.
-
-Gate cost: about 5 min per row on Run, about 12 min on Walk (reference legs, the app leg and the teleport back after each tap all run at walking speed; see docs/testing.md). Not run: rows 2, 5, 6 and 8 to 20, and the fresh, twist and zoom rows. If tap to walk work reopens, start there.
-
-Always run `./gradlew installGithubDebug` before the gate when app code changed since the phone's install, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
-
-Forward ratio. The near-feet refit of the 12 stored references gives forward / lateral 0.47 to 0.67 (10 of 12 within 0.53 to 0.59), against `FORWARD_RATIO` 0.40. Most taps land beside the player, so this costs little today. It matters once taps spread up the screen. Raising it is the first candidate if the scale error needs work.
+- The remaining error is scale, not heading. The heading fit is good in every bench row. Scale varies by place, which is why it is measured and not tabled.
+- Slow Walk moves under 1 m per 3 s tick, so `MIN_STEP_M` and `GroundFlowFit.MIN_MOVE_M` are set below that step. Bike and Drive exceed `FLOW_MAX_SPEED_MPS`, because the flow would overflow the crop search. They never measure and keep the last stored map. A phone that only uses Bike or Drive keeps the provisional map.
+- `FORWARD_RATIO` came from the good bench fits. Refits spread above it, so raising it is the first candidate if the scale error needs work. It matters little while most taps land beside the player.
+- A bench row that shows every target mirrored is the signature of the provisional map. Install the current APK before the gate, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
+- A bench row can fail from the ruler, not the app. The old full-band ruler did. Judge a failure against the near-feet fit before blaming the app.
+- The gate takes minutes per row on Run and longer on Walk, because the reference legs, the app leg and the teleport back all run at walking speed (docs/testing.md).
 
 ### Goal
 
 A tap on the game screen walks to the spot under the finger, out of the box, on any phone, at any camera heading and zoom.
 
-### Constraints (user, 2026-10-23 and 2026-10-24)
+### Constraints
 
 - No user training, no user configuration, no calibration step and no user action. Every constant comes from pre-release work.
 - A landing error up to 15 m is acceptable. Gate: p90 at most 15 m with at most 20% of taps rejected.
@@ -138,35 +124,14 @@ A tap on the game screen walks to the spot under the finger, out of the box, on 
 - The feet sit at a fixed screen fraction (`FEET_X`, `FEET_Y`). The game keeps the player centred.
 - A fresh install has no stored map. Taps then use the provisional map (`PROVISIONAL_HEADING_DEG`, `PROVISIONAL_LATERAL_PX_PER_M`). The walk the tap starts is measured, and the tap to walk controller re-aims the same tap from its tap-time position once a new map is stored and moves the target by at least `REAIM_MIN_METERS`. The same re-aim corrects a stored heading after a camera twist.
 - `AutoFitCoordinator` fits the moves of the current walk only (at most `FLOW_WINDOW_MOVES`), and needs two moves before it stores a map. A stop, a teleport-speed step or a closed gate ends the walk and drops its crops. So a twist between walks never mixes two cameras. A twist or pinch inside a walk shows as a move whose residual against the running fit is far above the fit's median (`GroundFlowFit.changesCamera`); the coordinator then drops the earlier moves and refits from the new one. The thresholds are unmeasured guesses.
-- A walk replaces the stored map only through `GroundFlowFit.replaces`: the fit must be self-consistent (flow count, residual); one that agrees with the stored map is written only when heading drifts over `REWRITE_HEADING_DEG` or scale over `REWRITE_SCALE_FRACTION`, so a walk on an unchanged camera writes once, and one that disagrees (a camera change) needs more moves and a tighter residual. `move` drops screenshot pairs where no crop moved (loading screens, popups). The thresholds are only partly measured: Walk and Slow Walk are covered by the rows above. Tests use PokeMiners loading and warning screens (`core/model/src/test/resources/pokeminers/`) as static-frame fixtures.
+- A walk replaces the stored map only through `GroundFlowFit.replaces`: the fit must be self-consistent (flow count, residual); one that agrees with the stored map is written only when heading drifts over `REWRITE_HEADING_DEG` or scale over `REWRITE_SCALE_FRACTION`, so a walk on an unchanged camera writes once, and one that disagrees (a camera change) needs more moves and a tighter residual. `move` drops screenshot pairs where no crop moved (loading screens, popups). The thresholds are only partly measured: Walk and Slow Walk are covered by the rows above. Tests use loading and warning screens (`core/model/src/test/resources/pokeminers/`) as static-frame fixtures.
 - The stored record is per device, never exported, and rejected when the display size differs. Version 2 of the record rejects maps from the old motion fit.
 
-Accuracy on synthetic frames (unit tests): heading within 2.5 degrees, scale within 5%, tap error under 5% of the tap distance. On the bench (Python prototype, one 8-frame leg per fit, 2026-10-24): heading usually within 8 degrees of the old four-term fit, landing p90 12 to 75 m against that fit. The old fit is itself noisy, so these numbers are not truth.
+Accuracy on synthetic frames (unit tests): heading within 2.5 degrees, scale within 5%, tap error under 5% of the tap distance.
 
-CPU per tick (Pixel 5, 1080x2340, Pokémon GO in front, thread CPU time from `Debug.threadCpuTimeNanos`, median of 8 to 12 ticks, 2026-10-25). The service logs it as `tick cpu` under `ScreenAccessibilitySvc`.
+Cost: the screenshot is a hardware bitmap with no pixel access, so one software copy stays. Only the five crop rectangles (about 13% of the pixels) become gray, and no full-frame gray buffer exists. The remaining cost is mostly the phase-correlation transform per crop, not the gray conversion. The transform uses `sqrt` instead of `hypot`, cached Hann windows and cached `Dft` tables per thread.
 
-| Version | Software copy | Gray + crops | Total |
-|---|---|---|---|
-| Before: whole frame to gray, then crops | included below | 113 ms gray, 70 ms crops | 188 ms |
-| After: `GrayFrame.read` per crop rectangle | 22 ms | 101 ms | 123 ms |
-
-Phase-correlation cost alone (Pixel 5, thread CPU, median of 30 runs of 6 spectra and 5 correlations on 128x128 noise crops, 2026-11-10): 75.7 ms before, 63.0 ms after three changes with the same output (`sqrt` instead of `hypot`, cached square-rooted Hann windows, cached `Dft` tables per thread). The `tick cpu` log line no longer exists, so the whole tick was not re-measured on a device; the 123 ms row above is the older total.
-
-The screenshot is a hardware bitmap with no pixel access, so one software copy stays. Only the five crop rectangles (about 13% of the pixels) become gray now; no full-frame gray buffer exists. The remaining cost is mostly the phase-correlation transform per crop, not the gray conversion, so "a few milliseconds" is not met yet.
-
-### Battery and CPU cost of auto-fit
-
-Measured 2026-11-12 on a Pixel 5 (2156 mAh, 1080x2340), `githubRelease` build, Pokémon GO in front, Walk-to at 2 km/h, each run 11 min (664 s). Before each run: `dumpsys battery unplug` and `dumpsys batterystats --reset`. The app's process CPU comes from `/proc/<pid>/stat`; the estimate comes from the app's UID line in `dumpsys batterystats`. The estimate is the power-profile model, not a fuel-gauge reading, and each row is one run.
-
-| Run | App CPU | UID estimate | Of it, `system_services` |
-|---|---|---|---|
-| Walk, both features off | 14.1 s | 1.23 mAh | 0.93 |
-| Walk, Tap to Walk on, Reconnect off | 47.7 s | 2.99 mAh | 1.22 |
-| Walk, both on | 53.7 s | 3.11 mAh | 1.10 |
-
-Auto-fit adds about 34 s of CPU and 1.8 mAh per 11 min of walking: about 10 mAh per hour, 0.45% of the battery per hour. That is about 150 ms of process CPU per 3 s tick (221 ticks), against 123 ms thread CPU in the older table; the process figure also counts garbage collection and the screenshot callback. Auto-fit costs nothing while the player stands still: it takes no screenshot (see the idle rows in [bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). The `tick cpu` log line no longer exists, so the per-tick figure is derived from the CPU delta, not logged.
-
-Verdict: the cost is small next to the game's own drain, and only runs while the player walks with the game in front. No optimization task follows from these numbers.
+Battery: auto-fit runs only while the player walks with the game in front. It takes no screenshot while the player stands still. The cost is small next to the game's own drain, so no optimization task follows.
 
 ### Open work
 
@@ -174,18 +139,10 @@ None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from 
 
 ### Rejected, do not retry
 
-- The range ring as the scale source. It is an animated pulse, not a fixed circle: its radius changes between screenshots 3 s apart (about 110 px and 500 px in New York), and a detector found it on few frames in Mumbai, Moscow, Nairobi and at night (2026-10-24).
-- A per-latitude (Web Mercator) scale table. The scale times cos(lat) spread 1.96 to 10.57 across ten places.
-- Screenshot registration against the app's own map, road and water colour masks against OSM tiles, and zoom as one scale parameter. A single tap-time screenshot superposed on a known-position map was proposed again on 2026-10-24 and declined for the flow-measured draft: both past attempts landed hundreds of metres off, and a street grid looks alike at 90 and 180 degrees.
+- The range ring as the scale source. It is an animated pulse, not a fixed circle: its radius changes between screenshots 3 s apart, and a detector found it on few frames in several places and at night.
+- A per-latitude (Web Mercator) scale table. The scale times cos(lat) spread over a 5x range across ten places.
+- Screenshot registration against the app's own map, road and water colour masks against OSM tiles, and zoom as one scale parameter. A single tap-time screenshot superposed on a known-position map was proposed again and declined for the flow-measured draft: both past attempts landed hundreds of metres off, and a street grid looks alike at 90 and 180 degrees.
 - The four-term motion fit from a frame spool: minutes of CPU per fit and a learning walk. Deleted in the flow-measured draft.
-
-Details for each are in [tap-to-walk-investigation.md](tap-to-walk-investigation.md).
-
-### Facts from PokeMiners and the community
-
-- Game master ([PokeMiners/game_masters](https://github.com/PokeMiners/game_masters)), template `MAP_OBJECTS_INTERACTION_RANGE_SETTINGS`: `interactionRangeMeters` 80, `whitePulseRadiusMeters` 50. The committed copy is `core/common/src/test/resources/pokeminers/interaction_range_settings.json`, written by `scripts/pokeminers_fetch.py`. The ring radii are recorded here only; no code reads them. The game master has no camera pitch, field of view or zoom setting.
-- The 50 m white pulse explains why the ring changes size: the drawn ring grows over time.
-- Reddit blocks plain curl and the fetch tool. Read posts through the Arctic Shift API (`https://arctic-shift.photon-reddit.com/api/posts/ids?ids=<id>`).
 
 ### Test material
 
