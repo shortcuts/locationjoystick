@@ -1023,6 +1023,14 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         reconnectTapEnabledValue = enabled
     }
 
+    var externalTeleportEnabledValue = false
+
+    override fun getExternalTeleportEnabled(): Flow<Boolean> = flowOf(externalTeleportEnabledValue)
+
+    override suspend fun setExternalTeleportEnabled(enabled: Boolean) {
+        externalTeleportEnabledValue = enabled
+    }
+
     var clearAllExceptOnboardingCallCount = 0
 
     override suspend fun clearAllExceptOnboarding() {

@@ -40,4 +40,6 @@ The literal `theappninjas.gpsjoystick.TELEPORT` works with the sender today. The
 ## Limits
 
 - The foreground start comes from outside the app. A start from the shell is allowed in the background, and a cold start with the app not running worked. A sender with no background exemption may be refused by Android 14 and later. The service catches that refusal, logs it and stops.
-- The toggle that enables the component, and its persistence, are a separate entry. Until it lands, enable the component with `pm enable` on a test phone.
+- Settings → General holds the switch. A per-device store holds its value, so it sits outside the export model.
+- `LjApplication` applies the stored value to the component at app start and on every change. One collector covers a reinstall, a data restore and Reset all data, which turns the component off.
+- A backup import never restores the value. A restored backup must not enable an entry point that any app on the phone can use.

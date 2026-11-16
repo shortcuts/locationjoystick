@@ -457,6 +457,8 @@ fun SettingsRoute(
                     viewModel.setReconnectTapEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetExternalTeleportEnabled -> viewModel.setExternalTeleportEnabled(action.enabled)
+
                 is SettingsAction.SetGuidedPath -> viewModel.setGuidedPath(action.path)
 
                 is SettingsAction.SetThemeMode -> {

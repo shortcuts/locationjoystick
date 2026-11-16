@@ -260,7 +260,8 @@ class SettingsViewModel
                 settingsRepository.getAccessibilityDisclosureChoice(),
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
                 settingsRepository.getBaseAltitudeOverride(),
-            ) { snapshot, disclosureChoice, (isServiceGranted, capture), baseAltitudeOverride ->
+                settingsRepository.getExternalTeleportEnabled(),
+            ) { snapshot, disclosureChoice, (isServiceGranted, capture), baseAltitudeOverride, externalTeleportEnabled ->
                 SettingsScreenState.Loaded(
                     SettingsUiState(
                         settings = snapshot.settings,
@@ -285,6 +286,7 @@ class SettingsViewModel
                         launchAfterLinkChosen = capture.launchAfterLinkChosen,
                         isScreenServiceGranted = isServiceGranted,
                         accessibilityDisclosureAccepted = disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
+                        externalTeleportEnabled = externalTeleportEnabled,
                     ),
                 )
             }.stateIn(
@@ -601,6 +603,10 @@ class SettingsViewModel
 
         fun setReconnectTapEnabled(enabled: Boolean) {
             save { settingsRepository.setReconnectTapEnabled(enabled) }
+        }
+
+        fun setExternalTeleportEnabled(enabled: Boolean) {
+            save { settingsRepository.setExternalTeleportEnabled(enabled) }
         }
 
         /** Launchable apps for the Capture launch-after-link picker; empty until the off-main query finishes. */

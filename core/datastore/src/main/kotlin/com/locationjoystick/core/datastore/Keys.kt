@@ -96,6 +96,7 @@ internal object Keys {
     val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
     val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
     val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
+    val EXTERNAL_TELEPORT_ENABLED = booleanPreferencesKey("external_teleport_enabled")
     val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
     val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
     val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")

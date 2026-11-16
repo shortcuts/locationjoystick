@@ -38,6 +38,7 @@ interface PreferencesDataSource :
     SpoofHistoryPreferences,
     TapToWalkPreferences,
     ReconnectPreferences,
+    ExternalTeleportPreferences,
     SettingsSnapshotPreferences {
     /** Gets the current speed profiles (slow walk/walk/run/bike/drive speeds and active profile ID). */
     fun getSpeedProfiles(): Flow<SpeedProfilePreferences>
@@ -387,6 +388,7 @@ class AppPreferencesDataSource
         SpoofHistoryPreferences by SpoofHistoryStore(dataStore),
         TapToWalkPreferences by TapToWalkStore(dataStore),
         ReconnectPreferences by ReconnectStore(dataStore),
+        ExternalTeleportPreferences by ExternalTeleportStore(dataStore),
         SettingsSnapshotPreferences by SettingsSnapshotStore(dataStore) {
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
             dataStore.safeData("speed profile preferences").map { prefs ->

@@ -456,6 +456,10 @@ class SettingsRepository
 
         suspend fun setReconnectTapEnabled(enabled: Boolean) = dataSource.setReconnectTapEnabled(enabled)
 
+        fun getExternalTeleportEnabled(): Flow<Boolean> = dataSource.getExternalTeleportEnabled()
+
+        suspend fun setExternalTeleportEnabled(enabled: Boolean) = dataSource.setExternalTeleportEnabled(enabled)
+
         fun getEffectiveTapToWalk(sdkInt: Int = Build.VERSION.SDK_INT): Flow<Boolean> =
             combine(
                 getTapToWalkOverlayEnabled(),

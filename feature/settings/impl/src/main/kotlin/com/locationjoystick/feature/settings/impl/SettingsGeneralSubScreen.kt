@@ -97,6 +97,8 @@ internal fun SettingsGeneralSubScreen(
                         SettingsSectionDivider()
                         HideAppSection(uiState, onAction)
                         SettingsSectionDivider()
+                        ExternalAppsSection(uiState, onAction)
+                        SettingsSectionDivider()
                         DebugSection(uiState, onAction)
                     }
                 }
@@ -334,6 +336,22 @@ private fun HideAppSection(
         onCheckedChange = { onAction(SettingsAction.SetHideForegroundNotification(it)) },
         title = stringResource(R.string.settings_menus_hide_notification_icon),
         description = stringResource(R.string.settings_menus_hide_notification_icon_desc),
+    )
+}
+
+@Composable
+private fun ExternalAppsSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    SettingsSectionHeader(stringResource(R.string.settings_menus_external_apps))
+    Spacer(Modifier.height(LjSpacing.xs))
+    LjSelectionRow(
+        mode = LjSelectionMode.Toggle,
+        checked = uiState.externalTeleportEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetExternalTeleportEnabled(it)) },
+        title = stringResource(R.string.settings_menus_external_teleport),
+        description = stringResource(R.string.settings_menus_external_teleport_desc),
     )
 }
 

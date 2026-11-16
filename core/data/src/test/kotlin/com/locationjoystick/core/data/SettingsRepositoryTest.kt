@@ -1246,6 +1246,16 @@ class SettingsRepositoryTest {
             }
         }
 
+    @Test
+    fun `external teleport enabled defaults false and round trips`() =
+        runTest {
+            assertFalse(repository.getExternalTeleportEnabled().first())
+
+            repository.setExternalTeleportEnabled(true)
+
+            assertTrue(repository.getExternalTeleportEnabled().first())
+        }
+
     // reconnect tap flags
 
     @Test
@@ -1884,6 +1894,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setReconnectTapEnabled(enabled: Boolean) {
         reconnectTapEnabledFlow.value = enabled
+    }
+
+    val externalTeleportEnabledFlow = MutableStateFlow(false)
+
+    override fun getExternalTeleportEnabled(): Flow<Boolean> = externalTeleportEnabledFlow
+
+    override suspend fun setExternalTeleportEnabled(enabled: Boolean) {
+        externalTeleportEnabledFlow.value = enabled
     }
 
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())

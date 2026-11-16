@@ -153,6 +153,9 @@
     <string name="settings_menus_capture_browser_automatic">"自动"</string>
     <string name="settings_menus_capture_launch_after_title">"链接处理后打开"</string>
     <string name="settings_menus_capture_launch_after_none">"无"</string>
+    <string name="settings_menus_external_apps">"其他应用"</string>
+    <string name="settings_menus_external_teleport">"允许其他应用传送"</string>
+    <string name="settings_menus_external_teleport_desc">"允许此手机上的其他应用移动你的位置，例如通过 Pokemod 传送命令（theappninjas.gpsjoystick.TELEPORT）。默认关闭。仅对你信任的应用开启。"</string>
     <string name="settings_menus_debug">"调试"</string>
     <string name="settings_menus_debug_stats">"调试信息"</string>
     <string name="settings_menus_debug_stats_desc">"模拟定位生效期间，在悬浮窗面板中显示实时速度、海拔、坐标和刷新频率。"</string>

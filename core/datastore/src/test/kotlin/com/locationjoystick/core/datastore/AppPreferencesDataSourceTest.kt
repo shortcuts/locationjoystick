@@ -395,6 +395,14 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `external teleport enabled defaults false and round trips`() =
+        runTest {
+            assertFalse(dataSource.getExternalTeleportEnabled().first())
+            dataSource.setExternalTeleportEnabled(true)
+            assertTrue(dataSource.getExternalTeleportEnabled().first())
+        }
+
+    @Test
     fun `bypassMockLocationCheck defaults to false and round-trips true`() =
         runTest {
             assertFalse(dataSource.getBypassMockLocationCheck().first())

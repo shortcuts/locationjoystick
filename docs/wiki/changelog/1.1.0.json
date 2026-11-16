@@ -7,6 +7,7 @@
     { "category": "feat", "scope": "Routes", "summary": "Teleport routes now show the stop counter too." },
     { "category": "feat", "scope": "Map", "summary": "The suggested teleport wait now also shows on the route start sheet and the paste coordinates box, in the app and in the floating widget." },
     { "category": "feat", "scope": "Settings", "summary": "Added Privacy Mode to the GitHub download. It installs a renamed copy of the app, so other apps do not see its name." },
+    { "category": "feat", "scope": "Settings", "summary": "New switch, Teleport from other apps. When you turn it on, other apps on your phone, such as Pokemod, can teleport you. It is off by default." },
     { "category": "fix", "scope": "Routes", "summary": "A looping route now starts over at the first stop instead of walking back. To walk back and forth, tick Walk back and forth under Loop." }
   ]
 }

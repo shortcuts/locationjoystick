@@ -1,6 +1,7 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -113,6 +114,17 @@ class SettingsSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Menus").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("App features").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun settings_shows_teleport_from_other_apps_off_by_default() {
+        composeRule.onNodeWithText("General").performClick()
+        composeRule.waitForIdle()
+        composeRule
+            .onNodeWithText("Teleport from other apps")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertIsOff()
     }
 
     @Test

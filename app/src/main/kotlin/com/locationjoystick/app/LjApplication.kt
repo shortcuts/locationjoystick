@@ -1,7 +1,10 @@
 package com.locationjoystick.app
 
 import android.app.Application
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.util.Log
 import com.locationjoystick.core.common.geocoding.Geocoding
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.GroupRepository
@@ -9,6 +12,7 @@ import com.locationjoystick.core.data.HotLocationsRepository
 import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.location.ExternalTeleportService
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.map.maplibre.MapTileHttp
 import com.locationjoystick.core.model.GroupRole
@@ -18,6 +22,7 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -53,6 +58,9 @@ class LjApplication : Application() {
             settingsRepository.getDisabledGeocodingProviders().collect { Geocoding.disabled = it }
         }
         applicationScope.launch {
+            settingsRepository.getExternalTeleportEnabled().distinctUntilChanged().collect(::applyExternalTeleportComponent)
+        }
+        applicationScope.launch {
             if (hotLocationsRepository.refreshIfStale()) {
                 val s = settingsRepository.getSettingsSnapshot().first()
                 if (s.hotLocationsEnabled) {
@@ -67,6 +75,20 @@ class LjApplication : Application() {
                     routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, s.selectedHotRouteIds)
                 }
             }
+        }
+    }
+
+    private fun applyExternalTeleportComponent(enabled: Boolean) {
+        val state =
+            if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        try {
+            packageManager.setComponentEnabledSetting(
+                ComponentName(this, ExternalTeleportService::class.java),
+                state,
+                PackageManager.DONT_KILL_APP,
+            )
+        } catch (e: RuntimeException) {
+            Log.e("LjApplication", "external teleport component state not applied", e)
         }
     }
 

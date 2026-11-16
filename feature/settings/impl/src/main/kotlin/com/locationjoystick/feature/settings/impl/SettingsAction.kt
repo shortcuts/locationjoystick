@@ -223,6 +223,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetExternalTeleportEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetGuidedPath(
         val path: GuidedPath,
     ) : SettingsAction()

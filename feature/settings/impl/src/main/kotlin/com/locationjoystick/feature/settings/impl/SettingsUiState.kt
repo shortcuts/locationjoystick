@@ -28,6 +28,7 @@ data class SettingsUiState(
     val selectedHotRouteIds: Set<String> = emptySet(),
     val isScreenServiceGranted: Boolean = false,
     val accessibilityDisclosureAccepted: Boolean = false,
+    val externalTeleportEnabled: Boolean = false,
     val hasAltitudeOverride: Boolean = false,
     val captureModeEnabled: Boolean = false,
     val captureEnabled: Boolean = false,

@@ -1304,7 +1304,7 @@ set_debug_stats() {
   tap_text "General"
   wait_s 2 "General loading"
   # Debug section is last on the General page, well below the fold (Theme,
-  # Map source, Place search, Teleport and walking, Hide the app all come first) — keep
+  # Map source, Place search, Teleport and walking, Hide the app, Other apps all come first) — keep
   # scrolling until the row actually appears.
   for _ in 1 2 3 4 5 6 7; do
     dump=$(ui_dump)

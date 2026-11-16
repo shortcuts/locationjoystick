@@ -153,6 +153,9 @@
     <string name="settings_menus_capture_browser_automatic">"Automatic"</string>
     <string name="settings_menus_capture_launch_after_title">"After a map link, open"</string>
     <string name="settings_menus_capture_launch_after_none">"None"</string>
+    <string name="settings_menus_external_apps">"Other apps"</string>
+    <string name="settings_menus_external_teleport">"Teleport from other apps"</string>
+    <string name="settings_menus_external_teleport_desc">"Lets other apps on this phone move your location, such as with the Pokemod teleport command (theappninjas.gpsjoystick.TELEPORT). Off by default. Turn it on only for an app you trust."</string>
     <string name="settings_menus_debug">"Debug"</string>
     <string name="settings_menus_debug_stats">"Debug stats"</string>
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
