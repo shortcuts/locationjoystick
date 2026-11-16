@@ -2,7 +2,6 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.RoadRouteFetch
 import com.locationjoystick.core.model.ActiveMode
-import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
 import kotlinx.coroutines.Job
@@ -12,7 +11,6 @@ import org.junit.Test
 class PauseActionTest {
     private val idle = RoadRouteFetch.Idle
     private val walkFetch = RoadRouteFetch.WalkFetch(Job())
-    private val running = MockLocationState.RUNNING
 
     private fun active(
         mode: MockMode,
@@ -21,46 +19,52 @@ class PauseActionTest {
 
     @Test
     fun `follower leaves follow leader`() =
-        assertEquals(PauseAction.LeaveFollower, pauseActionFor(MovementState.Manual(MockMode.FOLLOWER), idle, running))
+        assertEquals(PauseAction.LeaveFollower, pauseActionFor(MovementState.Manual(MockMode.FOLLOWER), idle))
 
     @Test
     fun `joystick with nothing running does nothing`() =
-        assertEquals(PauseAction.None, pauseActionFor(MovementState.Manual(MockMode.JOYSTICK), idle, running))
+        assertEquals(PauseAction.None, pauseActionFor(MovementState.Manual(MockMode.JOYSTICK), idle))
 
     @Test
-    fun `walk pauses`() = assertEquals(PauseAction.PauseWalk, pauseActionFor(active(MockMode.WALK_TO), idle, running))
+    fun `walk pauses`() = assertEquals(PauseAction.PauseWalk, pauseActionFor(active(MockMode.WALK_TO), idle))
 
     @Test
-    fun `paused walk does nothing`() = assertEquals(PauseAction.None, pauseActionFor(active(MockMode.WALK_TO, true), idle, running))
+    fun `paused walk does nothing`() = assertEquals(PauseAction.None, pauseActionFor(active(MockMode.WALK_TO, true), idle))
 
     @Test
     fun `walk fetch pauses the walk before the mode is WALK_TO`() =
-        assertEquals(PauseAction.PauseWalk, pauseActionFor(MovementState.Manual(MockMode.TELEPORT), walkFetch, running))
+        assertEquals(PauseAction.PauseWalk, pauseActionFor(MovementState.Manual(MockMode.TELEPORT), walkFetch))
 
     @Test
     fun `walk fetch already paused does nothing`() =
         assertEquals(
             PauseAction.None,
-            pauseActionFor(MovementState.Manual(MockMode.TELEPORT), walkFetch.copy(pausedOnStart = true), running),
+            pauseActionFor(MovementState.PausePending(MockMode.TELEPORT, ActiveMode.WALK_TO), walkFetch),
         )
 
     @Test
-    fun `walk fetch outranks roaming`() = assertEquals(PauseAction.PauseWalk, pauseActionFor(active(MockMode.ROAMING), walkFetch, running))
+    fun `walk fetch outranks roaming`() = assertEquals(PauseAction.PauseWalk, pauseActionFor(active(MockMode.ROAMING), walkFetch))
 
     @Test
-    fun `roaming pauses`() = assertEquals(PauseAction.PauseRoaming, pauseActionFor(active(MockMode.ROAMING), idle, running))
+    fun `roaming pauses`() = assertEquals(PauseAction.PauseRoaming, pauseActionFor(active(MockMode.ROAMING), idle))
 
     @Test
-    fun `paused roaming does nothing`() = assertEquals(PauseAction.None, pauseActionFor(active(MockMode.ROAMING, true), idle, running))
+    fun `paused roaming does nothing`() = assertEquals(PauseAction.None, pauseActionFor(active(MockMode.ROAMING, true), idle))
 
     @Test
-    fun `replay pauses`() = assertEquals(PauseAction.PauseReplay, pauseActionFor(active(MockMode.ROUTE_REPLAY), idle, running))
+    fun `replay pauses`() = assertEquals(PauseAction.PauseReplay, pauseActionFor(active(MockMode.ROUTE_REPLAY), idle))
 
     @Test
-    fun `paused replay does nothing`() =
-        assertEquals(PauseAction.None, pauseActionFor(active(MockMode.ROUTE_REPLAY), idle, MockLocationState.PAUSED))
+    fun `paused replay does nothing`() = assertEquals(PauseAction.None, pauseActionFor(active(MockMode.ROUTE_REPLAY, true), idle))
 
     @Test
     fun `replay fetch pauses the replay before the mode is ROUTE_REPLAY`() =
-        assertEquals(PauseAction.PauseReplay, pauseActionFor(MovementState.Manual(MockMode.TELEPORT), RoadRouteFetch.ReplayFetch, running))
+        assertEquals(PauseAction.PauseReplay, pauseActionFor(MovementState.Manual(MockMode.TELEPORT), RoadRouteFetch.ReplayFetch))
+
+    @Test
+    fun `replay fetch already paused does nothing`() =
+        assertEquals(
+            PauseAction.None,
+            pauseActionFor(MovementState.PausePending(MockMode.TELEPORT, ActiveMode.ROUTE_REPLAY), RoadRouteFetch.ReplayFetch),
+        )
 }

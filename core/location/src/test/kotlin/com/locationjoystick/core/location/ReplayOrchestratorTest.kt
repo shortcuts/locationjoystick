@@ -12,10 +12,12 @@ import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SpoofingEvent
 import com.locationjoystick.core.data.WalkToEngine
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
@@ -109,32 +111,21 @@ class ReplayOrchestratorTest {
         orchestrator.handlePause()
 
         verify { routeReplayEngine.pause() }
-        assertEquals(SpoofingEvent.PAUSE, events.last())
+        assertEquals(MovementState.Paused(ActiveMode.ROUTE_REPLAY), locationRepository.currentMovement())
         assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
-    }
-
-    @Test
-    fun handlePause_whenServiceRejectsPause_keepsRepositoryState() {
-        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        locationRepository.startSpoofing()
-        acceptEvents = false
-
-        orchestrator.handlePause()
-
-        assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
     }
 
     @Test
     fun handleResume_whenServiceRejectsStart_keepsRepositoryState() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         locationRepository.startSpoofing()
-        locationRepository.pauseSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.FAIL)
         acceptEvents = false
 
         orchestrator.handleResume(1.4)
 
         assertEquals(SpoofingEvent.START, events.last())
-        assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
+        assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
     }
 
     @Test
@@ -165,7 +156,7 @@ class ReplayOrchestratorTest {
 
             orchestrator.handleStart("pending", 1.4, RouteStartConfig(followRoadsToStart = true, teleportToStart = true))
             // The joystick marks the repository paused before the service processes its intent.
-            locationRepository.pauseSpoofing()
+            locationRepository.pauseReplay()
             orchestrator.handlePause()
             val manualPosition = LatLng(5.0, 5.0)
             locationRepository.setPositionInternal(manualPosition)
@@ -477,15 +468,17 @@ class ReplayOrchestratorTest {
         }
 
     @Test
-    fun handleStop_whenPaused_doesNotCallStartUpdateLoop() =
+    fun handleStop_whenPaused_returnsToRunningAndRestartsUpdateLoop() =
         runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.startSpoofing()
-            locationRepository.pauseSpoofing()
+            locationRepository.pauseReplay()
             assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
 
             orchestrator.handleStop()
 
-            assertFalse(startUpdateLoopCalled)
+            assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
+            assertTrue(startUpdateLoopCalled)
         }
 
     @Test

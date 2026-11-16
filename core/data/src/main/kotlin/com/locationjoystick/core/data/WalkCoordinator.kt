@@ -121,8 +121,6 @@ class WalkCoordinator
                 waypointIndex = 0
                 val finalTarget = waypoints.last()
                 locationRepository.setWalkTarget(finalTarget)
-                locationRepository.setMockMode(MockMode.WALK_TO)
-                if (locationRepository.roadRouteFetch.value.walkFetchPaused) locationRepository.pauseMovement()
 
                 var lastBearing = 0f
                 with(walkToEngine) {

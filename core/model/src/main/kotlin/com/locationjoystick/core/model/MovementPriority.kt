@@ -8,7 +8,7 @@ package com.locationjoystick.core.model
  *    roam start. Starting roam must stop the
  *    paused replay first so two engines never write position together.
  * 3. **Playing** roam owns the tick over joystick. **Paused** roam yields to the joystick
- *    (mode stays `ROAMING`). Roam pause lives in [MovementState], not [MockLocationState.PAUSED].
+ *    (mode stays `ROAMING`). Roam and replay pause live in [MovementState].
  * 4. Walk-to yields while its own pause flag is set. Follower always owns the tick.
  *
  * Those rules only gate the joystick's own ticks (e.g. a retained locked-stick direction). A new
@@ -27,6 +27,7 @@ fun canStartRoaming(
 fun shouldIgnoreJoystickInput(movement: MovementState): Boolean =
     when (movement) {
         is MovementState.Manual -> movement.mode == MockMode.FOLLOWER
+        is MovementState.PausePending -> movement.mode == MockMode.FOLLOWER
         is MovementState.Running -> true
         is MovementState.Paused -> false
     }

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "SpoofingStateMachine"
 
-enum class SpoofingEvent { START, PAUSE, STOP, FAIL, CLEAR_ERROR }
+enum class SpoofingEvent { START, STOP, FAIL, CLEAR_ERROR }
 
 /** Returns the next state, or null when [event] is rejected in [current]. */
 internal fun nextSpoofingState(
@@ -19,24 +19,22 @@ internal fun nextSpoofingState(
         MockLocationState.IDLE ->
             when (event) {
                 SpoofingEvent.START -> MockLocationState.RUNNING
-                SpoofingEvent.PAUSE -> null
                 SpoofingEvent.STOP -> MockLocationState.IDLE
                 SpoofingEvent.FAIL -> MockLocationState.ERROR
                 SpoofingEvent.CLEAR_ERROR -> null
             }
+        // PAUSED is derived by LocationRepository and never held here.
         MockLocationState.RUNNING, MockLocationState.PAUSED ->
             when (event) {
                 SpoofingEvent.START -> MockLocationState.RUNNING
-                SpoofingEvent.PAUSE -> MockLocationState.PAUSED
                 SpoofingEvent.STOP -> MockLocationState.IDLE
                 SpoofingEvent.FAIL -> MockLocationState.ERROR
                 SpoofingEvent.CLEAR_ERROR -> null
             }
-        // A late START or PAUSE must not hide a failed provider; only Stop and retry leave ERROR.
+        // A late START must not hide a failed provider; only Stop and retry leave ERROR.
         MockLocationState.ERROR ->
             when (event) {
                 SpoofingEvent.START -> null
-                SpoofingEvent.PAUSE -> null
                 SpoofingEvent.STOP -> MockLocationState.IDLE
                 SpoofingEvent.FAIL -> MockLocationState.ERROR
                 SpoofingEvent.CLEAR_ERROR -> MockLocationState.IDLE

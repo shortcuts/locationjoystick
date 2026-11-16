@@ -271,7 +271,7 @@ internal class ReplayOrchestrator(
             state?.let { lifecycle.setPaused(it, true) }
             if (state == null || state.engineStarted) activeReplayer.pause()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            onSpoofingEvent(SpoofingEvent.PAUSE)
+            locationRepository.pauseReplay()
             publishProgress()
             Log.i(TAG, "Replay paused")
         }
@@ -450,7 +450,7 @@ internal class ReplayOrchestrator(
         // A pause requested while OSRM or the route lookup was pending must survive setup.
         lifecycle.locked {
             onSpoofingEvent(SpoofingEvent.START)
-            if (state.paused) onSpoofingEvent(SpoofingEvent.PAUSE)
+            if (state.paused) locationRepository.pauseReplay()
         }
 
         lifecycle.awaitResume(state)

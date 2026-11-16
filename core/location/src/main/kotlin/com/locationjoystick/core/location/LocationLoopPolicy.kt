@@ -99,7 +99,7 @@ internal fun computeRunningLoopAction(
  */
 internal fun shouldApplyUpdatePositionWithVector(movement: MovementState): Boolean =
     when (movement) {
-        is MovementState.Manual -> movement.mode == MockMode.JOYSTICK
+        is MovementState.Manual, is MovementState.PausePending -> movement.mode == MockMode.JOYSTICK
         is MovementState.Running -> movement.active == ActiveMode.WALK_TO
         is MovementState.Paused -> true
     }

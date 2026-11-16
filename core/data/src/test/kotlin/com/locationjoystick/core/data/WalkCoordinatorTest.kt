@@ -7,6 +7,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.isPaused
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -403,7 +404,7 @@ class WalkCoordinatorTest {
             locationRepository.beginRoadRouteFetch(Job())
 
             walkCoordinator.pause()
-            assertTrue(locationRepository.isWalkPaused())
+            assertTrue(locationRepository.currentMovement().isPaused(MockMode.WALK_TO))
             walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
 
             assertEquals(MovementState.Paused(ActiveMode.WALK_TO), locationRepository.currentMovement())

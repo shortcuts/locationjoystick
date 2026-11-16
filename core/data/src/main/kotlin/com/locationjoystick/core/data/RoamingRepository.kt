@@ -4,7 +4,6 @@ import android.util.Log
 import com.locationjoystick.core.common.util.BearingTracker
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.canStartRoaming
@@ -68,9 +67,6 @@ class RoamingRepository
                 locationRepository.setRouteWaypoints(null)
                 locationRepository.setRouteProgress(null)
                 locationRepository.setActiveRouteId(null)
-                if (state == MockLocationState.PAUSED) {
-                    locationRepository.startSpoofing()
-                }
             }
             Log.d(
                 TAG,

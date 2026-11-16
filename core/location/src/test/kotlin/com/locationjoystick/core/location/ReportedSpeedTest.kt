@@ -34,9 +34,9 @@ class ReportedSpeedTest {
     fun `paused spoofing publishes zero speed`() {
         val service = newService()
         service.locationRepository.startSpoofing()
-        service.locationRepository.setMockMode(MockMode.WALK_TO)
+        service.locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)
-        service.locationRepository.pauseSpoofing()
+        service.locationRepository.pauseReplay()
 
         service.publishReportedSpeed(service.captureSnapshot(nowMs = 0L).speedMs)
 

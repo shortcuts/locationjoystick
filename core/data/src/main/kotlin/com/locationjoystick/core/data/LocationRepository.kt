@@ -9,10 +9,9 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RouteProgress
-import com.locationjoystick.core.model.enterMode
-import com.locationjoystick.core.model.isActive
-import com.locationjoystick.core.model.isPaused
+import com.locationjoystick.core.model.afterEntering
 import com.locationjoystick.core.model.pausedOrNull
+import com.locationjoystick.core.model.pausesReplay
 import com.locationjoystick.core.model.resumedOrNull
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -32,19 +31,16 @@ import javax.inject.Singleton
 
 private const val TAG = "LocationRepository"
 
-/** The OSRM road fetch for one movement action. A walk fetch carries its job so a stop can cancel it, and a pause requested before the walk exists. */
+/** The OSRM road fetch for one movement action. A walk fetch carries its job so a stop can cancel it. */
 sealed interface RoadRouteFetch {
     data object Idle : RoadRouteFetch
 
     data class WalkFetch(
         val job: Job,
-        val pausedOnStart: Boolean = false,
     ) : RoadRouteFetch
 
     data object ReplayFetch : RoadRouteFetch
 }
-
-val RoadRouteFetch.walkFetchPaused: Boolean get() = this is RoadRouteFetch.WalkFetch && pausedOnStart
 
 /** Live per-tick snapshot for the debug overlay. [tickIntervalMs] is wall-clock time since the previous tick. */
 data class DebugStats(
@@ -68,8 +64,8 @@ data class DebugStats(
  *
  * ## Movement state
  * Read [movement] to know the current mode and whether it is paused. It is the single source of
- * truth — do NOT re-derive it from [activeRouteId], [walkTarget], or roaming flags. Replay pause
- * stays in [mockLocationState] because it is also the spoofing lifecycle; [movement] folds it in.
+ * truth — do NOT re-derive it from [activeRouteId], [walkTarget], or roaming flags. Every pause
+ * lives there; [mockLocationState] derives PAUSED from it while a replay is paused.
  */
 @Singleton
 class LocationRepository
@@ -132,7 +128,6 @@ class LocationRepository
         }
 
         private val spoofingMachine = SpoofingStateMachine()
-        val mockLocationState: StateFlow<MockLocationState> = spoofingMachine.state
 
         private val _activeRouteId = MutableStateFlow<String?>(null)
         val activeRouteId: StateFlow<String?> = _activeRouteId.asStateFlow()
@@ -166,6 +161,7 @@ class LocationRepository
 
         /** Releases the fetch started with the same [walkJob]. Any other owner's fetch stays, so this is safe to call twice. */
         fun endRoadRouteFetch(walkJob: Job? = null) {
+            var released = false
             _roadRouteFetch.update {
                 val owned =
                     when (it) {
@@ -173,8 +169,10 @@ class LocationRepository
                         RoadRouteFetch.ReplayFetch -> walkJob == null
                         RoadRouteFetch.Idle -> false
                     }
+                released = owned
                 if (owned) RoadRouteFetch.Idle else it
             }
+            if (released) clearPendingPause(if (walkJob != null) ActiveMode.WALK_TO else ActiveMode.ROUTE_REPLAY)
         }
 
         /** Cancels the in-flight walk fetch. Ignored when idle or when the fetch belongs to a replay. */
@@ -188,48 +186,81 @@ class LocationRepository
                     current
                 }
             }
+            if (_roadRouteFetch.value is RoadRouteFetch.Idle) clearPendingPause(ActiveMode.WALK_TO)
         }
 
         /** Holds a pause for the walk this fetch will start. Ignored when no walk fetch is pending. */
-        fun pauseWalkFetch(): Boolean = setWalkFetchPaused(from = false, to = true)
-
-        fun resumeWalkFetch(): Boolean = setWalkFetchPaused(from = true, to = false)
-
-        private fun setWalkFetchPaused(
-            from: Boolean,
-            to: Boolean,
-        ): Boolean {
+        fun pauseWalkFetch(): Boolean {
             var changed = false
-            _roadRouteFetch.update { current ->
-                if (current is RoadRouteFetch.WalkFetch && current.pausedOnStart == from) {
+            _movement.update { current ->
+                if (current is MovementState.Manual && _roadRouteFetch.value is RoadRouteFetch.WalkFetch) {
                     changed = true
-                    current.copy(pausedOnStart = to)
+                    MovementState.PausePending(current.mode, ActiveMode.WALK_TO)
                 } else {
-                    Log.w(TAG, "ignored walk fetch pause=$to from $current")
+                    Log.w(TAG, "ignored walk fetch pause from $current")
                     current
                 }
             }
             return changed
         }
 
-        /** Whether the walk is paused, either running or still being fetched. */
-        fun isWalkPaused(): Boolean = currentMovement().isPaused(MockMode.WALK_TO) || _roadRouteFetch.value.walkFetchPaused
+        fun resumeWalkFetch(): Boolean {
+            var changed = false
+            _movement.update { current ->
+                if (current is MovementState.PausePending && current.pending == ActiveMode.WALK_TO) {
+                    changed = true
+                    MovementState.Manual(current.manual)
+                } else {
+                    Log.w(TAG, "ignored walk fetch resume from $current")
+                    current
+                }
+            }
+            return changed
+        }
+
+        /** Pauses a replay, or holds the pause while its road fetch runs. Repeating it is a quiet no-op. */
+        fun pauseReplay() {
+            _movement.update { current ->
+                when {
+                    current.pausesReplay -> current
+                    current == MovementState.Running(ActiveMode.ROUTE_REPLAY) -> MovementState.Paused(ActiveMode.ROUTE_REPLAY)
+                    current is MovementState.Manual && _roadRouteFetch.value is RoadRouteFetch.ReplayFetch ->
+                        MovementState.PausePending(current.mode, ActiveMode.ROUTE_REPLAY)
+                    else -> {
+                        Log.w(TAG, "ignored replay pause from $current")
+                        current
+                    }
+                }
+            }
+        }
+
+        private fun clearPendingPause(active: ActiveMode) {
+            _movement.update { if (it is MovementState.PausePending && it.pending == active) MovementState.Manual(it.manual) else it }
+        }
+
+        private fun clearReplayPause() {
+            _movement.update {
+                when {
+                    it == MovementState.Paused(ActiveMode.ROUTE_REPLAY) -> MovementState.Running(ActiveMode.ROUTE_REPLAY)
+                    it is MovementState.PausePending && it.pending == ActiveMode.ROUTE_REPLAY -> MovementState.Manual(it.manual)
+                    else -> it
+                }
+            }
+        }
 
         private val _movement = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.TELEPORT))
 
         val currentMode: StateFlow<MockMode> = _movement.mapState { it.mode }
 
-        /** Mode and pause state, with replay pause read from [mockLocationState]. */
-        val movement: Flow<MovementState> = combine(_movement, mockLocationState) { m, state -> m.withReplayPause(state) }
+        /** Mode and pause state. */
+        val movement: Flow<MovementState> = _movement.asStateFlow()
 
-        /** Synchronous snapshot of [movement]. */
-        fun currentMovement(): MovementState = _movement.value.withReplayPause(mockLocationState.value)
+        fun currentMovement(): MovementState = _movement.value
 
-        private fun MovementState.withReplayPause(state: MockLocationState): MovementState =
-            when {
-                !isActive(MockMode.ROUTE_REPLAY) -> this
-                state == MockLocationState.PAUSED -> MovementState.Paused(ActiveMode.ROUTE_REPLAY)
-                else -> MovementState.Running(ActiveMode.ROUTE_REPLAY)
+        /** The spoofing lifecycle, with PAUSED while a replay is paused. */
+        val mockLocationState: StateFlow<MockLocationState> =
+            combineState(spoofingMachine.state, _movement) { spoofing, movement ->
+                if (spoofing == MockLocationState.RUNNING && movement.pausesReplay) MockLocationState.PAUSED else spoofing
             }
 
         private inline fun transition(next: (MovementState) -> MovementState?) {
@@ -274,8 +305,12 @@ class LocationRepository
                         _currentPosition.value =
                             LatLng(latitude = AppConstants.MapConstants.DEFAULT_LAT, longitude = AppConstants.MapConstants.DEFAULT_LON)
                     }
-                SpoofingEvent.STOP -> _reportedSpeedMps.value = 0f
-                SpoofingEvent.PAUSE, SpoofingEvent.FAIL, SpoofingEvent.CLEAR_ERROR -> Unit
+                SpoofingEvent.STOP -> {
+                    _reportedSpeedMps.value = 0f
+                    clearReplayPause()
+                }
+                SpoofingEvent.FAIL -> clearReplayPause()
+                SpoofingEvent.CLEAR_ERROR -> Unit
             }
             return true
         }
@@ -286,10 +321,6 @@ class LocationRepository
 
         fun stopSpoofing() {
             sendSpoofingEvent(SpoofingEvent.STOP)
-        }
-
-        fun pauseSpoofing() {
-            sendSpoofingEvent(SpoofingEvent.PAUSE)
         }
 
         fun setActiveRouteId(id: String?) {
@@ -307,11 +338,13 @@ class LocationRepository
             } else if (_movement.value.mode == MockMode.WALK_TO) {
                 // Only reset a walk, so a mode set by another subsystem survives (e.g. replay after a walk).
                 setMockMode(MockMode.TELEPORT)
+            } else {
+                clearPendingPause(ActiveMode.WALK_TO)
             }
         }
 
         fun setMockMode(mode: MockMode) {
-            transition { enterMode(mode) }
+            transition { it.afterEntering(mode) }
         }
 
         /** Pauses a walk or roam. Ignored in any other state. */
@@ -334,6 +367,22 @@ class LocationRepository
 
         fun setRouteProgress(progress: RouteProgress?) {
             _routeProgress.value = progress
+        }
+    }
+
+/** A [StateFlow] view whose value and emissions follow [transform] of two flows. */
+private fun <A, B, R> combineState(
+    a: StateFlow<A>,
+    b: StateFlow<B>,
+    transform: (A, B) -> R,
+): StateFlow<R> =
+    object : StateFlow<R> {
+        override val value: R get() = transform(a.value, b.value)
+        override val replayCache: List<R> get() = listOf(value)
+
+        override suspend fun collect(collector: FlowCollector<R>): Nothing {
+            combine(a, b, transform).distinctUntilChanged().collect(collector)
+            error("StateFlow collection never completes")
         }
     }
 

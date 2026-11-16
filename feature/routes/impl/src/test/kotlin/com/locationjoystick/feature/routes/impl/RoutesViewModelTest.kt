@@ -13,6 +13,7 @@ import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LoopMode
+import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
@@ -248,8 +249,9 @@ class RoutesViewModelUiStateTest {
     fun playbackState_isPaused_when_active_route_and_paused() =
         runTest {
             locationRepository.setActiveRouteId("r1")
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.startSpoofing()
-            locationRepository.pauseSpoofing()
+            locationRepository.pauseReplay()
 
             viewModel.playbackState.test {
                 val state = awaitItem()

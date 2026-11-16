@@ -18,19 +18,19 @@ class MovementStateTest {
     }
 
     @Test
-    fun `pause and resume round-trip for walk and roam`() {
-        listOf(MockMode.WALK_TO, MockMode.ROAMING).forEach {
-            val paused = enterMode(it).pausedOrNull()
-            assertEquals(MovementState.Paused(ActiveMode.valueOf(it.name)), paused)
-            assertEquals(MovementState.Running(ActiveMode.valueOf(it.name)), paused!!.resumedOrNull())
+    fun `pause and resume round-trip for every active mode`() {
+        ActiveMode.entries.forEach {
+            val paused = MovementState.Running(it).pausedOrNull()
+            assertEquals(MovementState.Paused(it), paused)
+            assertEquals(MovementState.Running(it), paused!!.resumedOrNull())
         }
     }
 
     @Test
-    fun `pause is rejected from manual, replay and already paused`() {
+    fun `pause is rejected from manual, pending and already paused`() {
         assertNull(enterMode(MockMode.TELEPORT).pausedOrNull())
         assertNull(enterMode(MockMode.JOYSTICK).pausedOrNull())
-        assertNull(enterMode(MockMode.ROUTE_REPLAY).pausedOrNull())
+        assertNull(MovementState.PausePending(MockMode.TELEPORT, ActiveMode.WALK_TO).pausedOrNull())
         assertNull(MovementState.Paused(ActiveMode.ROAMING).pausedOrNull())
     }
 
@@ -38,7 +38,49 @@ class MovementStateTest {
     fun `resume is rejected when not paused`() {
         assertNull(enterMode(MockMode.WALK_TO).resumedOrNull())
         assertNull(enterMode(MockMode.TELEPORT).resumedOrNull())
-        assertNull(MovementState.Paused(ActiveMode.ROUTE_REPLAY).resumedOrNull())
+    }
+
+    @Test
+    fun `resume of a pending pause returns to the manual mode`() {
+        assertEquals(
+            MovementState.Manual(MockMode.JOYSTICK),
+            MovementState.PausePending(MockMode.JOYSTICK, ActiveMode.ROUTE_REPLAY).resumedOrNull(),
+        )
+    }
+
+    @Test
+    fun `entering the pending mode turns a pending pause into Paused`() {
+        val pending = MovementState.PausePending(MockMode.TELEPORT, ActiveMode.WALK_TO)
+        assertEquals(MovementState.Paused(ActiveMode.WALK_TO), pending.afterEntering(MockMode.WALK_TO))
+    }
+
+    @Test
+    fun `entering another mode drops a pending pause`() {
+        val pending = MovementState.PausePending(MockMode.TELEPORT, ActiveMode.WALK_TO)
+        assertEquals(MovementState.Running(ActiveMode.ROAMING), pending.afterEntering(MockMode.ROAMING))
+        assertEquals(MovementState.Manual(MockMode.JOYSTICK), pending.afterEntering(MockMode.JOYSTICK))
+    }
+
+    @Test
+    fun `entering a mode from any other state resets pause`() {
+        assertEquals(
+            MovementState.Running(ActiveMode.ROUTE_REPLAY),
+            MovementState.Paused(ActiveMode.ROUTE_REPLAY).afterEntering(MockMode.ROUTE_REPLAY),
+        )
+    }
+
+    @Test
+    fun `a pending pause counts as paused for its mode only`() {
+        val pending = MovementState.PausePending(MockMode.TELEPORT, ActiveMode.ROUTE_REPLAY)
+        assertTrue(pending.isPaused)
+        assertTrue(pending.isPaused(MockMode.ROUTE_REPLAY))
+        assertFalse(pending.isPaused(MockMode.WALK_TO))
+        assertFalse(pending.isActive)
+        assertEquals(MockMode.TELEPORT, pending.mode)
+        assertTrue(pending.pausesReplay)
+        assertTrue(MovementState.Paused(ActiveMode.ROUTE_REPLAY).pausesReplay)
+        assertFalse(MovementState.Running(ActiveMode.ROUTE_REPLAY).pausesReplay)
+        assertFalse(MovementState.Paused(ActiveMode.WALK_TO).pausesReplay)
     }
 
     @Test

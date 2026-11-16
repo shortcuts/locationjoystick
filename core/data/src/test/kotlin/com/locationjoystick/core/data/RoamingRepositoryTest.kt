@@ -90,7 +90,7 @@ class RoamingRepositoryTest {
         runTest {
             fakeLocationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             fakeLocationRepository.startSpoofing()
-            fakeLocationRepository.pauseSpoofing()
+            fakeLocationRepository.pauseReplay()
             fakeLocationRepository.setActiveRouteId("route-1")
             fakeLocationRepository.setRouteWaypoints(listOf(LatLng(1.0, 2.0), LatLng(3.0, 4.0)))
             val config = createDefaultConfig()

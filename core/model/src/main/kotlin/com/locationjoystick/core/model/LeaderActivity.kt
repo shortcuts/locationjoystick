@@ -19,7 +19,6 @@ sealed interface LeaderActivity {
     ) : LeaderActivity
 }
 
-/** [movement] must fold in the replay pause, as `LocationRepository.currentMovement()` does. */
 fun leaderActivityOf(
     movement: MovementState,
     progress: RouteProgress?,
@@ -27,7 +26,7 @@ fun leaderActivityOf(
 ): LeaderActivity? {
     val active =
         when (movement) {
-            is MovementState.Manual -> return null
+            is MovementState.Manual, is MovementState.PausePending -> return null
             is MovementState.Running -> movement.active
             is MovementState.Paused -> movement.active
         }

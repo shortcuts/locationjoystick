@@ -572,7 +572,6 @@ class MapController
                 pauseActionFor(
                     locationRepository.currentMovement(),
                     locationRepository.roadRouteFetch.value,
-                    locationRepository.mockLocationState.value,
                 )
             when (action) {
                 PauseAction.None -> Unit
@@ -589,7 +588,7 @@ class MapController
                 PauseAction.PauseRoaming -> roamingRepository.pauseRoaming()
                 PauseAction.PauseReplay -> {
                     // Mark this synchronously so repeated touch events do not queue more pause commands.
-                    locationRepository.pauseSpoofing()
+                    locationRepository.pauseReplay()
                     pauseRouteReplay()
                 }
             }
