@@ -69,3 +69,40 @@ fun backgroundArgb(hue: Int): Int {
     fun channel(f: Float) = ((f + m) * 255).toInt()
     return (0xFF shl 24) or (channel(r) shl 16) or (channel(g) shl 8) or channel(b)
 }
+
+/** Rotates the hue of [argb] by [hue] degrees. Alpha, saturation and value stay. */
+fun shiftHue(
+    argb: Int,
+    hue: Int,
+): Int {
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    val max = maxOf(r, g, b)
+    val min = minOf(r, g, b)
+    val delta = (max - min).toFloat()
+    if (delta == 0f) return argb
+    val base =
+        when (max) {
+            r -> ((g - b) / delta).mod(6f)
+            g -> (b - r) / delta + 2
+            else -> (r - g) / delta + 4
+        }
+    val h = (base + hue.mod(360) / 60f).mod(6f)
+    val v = max / 255f
+    val c = delta / 255f
+    val x = c * (1 - kotlin.math.abs(h % 2 - 1))
+    val (r1, g1, b1) =
+        when (h.toInt()) {
+            0 -> Triple(c, x, 0f)
+            1 -> Triple(x, c, 0f)
+            2 -> Triple(0f, c, x)
+            3 -> Triple(0f, x, c)
+            4 -> Triple(x, 0f, c)
+            else -> Triple(c, 0f, x)
+        }
+    val m = v - c
+
+    fun channel(f: Float) = Math.round((f + m) * 255)
+    return (argb and (0xFF shl 24)) or (channel(r1) shl 16) or (channel(g1) shl 8) or channel(b1)
+}

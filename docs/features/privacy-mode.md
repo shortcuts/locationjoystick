@@ -8,7 +8,16 @@ Installing another app needs `REQUEST_INSTALL_PACKAGES`. Play policy restricts i
 
 ## What it does
 
-It rewrites the installed APK into a clone under a random package ID, a user-chosen name and a shifted icon hue. It hides only the package name and label from other apps. It does not hide the mock-location setting from apps that read it. The disclosure and the wiki page say so.
+It rewrites the installed APK into a clone under a random package ID, a user-chosen name and a shifted icon hue. It hides the package name, the label and the icon colours from other apps. The icon hue shift covers background and glyph with one record hue. The clone drops the `locationjoystick` scheme filter and the verified-link filter, because the host's asset-links file lists the original's signature.
+
+## Remaining leaks
+
+- The dex is untouched, so the inner component names and class names still carry the original name. Renaming them is a separate spike.
+- The accessibility-service entry in system settings keeps the original service class name.
+- The widget module ships its own unshifted icon image (`ic_app_launcher`) inside the clone.
+- The mock-location setting stays visible to apps that read it.
+
+The disclosure and the wiki page say so.
 
 ## Decisions
 
