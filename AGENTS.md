@@ -176,6 +176,8 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `FollowerCatchUpCoordinator` | `:core:location` | Class (not service) | Owns follower catch-up state so the service does not hold it in loose fields. Mirrors `WalkCoordinator`. |
 | `FollowerResumeCoordinator` | `:core:location` | Class (not service) | Owns the wait that returns a follower to Follow leader after a manual mode. Owned by `MapController`; the service still performs the re-entry. |
 | `GroupModeController` | `:core:location` | Class (not service) | Owns leader advertising and the follower restoration and rediscovery jobs. Reports back through lambdas. |
+| `FollowerUpdateHandler` | `:core:location` | Class (not service) | Applies each polled leader position on a follower: target, bootstrap, pause or snap. Reads live service state through lambdas. |
+| `ServiceCommand` | `:core:location` | Sealed interface | One handled `MockLocationService` intent action with its extras read. `Intent?.toServiceCommand` returns null for an unknown action or a missing extra. |
 | `TestProviderController` | `:core:location` | Class (not service) | Owns the GPS test provider registration. Reports a refused provider or revoked mock app through `onError`. |
 | `SpoofingErrorHandler` | `:core:location` | Class (not service) | Moves the service to ERROR, releases the wake lock and stops walk, replay and roaming. |
 | `SpoofingStateMachine` | `:core:data` | Class (not service) | Owns the spoofing-state flow and the legal transitions. `LocationRepository` exposes it; collaborators send events, never states. |

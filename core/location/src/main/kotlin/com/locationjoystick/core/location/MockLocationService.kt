@@ -35,10 +35,8 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RouteStartConfig
-import com.locationjoystick.core.model.SyncPositionUpdate
 import com.locationjoystick.core.model.followerModeEnabled
 import com.locationjoystick.core.model.groupId
-import com.locationjoystick.core.model.leaderActivityOf
 import com.locationjoystick.core.model.role
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
@@ -180,6 +178,8 @@ class MockLocationService : Service() {
 
     private lateinit var groupMode: GroupModeController
 
+    private lateinit var followerUpdateHandler: FollowerUpdateHandler
+
     private lateinit var overlayNotificationReactor: OverlayNotificationReactor
 
     internal lateinit var altitudeAnchor: AltitudeAnchorCoordinator
@@ -304,6 +304,21 @@ class MockLocationService : Service() {
                 replayOrchestrator = replayOrchestrator,
                 roamingRepository = roamingRepository,
             )
+        followerUpdateHandler =
+            FollowerUpdateHandler(
+                scope = serviceScope,
+                followerCatchUp = followerCatchUp,
+                groupRepository = groupRepository,
+                settingsRepository = settingsRepository,
+                locationRepository = locationRepository,
+                serviceState = { state.value },
+                followLeaderTeleports = { followLeaderTeleports },
+                hideTeleportFeatures = { hideTeleportFeatures },
+                currentPosition = positionRef::get,
+                startSpoofing = ::startSpoofing,
+                snapToLeader = ::snapToLeader,
+                pauseForInactiveLeader = ::pauseFollowerForInactiveLeader,
+            )
         groupMode =
             GroupModeController(
                 scope = serviceScope,
@@ -312,6 +327,7 @@ class MockLocationService : Service() {
                 contentApiRoutes = contentApiRoutes,
                 groupNsdManager = groupNsdManager,
                 groupRepository = groupRepository,
+                locationRepository = locationRepository,
                 enterFollowerMode = ::enterFollowerMode,
                 exitFollowerMode = ::exitFollowerMode,
                 onLeaderExited = {
@@ -511,11 +527,10 @@ class MockLocationService : Service() {
             foregroundType,
         )
 
-        when (intent?.action) {
-            ACTION_START -> {
-                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, AppConstants.MapConstants.DEFAULT_LAT)
-                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, AppConstants.MapConstants.DEFAULT_LON)
-                startSpoofing(lat, lon)
+        val command = intent.toServiceCommand(positionRef.get()) ?: return START_STICKY
+        when (command) {
+            is ServiceCommand.Start -> {
+                startSpoofing(command.lat, command.lon)
                 // Safety net: a leader whose service was destroyed (OS kill) must serve followers again.
                 serviceScope.launch {
                     val gs = groupRepository.groupState.first()
@@ -524,18 +539,15 @@ class MockLocationService : Service() {
                 }
             }
 
-            ACTION_ENTER_FOLLOWER -> {
-                val host = intent.getStringExtra(AppConstants.ServiceConstants.EXTRA_FOLLOWER_HOST) ?: return START_STICKY
-                val port = intent.getIntExtra(AppConstants.ServiceConstants.EXTRA_FOLLOWER_PORT, 0)
-                val groupId = intent.getStringExtra(AppConstants.ServiceConstants.EXTRA_FOLLOWER_GROUP_ID) ?: return START_STICKY
-                enterFollowerMode(host, port, groupId)
+            is ServiceCommand.EnterFollower -> {
+                enterFollowerMode(command.host, command.port, command.groupId)
             }
 
-            ACTION_EXIT_FOLLOWER -> {
+            ServiceCommand.ExitFollower -> {
                 exitFollowerMode()
             }
 
-            AppConstants.ServiceConstants.ACTION_RESUME_FOLLOWER -> {
+            ServiceCommand.ResumeFollower -> {
                 // Same NSD re-resolve as boot restoration: the leader's port may have changed.
                 serviceScope.launch {
                     val gs = groupRepository.groupState.first()
@@ -544,16 +556,14 @@ class MockLocationService : Service() {
                 }
             }
 
-            AppConstants.ServiceConstants.ACTION_START_LEADER -> {
-                val groupId = intent.getStringExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID) ?: return START_STICKY
-                groupMode.enterLeaderMode(groupId)
+            is ServiceCommand.StartLeader -> {
+                groupMode.enterLeaderMode(command.groupId)
             }
 
-            AppConstants.ServiceConstants.ACTION_EXIT_LEADER -> {
+            ServiceCommand.ExitLeader -> {
                 groupMode.exitLeaderMode()
             }
-
-            null -> {
+            ServiceCommand.OsRestart -> {
                 // Service restarted by OS (START_STICKY). A parked widget must not resume mock GPS.
                 serviceScope.launch {
                     if (settingsRepository.getKeepWidgetOnIdle().first()) {
@@ -594,7 +604,7 @@ class MockLocationService : Service() {
                 }
             }
 
-            ACTION_STOP -> {
+            ServiceCommand.Stop -> {
                 val stopService = shouldStopServiceOnStop()
                 stopSpoofing()
                 if (stopService) {
@@ -603,99 +613,65 @@ class MockLocationService : Service() {
                 }
             }
 
-            ACTION_PARK_KEEP_WIDGET -> {
+            ServiceCommand.ParkKeepWidget -> {
                 parkSpoofingKeepWidget()
             }
 
-            ACTION_CLEAR_MOTION_VECTOR -> {
+            ServiceCommand.ClearMotionVector -> {
                 clearMotionVector()
             }
 
-            ACTION_UPDATE_POSITION -> {
-                val currentPos = positionRef.get()
-                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentPos.latitude)
-                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, currentPos.longitude)
-                val speedMs = intent.getFloatExtra(ServiceConstants.EXTRA_SPEED_MS, 0f)
-                val bearing = intent.getFloatExtra(ServiceConstants.EXTRA_BEARING, 0f)
-                if (speedMs > 0f) {
-                    updatePositionWithVector(lat, lon, speedMs, bearing)
+            is ServiceCommand.UpdatePosition -> {
+                if (command.speedMs > 0f) {
+                    updatePositionWithVector(command.lat, command.lon, command.speedMs, command.bearing)
                 } else {
-                    updatePosition(lat, lon, intent.getBooleanExtra(ServiceConstants.EXTRA_IS_TELEPORT, false))
-                    if (shouldPushImmediateLocationUpdate(speedMs, locationRepository.currentMode.value)) {
+                    updatePosition(command.lat, command.lon, command.isTeleport)
+                    if (shouldPushImmediateLocationUpdate(command.speedMs, locationRepository.currentMode.value)) {
                         pushLocationUpdate()
                     }
                 }
             }
 
-            ACTION_ROUTE_REPLAY_START -> {
-                val isEphemeral = intent.getBooleanExtra(EXTRA_IS_EPHEMERAL, false)
-                val speedMs =
-                    intent.getDoubleExtra(
-                        EXTRA_SPEED_MS,
-                        AppConstants.LocationConstants.DEFAULT_REPLAY_SPEED_MS,
-                    )
-                if (isEphemeral) {
-                    val encoded = intent.getStringExtra(AppConstants.ServiceConstants.EXTRA_EPHEMERAL_WAYPOINTS)
-                    val waypoints =
-                        encoded
-                            ?.split(";")
-                            ?.mapNotNull { seg ->
-                                val parts = seg.split(",")
-                                val lat = parts.getOrNull(0)?.toDoubleOrNull() ?: return@mapNotNull null
-                                val lon = parts.getOrNull(1)?.toDoubleOrNull() ?: return@mapNotNull null
-                                LatLng(lat, lon)
-                            }?.takeIf { it.size >= 2 }
-                            ?: return START_STICKY
-                    handleEphemeralReplayStart(
-                        waypoints,
-                        speedMs,
-                        intent.getIntArrayExtra(EXTRA_EPHEMERAL_STOP_INDICES)?.toList(),
-                    )
-                } else {
-                    val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
-                    handleReplayStart(routeId, speedMs, intent.toRouteStartConfig(), intent.returnPositionOrNull())
-                }
+            is ServiceCommand.StartEphemeralReplay -> {
+                handleEphemeralReplayStart(command.waypoints, command.speedMs, command.stopIndices)
             }
 
-            ACTION_ROUTE_REPLAY_PAUSE -> {
+            is ServiceCommand.StartRouteReplay -> {
+                handleReplayStart(command.routeId, command.speedMs, command.config, command.returnPosition)
+            }
+
+            ServiceCommand.ReplayPause -> {
                 handleReplayPause()
             }
 
-            ACTION_ROUTE_REPLAY_RESUME -> {
-                val speedMs =
-                    intent.getDoubleExtra(
-                        EXTRA_SPEED_MS,
-                        AppConstants.LocationConstants.DEFAULT_REPLAY_SPEED_MS,
-                    )
-                handleReplayResume(speedMs)
+            is ServiceCommand.ReplayResume -> {
+                handleReplayResume(command.speedMs)
             }
 
-            ACTION_ROUTE_REPLAY_STOP -> {
+            ServiceCommand.ReplayStop -> {
                 replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayStop() }
             }
 
-            ACTION_ROUTE_REPLAY_CANCEL -> {
+            ServiceCommand.ReplayCancel -> {
                 replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayCancel() }
             }
 
-            ACTION_ROUTE_REPLAY_JUMP_NEXT -> {
+            ServiceCommand.ReplayJumpNext -> {
                 handleReplayJumpNext()
             }
 
-            ACTION_ROUTE_REPLAY_JUMP_PREVIOUS -> {
+            ServiceCommand.ReplayJumpPrevious -> {
                 handleReplayJumpPrevious()
             }
 
-            ACTION_FOLLOWER_TELEPORT -> {
+            ServiceCommand.FollowerTeleport -> {
                 teleportToLeaderNow()
             }
 
-            ACTION_ROUTE_APPEND_WAYPOINT -> {
-                val lat = intent.getDoubleExtra(EXTRA_WAYPOINT_LAT, 0.0)
-                val lon = intent.getDoubleExtra(EXTRA_WAYPOINT_LON, 0.0)
-                replayOrchestrator.handleAppendWaypoint(LatLng(lat, lon), intent.getBooleanExtra(EXTRA_WAYPOINT_IS_STOP, true))
+            is ServiceCommand.AppendWaypoint -> {
+                replayOrchestrator.handleAppendWaypoint(command.position, command.isStop)
             }
         }
 
@@ -860,18 +836,7 @@ class MockLocationService : Service() {
     internal fun pushInactiveToFollowersIfLeader() {
         if (shouldStopServiceOnStop() || !leaderSyncServer.isRunning) return
         val pos = positionRef.get()
-        leaderSyncServer.push(
-            SyncPositionUpdate(
-                timestamp = System.currentTimeMillis(),
-                latitude = pos.latitude,
-                longitude = pos.longitude,
-                speedMs = 0f,
-                bearing = currentBearing,
-                seq = 0,
-                active = false,
-                teleportSeq = teleportSeq.get(),
-            ),
-        )
+        groupMode.pushInactive(pos.latitude, pos.longitude, currentBearing, teleportSeq.get())
     }
 
     /**
@@ -965,45 +930,7 @@ class MockLocationService : Service() {
                         position = locationRepository.currentPosition.value,
                     )
                 },
-            ) { update ->
-                val (lat, lon, speedMs, bearing, active) = update
-                val leaderTeleported = followerCatchUp.observeTeleportSeq(update.teleportSeq)
-                // An inactive leader's position is stale: keep no target so Teleport to leader
-                // reports "position not yet known" instead of silently moving nowhere.
-                if (active) {
-                    followerCatchUp.setTarget(LatLng(lat, lon), bearing, speedMs)
-                    groupRepository.setLeaderPosition(LatLng(lat, lon))
-                }
-                groupRepository.setLeaderActivity(if (active) update.activity else null)
-                when (followerCatchUp.handleLeaderActiveUpdate(active, state.value)) {
-                    FollowerActiveAction.BOOTSTRAP -> {
-                        // Leader stop, move, start again counts as a teleport; the very first bootstrap
-                        // (nothing reported yet) always snaps.
-                        val resumed = followerCatchUp.consumePausedByLeader()
-                        val snapNow = !resumed || shouldSnapToLeader(true, followLeaderTeleports, hideTeleportFeatures)
-                        val startAt = if (snapNow) LatLng(lat, lon) else positionRef.get()
-                        serviceScope.launch {
-                            startSpoofing(startAt.latitude, startAt.longitude)
-                            if (resumed && snapNow) settingsRepository.setLastTeleportTime(System.currentTimeMillis())
-                            // startSpoofing() unconditionally sets mode to TELEPORT — reassert
-                            // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
-                            locationRepository.setMockMode(MockMode.FOLLOWER)
-                        }
-                    }
-
-                    FollowerActiveAction.PAUSE -> {
-                        followerCatchUp.clearTarget()
-                        groupRepository.setLeaderPosition(null)
-                        serviceScope.launch { pauseFollowerForInactiveLeader() }
-                    }
-
-                    FollowerActiveAction.NO_OP -> {
-                        if (shouldSnapToLeader(leaderTeleported, followLeaderTeleports, hideTeleportFeatures)) {
-                            snapToLeader(LatLng(lat, lon))
-                        }
-                    }
-                }
-            }
+            ) { followerUpdateHandler.onUpdate(it) }
             Log.i(TAG, "Entered FOLLOWER mode for group $groupId at $host:$port")
         }
     }
@@ -1241,31 +1168,7 @@ class MockLocationService : Service() {
                 val pos = positionRef.get()
                 serviceScope.launch { settingsRepository.setLastLocation(pos) }
             }
-            if (leaderSharingEnabled) {
-                val active = state.value != MockLocationState.IDLE && state.value != MockLocationState.ERROR
-                leaderSyncServer.push(
-                    SyncPositionUpdate(
-                        timestamp = System.currentTimeMillis(),
-                        latitude = fix.latitude,
-                        longitude = fix.longitude,
-                        speedMs = fix.speedMs,
-                        bearing = fix.bearing,
-                        seq = 0,
-                        active = active,
-                        teleportSeq = teleportSeq.get(),
-                        activity =
-                            if (active) {
-                                leaderActivityOf(
-                                    locationRepository.currentMovement(),
-                                    locationRepository.routeProgress.value,
-                                    locationRepository.walkTarget.value,
-                                )
-                            } else {
-                                null
-                            },
-                    ),
-                )
-            }
+            if (leaderSharingEnabled) groupMode.pushPosition(fix.latitude, fix.longitude, fix.speedMs, fix.bearing, teleportSeq.get())
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
         } catch (e: Exception) {

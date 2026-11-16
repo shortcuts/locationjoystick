@@ -5,6 +5,8 @@ import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.LatLng
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -24,6 +26,20 @@ class LeaderStopKeepsServerTest {
             leaderSyncServer = server
             groupRepository = mockk(relaxed = true)
             isGroupLeader = role == GroupRole.LEADER
+            stubGroupMode(
+                GroupModeController(
+                    scope = CoroutineScope(SupervisorJob()),
+                    leaderSyncServer = server,
+                    controlApiRoutes = mockk(relaxed = true),
+                    contentApiRoutes = mockk(relaxed = true),
+                    groupNsdManager = mockk(relaxed = true),
+                    groupRepository = groupRepository,
+                    locationRepository = locationRepository,
+                    enterFollowerMode = { _, _, _ -> },
+                    exitFollowerMode = {},
+                    onLeaderExited = {},
+                ),
+            )
         }
 
     @Test

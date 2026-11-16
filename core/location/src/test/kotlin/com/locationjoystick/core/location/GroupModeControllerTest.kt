@@ -3,23 +3,34 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
+import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.GroupState
+import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.MovementState
+import com.locationjoystick.core.model.SyncPositionUpdate
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** A rediscovery in progress must not outlive the group it was started for (group-sync.md, Edge cases). */
@@ -31,6 +42,7 @@ class GroupModeControllerTest {
     private val groupRepository = mockk<GroupRepository>(relaxed = true)
     private val nsd = mockk<NsdCodeManager>(relaxed = true)
     private val leaderServer = mockk<LeaderSyncServer>(relaxed = true)
+    private val locationRepository = mockk<LocationRepository>(relaxed = true)
     private lateinit var controller: GroupModeController
 
     private fun newController(state: GroupState): GroupModeController {
@@ -44,6 +56,7 @@ class GroupModeControllerTest {
             contentApiRoutes = mockk(relaxed = true),
             groupNsdManager = nsd,
             groupRepository = groupRepository,
+            locationRepository = locationRepository,
             enterFollowerMode = { host, _, _ -> reentered += host },
             exitFollowerMode = { controller.stopFollowerRestoration() },
             onLeaderExited = { leaderExits++ },
@@ -158,5 +171,47 @@ class GroupModeControllerTest {
         controller.stopAdvertising()
         assertEquals(GroupModeState.Idle, controller.state)
         verify(exactly = 0) { nsd.stopAdvertising(any()) }
+    }
+
+    private fun pushedWhile(state: MockLocationState): SyncPositionUpdate {
+        every { locationRepository.mockLocationState } returns MutableStateFlow(state)
+        every { locationRepository.currentMovement() } returns MovementState.Running(ActiveMode.ROAMING)
+        every { locationRepository.routeProgress } returns MutableStateFlow(null)
+        every { locationRepository.walkTarget } returns MutableStateFlow(null)
+        val pushed = slot<SyncPositionUpdate>()
+        every { leaderServer.push(capture(pushed)) } returns Unit
+        newController(GroupState.None).pushPosition(1.0, 2.0, 3f, 4f, teleportSeq = 7)
+        return pushed.captured
+    }
+
+    @Test
+    fun `push while running is active and carries an activity`() {
+        val update = pushedWhile(MockLocationState.RUNNING)
+
+        assertTrue(update.active)
+        assertNotNull(update.activity)
+        assertEquals(7L, update.teleportSeq)
+        assertEquals(3f, update.speedMs)
+    }
+
+    @Test
+    fun `push while idle is inactive with no activity`() {
+        val update = pushedWhile(MockLocationState.IDLE)
+
+        assertFalse(update.active)
+        assertNull(update.activity)
+    }
+
+    @Test
+    fun `push inactive sends zero speed and inactive`() {
+        val pushed = slot<SyncPositionUpdate>()
+        every { leaderServer.push(capture(pushed)) } returns Unit
+
+        newController(GroupState.None).pushInactive(1.0, 2.0, 4f, teleportSeq = 9)
+
+        assertFalse(pushed.captured.active)
+        assertEquals(0f, pushed.captured.speedMs)
+        assertEquals(9L, pushed.captured.teleportSeq)
+        assertEquals(4f, pushed.captured.bearing)
     }
 }

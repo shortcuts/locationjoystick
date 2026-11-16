@@ -5,8 +5,12 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
+import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.model.GroupRole
+import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.SyncPositionUpdate
 import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.leaderActivityOf
 import com.locationjoystick.core.model.role
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -49,8 +53,8 @@ private val GroupModeState.job: Job?
         }
 
 /**
- * Owns leader advertising and the follower restoration and rediscovery jobs. Communicates back to
- * the service via lambdas: [enterFollowerMode], [exitFollowerMode] and [onLeaderExited].
+ * Owns leader advertising, the leader position push and the follower restoration and rediscovery
+ * jobs. Communicates back to the service via lambdas: [enterFollowerMode], [exitFollowerMode] and [onLeaderExited].
  */
 internal class GroupModeController(
     private val scope: CoroutineScope,
@@ -59,6 +63,7 @@ internal class GroupModeController(
     private val contentApiRoutes: ContentApiRoutes,
     private val groupNsdManager: NsdCodeManager,
     private val groupRepository: GroupRepository,
+    private val locationRepository: LocationRepository,
     private val enterFollowerMode: (host: String, port: Int, groupId: String) -> Unit,
     private val exitFollowerMode: () -> Unit,
     private val onLeaderExited: () -> Unit,
@@ -121,6 +126,60 @@ internal class GroupModeController(
         stopAdvertising()
         Log.i(TAG, "Exited LEADER mode")
         onLeaderExited()
+    }
+
+    /** Pushes the live fix to followers; the leader activity rides along only while spoofing is active. */
+    fun pushPosition(
+        latitude: Double,
+        longitude: Double,
+        speedMs: Float,
+        bearing: Float,
+        teleportSeq: Long,
+    ) {
+        val state = locationRepository.mockLocationState.value
+        val active = state != MockLocationState.IDLE && state != MockLocationState.ERROR
+        leaderSyncServer.push(
+            SyncPositionUpdate(
+                timestamp = System.currentTimeMillis(),
+                latitude = latitude,
+                longitude = longitude,
+                speedMs = speedMs,
+                bearing = bearing,
+                seq = 0,
+                active = active,
+                teleportSeq = teleportSeq,
+                activity =
+                    if (active) {
+                        leaderActivityOf(
+                            locationRepository.currentMovement(),
+                            locationRepository.routeProgress.value,
+                            locationRepository.walkTarget.value,
+                        )
+                    } else {
+                        null
+                    },
+            ),
+        )
+    }
+
+    fun pushInactive(
+        latitude: Double,
+        longitude: Double,
+        bearing: Float,
+        teleportSeq: Long,
+    ) {
+        leaderSyncServer.push(
+            SyncPositionUpdate(
+                timestamp = System.currentTimeMillis(),
+                latitude = latitude,
+                longitude = longitude,
+                speedMs = 0f,
+                bearing = bearing,
+                seq = 0,
+                active = false,
+                teleportSeq = teleportSeq,
+            ),
+        )
     }
 
     fun stopAdvertising() {
