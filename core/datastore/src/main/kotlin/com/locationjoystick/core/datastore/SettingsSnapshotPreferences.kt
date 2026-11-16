@@ -35,10 +35,6 @@ import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.DE
 import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.DEFAULT_SLOW_WALK_SPEED_MS
 import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.DEFAULT_WALK_SPEED_MS
 import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.DEFAULT_WIDGET_ITEMS
-import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.MAX_JITTER_RADIUS_METERS
-import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.MAX_JITTER_STEP_METERS
-import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.MIN_JITTER_STEP_METERS
-import com.locationjoystick.core.datastore.AppPreferencesDataSource.Companion.MIN_SPEED_MS
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
@@ -77,7 +73,7 @@ data class SettingsSnapshot(
     val jitterMaxStepMeters: Double,
     val jitterSpeedIdleVariationPct: Int,
     val jitterSpeedMovingVariationPct: Int,
-    val jitterSpeedIdleWobbleProbabilityPct: Int = DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
+    val jitterSpeedIdleWobbleProbabilityPct: Int,
     val hotLocationsEnabled: Boolean,
     val selectedHotLocationIds: Set<String>,
     val hotRoutesEnabled: Boolean,
@@ -93,11 +89,11 @@ internal class SettingsSnapshotStore(
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
         val settings = snapshot.settings
         dataStore.edit { prefs ->
-            prefs[Keys.SLOW_WALK_SPEED_MS] = snapshot.slowWalkSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-            prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-            prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-            prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-            prefs[Keys.DRIVE_SPEED_MS] = snapshot.driveSpeedMs.coerceAtLeast(MIN_SPEED_MS)
+            prefs[Keys.SLOW_WALK_SPEED_MS] = snapshot.slowWalkSpeedMs.coerceSpeedMs()
+            prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceSpeedMs()
+            prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceSpeedMs()
+            prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceSpeedMs()
+            prefs[Keys.DRIVE_SPEED_MS] = snapshot.driveSpeedMs.coerceSpeedMs()
             prefs[Keys.SPEED_UNIT] = settings.speedUnit.name
             prefs[Keys.WIDGET_ITEMS] = settings.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
             prefs[Keys.WIDGET_SEEN_DEFAULTS] = DEFAULT_WIDGET_ITEMS
@@ -110,10 +106,10 @@ internal class SettingsSnapshotStore(
             prefs[Keys.MAP_TILE_SOURCE] = settings.mapTileSource.name
             prefs[Keys.GUIDED_PATH] = settings.guidedPath.name
             prefs[Keys.DISABLED_GEOCODING_PROVIDERS] = settings.disabledGeocodingProviders.map { it.name }.toSet()
-            prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-            prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+            prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceJitterRadius()
+            prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceJitterRadius()
             prefs[Keys.JITTER_MAX_STEP_METERS] =
-                snapshot.jitterMaxStepMeters.coerceIn(MIN_JITTER_STEP_METERS, MAX_JITTER_STEP_METERS)
+                snapshot.jitterMaxStepMeters.coerceJitterStep()
             prefs[Keys.REALISM_BEARING_HOLD_IDLE] = settings.bearingHoldOnIdle
             prefs[Keys.REALISM_ALTITUDE_ENABLED] = settings.altitudeEnabled
             prefs[Keys.REALISM_WARMUP_ENABLED] = settings.warmupEnabled
@@ -128,13 +124,13 @@ internal class SettingsSnapshotStore(
             prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = settings.bypassMockLocationCheck
             prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = settings.realElevationEnabled
             prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
-                settings.altitudeJitterRadiusMeters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+                settings.altitudeJitterRadiusMeters.coerceJitterRadius()
             prefs[Keys.PLANTING_RADIUS_METERS] = clampPlantingRadius(settings.plantingRadiusMeters)
             prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = settings.altitudeOverrideButtonEnabled
             prefs[Keys.DEBUG_STATS_ENABLED] = settings.debugStatsEnabled
-            prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] = snapshot.jitterSpeedIdleVariationPct.coercePct()
-            prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] = snapshot.jitterSpeedMovingVariationPct.coercePct()
-            prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT] = snapshot.jitterSpeedIdleWobbleProbabilityPct.coercePct()
+            prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] = snapshot.jitterSpeedIdleVariationPct.coerceSpeedVariationPct()
+            prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] = snapshot.jitterSpeedMovingVariationPct.coerceSpeedVariationPct()
+            prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT] = snapshot.jitterSpeedIdleWobbleProbabilityPct.coerceSpeedVariationPct()
             prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
             prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
             prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
@@ -144,9 +140,6 @@ internal class SettingsSnapshotStore(
         }
     }
 }
-
-private fun Int.coercePct(): Int =
-    coerceIn(AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN, AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX)
 
 private fun Preferences.toSettingsSnapshot(): SettingsSnapshot {
     val prefs = this

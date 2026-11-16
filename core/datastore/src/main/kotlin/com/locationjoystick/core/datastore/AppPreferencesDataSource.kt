@@ -402,15 +402,15 @@ class AppPreferencesDataSource
                 )
             }
 
-        override suspend fun setSlowWalkSpeed(ms: Double) = setPref(Keys.SLOW_WALK_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
+        override suspend fun setSlowWalkSpeed(ms: Double) = setPref(Keys.SLOW_WALK_SPEED_MS, ms.coerceSpeedMs())
 
-        override suspend fun setWalkSpeed(ms: Double) = setPref(Keys.WALK_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
+        override suspend fun setWalkSpeed(ms: Double) = setPref(Keys.WALK_SPEED_MS, ms.coerceSpeedMs())
 
-        override suspend fun setRunSpeed(ms: Double) = setPref(Keys.RUN_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
+        override suspend fun setRunSpeed(ms: Double) = setPref(Keys.RUN_SPEED_MS, ms.coerceSpeedMs())
 
-        override suspend fun setBikeSpeed(ms: Double) = setPref(Keys.BIKE_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
+        override suspend fun setBikeSpeed(ms: Double) = setPref(Keys.BIKE_SPEED_MS, ms.coerceSpeedMs())
 
-        override suspend fun setDriveSpeed(ms: Double) = setPref(Keys.DRIVE_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
+        override suspend fun setDriveSpeed(ms: Double) = setPref(Keys.DRIVE_SPEED_MS, ms.coerceSpeedMs())
 
         override suspend fun setActiveProfileId(profileId: String) = setPref(Keys.ACTIVE_PROFILE_ID, profileId)
 
@@ -596,11 +596,9 @@ class AppPreferencesDataSource
                 DEFAULT_JITTER_MOVING_RADIUS_METERS,
             )
 
-        override suspend fun setJitterIdleRadius(meters: Double) =
-            setPref(Keys.JITTER_IDLE_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
+        override suspend fun setJitterIdleRadius(meters: Double) = setPref(Keys.JITTER_IDLE_RADIUS_METERS, meters.coerceJitterRadius())
 
-        override suspend fun setJitterMovingRadius(meters: Double) =
-            setPref(Keys.JITTER_MOVING_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
+        override suspend fun setJitterMovingRadius(meters: Double) = setPref(Keys.JITTER_MOVING_RADIUS_METERS, meters.coerceJitterRadius())
 
         override fun getJitterMaxStepMeters(): Flow<Double> =
             pref(
@@ -608,8 +606,7 @@ class AppPreferencesDataSource
                 DEFAULT_JITTER_MAX_STEP_METERS,
             )
 
-        override suspend fun setJitterMaxStepMeters(meters: Double) =
-            setPref(Keys.JITTER_MAX_STEP_METERS, meters.coerceIn(MIN_JITTER_STEP_METERS, MAX_JITTER_STEP_METERS))
+        override suspend fun setJitterMaxStepMeters(meters: Double) = setPref(Keys.JITTER_MAX_STEP_METERS, meters.coerceJitterStep())
 
         override fun getLastTeleportTime(): Flow<Long> =
             pref(Keys.LAST_TELEPORT_TIME_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_TELEPORT_TIME_MS)
@@ -711,7 +708,7 @@ class AppPreferencesDataSource
             pref(Keys.ALTITUDE_JITTER_RADIUS_METERS, DEFAULT_ALTITUDE_JITTER_RADIUS_METERS)
 
         override suspend fun setAltitudeJitterRadius(meters: Double) =
-            setPref(Keys.ALTITUDE_JITTER_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
+            setPref(Keys.ALTITUDE_JITTER_RADIUS_METERS, meters.coerceJitterRadius())
 
         override fun getPlantingRadius(): Flow<Double> = pref(Keys.PLANTING_RADIUS_METERS, DEFAULT_PLANTING_RADIUS_METERS)
 
@@ -755,19 +752,13 @@ class AppPreferencesDataSource
         override suspend fun setJitterSpeedIdleVariationPct(pct: Int) =
             setPref(
                 Keys.JITTER_SPEED_IDLE_VARIATION_PCT,
-                pct.coerceIn(
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                ),
+                pct.coerceSpeedVariationPct(),
             )
 
         override suspend fun setJitterSpeedMovingVariationPct(pct: Int) =
             setPref(
                 Keys.JITTER_SPEED_MOVING_VARIATION_PCT,
-                pct.coerceIn(
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                ),
+                pct.coerceSpeedVariationPct(),
             )
 
         override fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int> =
@@ -776,10 +767,7 @@ class AppPreferencesDataSource
         override suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) =
             setPref(
                 Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
-                pct.coerceIn(
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                ),
+                pct.coerceSpeedVariationPct(),
             )
 
         override fun getHotLocationsEnabled(): Flow<Boolean> = pref(Keys.HOT_LOCATIONS_ENABLED, false)

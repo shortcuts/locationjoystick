@@ -1941,6 +1941,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 jitterMaxStepMeters = AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
+                jitterSpeedIdleWobbleProbabilityPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,

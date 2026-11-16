@@ -150,6 +150,45 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `applySnapshot clamps like the setters`() =
+        runTest {
+            for (raw in listOf(-1000.0, 1_000_000.0)) {
+                val pct = raw.toInt()
+                val base = dataSource.getSettingsSnapshot().first()
+                dataSource.applySnapshot(
+                    base.copy(
+                        settings = base.settings.copy(altitudeJitterRadiusMeters = raw),
+                        slowWalkSpeedMs = raw,
+                        walkSpeedMs = raw,
+                        runSpeedMs = raw,
+                        bikeSpeedMs = raw,
+                        driveSpeedMs = raw,
+                        jitterIdleRadius = raw,
+                        jitterMovingRadius = raw,
+                        jitterMaxStepMeters = raw,
+                        jitterSpeedIdleVariationPct = pct,
+                        jitterSpeedMovingVariationPct = pct,
+                        jitterSpeedIdleWobbleProbabilityPct = pct,
+                    ),
+                )
+                val viaSnapshot = dataSource.getSettingsSnapshot().first()
+                dataSource.setSlowWalkSpeed(raw)
+                dataSource.setWalkSpeed(raw)
+                dataSource.setRunSpeed(raw)
+                dataSource.setBikeSpeed(raw)
+                dataSource.setDriveSpeed(raw)
+                dataSource.setJitterIdleRadius(raw)
+                dataSource.setJitterMovingRadius(raw)
+                dataSource.setJitterMaxStepMeters(raw)
+                dataSource.setAltitudeJitterRadius(raw)
+                dataSource.setJitterSpeedIdleVariationPct(pct)
+                dataSource.setJitterSpeedMovingVariationPct(pct)
+                dataSource.setJitterSpeedIdleWobbleProbabilityPct(pct)
+                assertEquals(dataSource.getSettingsSnapshot().first(), viaSnapshot)
+            }
+        }
+
+    @Test
     fun `snapshot reads the live fields set through their setters`() =
         runTest {
             dataSource.setTapToWalkOverlayEnabled(true)
