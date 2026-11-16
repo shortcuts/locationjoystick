@@ -44,6 +44,7 @@ import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -72,6 +73,7 @@ internal class WidgetPanelPresenter(
     private val captureRepository: CaptureCoordinatesRepository,
     private val favoriteRepository: FavoriteRepository,
     private val routeRepository: RouteRepository,
+    private val walkAiming: StateFlow<Boolean>,
 ) {
     companion object {
         private const val TAG = "WidgetPanelPresenter"
@@ -485,6 +487,7 @@ internal class WidgetPanelPresenter(
             )
             val mapTileSource by settingsRepository.getMapTileSource().collectAsStateWithLifecycle(initialValue = MapTileSource.DEFAULT)
             val routeControlsExpanded by mapRouteControlsExpanded.collectAsStateWithLifecycle()
+            val aiming by walkAiming.collectAsStateWithLifecycle()
             val captureEnabled by captureRepository.captureEnabled.collectAsStateWithLifecycle(initialValue = false)
             val capturedPoints by captureRepository.points.collectAsStateWithLifecycle(initialValue = emptyList())
             val favoritesSortMode by settingsRepository.getFavoritesSortMode().collectAsStateWithLifecycle(
@@ -565,6 +568,7 @@ internal class WidgetPanelPresenter(
                 },
                 quickWalk = quickWalk,
                 hideTeleportFeatures = hideTeleportFeatures,
+                walkAiming = aiming,
                 showRouteJumpButtons = showRouteJumpButtons,
                 tileSource = mapTileSource,
                 routeProgress = shared.routeProgress,

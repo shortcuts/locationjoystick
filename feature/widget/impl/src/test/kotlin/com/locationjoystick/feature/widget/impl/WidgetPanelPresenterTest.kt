@@ -125,6 +125,7 @@ class WidgetPanelPresenterTest {
                 captureRepository = mockk(relaxed = true),
                 favoriteRepository = favoriteRepository,
                 routeRepository = mockk(relaxed = true),
+                walkAiming = kotlinx.coroutines.flow.MutableStateFlow(false),
             )
     }
 

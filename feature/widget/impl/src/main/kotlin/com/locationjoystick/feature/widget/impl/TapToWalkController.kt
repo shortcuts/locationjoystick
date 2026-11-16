@@ -12,6 +12,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.walkTarget
+import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.ScreenFeatureGates
@@ -41,6 +42,8 @@ internal class TapToWalkController(
     private val settingsRepository: SettingsRepository,
     private val locationRepository: LocationRepository,
     private val mapController: MapController,
+    private val walkFit: StateFlow<GroundCalibration?>,
+    private val onWalkStart: () -> Unit,
     private val onShowDisclosure: () -> Unit,
 ) {
     companion object {
@@ -76,6 +79,8 @@ internal class TapToWalkController(
 
     init {
         scope.launch { groundCalibration.collect { reaimOnNewMap() } }
+        // A cleared walk fit means the stored map just replaced it; that store re-aims on its own.
+        scope.launch { walkFit.collect { if (it != null) reaimOnNewMap() } }
         scope.launch { visible.collect { if (!it) dismiss() } }
     }
 
@@ -140,6 +145,8 @@ internal class TapToWalkController(
         val wasChoosing = state.value is TapToWalkState.Choosing
         val target = resolveOrWarn(tap)
         if (target != null) {
+            // Before the walk moves, so its first frame shows the camera the tap was made under.
+            if (move != TapToWalkMove.TELEPORT) onWalkStart()
             dispatch(move, target)
             if (move != TapToWalkMove.TELEPORT) transition(TapToWalkEvent.Aimed(tap, target, move))
         }
@@ -169,6 +176,8 @@ internal class TapToWalkController(
     private fun groundMapNow(): GroundMap? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
         val bounds = windowManager.maximumWindowMetrics.bounds
+        // The current walk's own map wins: the stored one may predate a camera turn.
+        walkFit.value?.let { return GroundMap(it, bounds.width().toDouble(), bounds.height().toDouble()) }
         return TapToWalkOverlay.groundMapFor(groundCalibration.value, bounds.width(), bounds.height())
     }
 

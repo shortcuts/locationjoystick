@@ -48,12 +48,14 @@ class TapToWalkControllerTest {
 
     private val walkTargetFlow = MutableStateFlow<LatLng?>(null)
     private val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
+    private val walkFitFlow = MutableStateFlow<GroundCalibration?>(null)
     private val movesFlow = MutableStateFlow(TapToWalkMove.DEFAULT)
     private val hideTeleportFlow = MutableStateFlow(false)
     private val sharedStateFlow = MutableStateFlow(MapSharedState())
     private val mapController = mockk<MapController>(relaxed = true) { every { sharedState } returns sharedStateFlow }
     private val overlay = mockk<TapToWalkOverlay>(relaxed = true)
     private lateinit var controller: TapToWalkController
+    private var walkStarts = 0
 
     @Before
     fun setUp() {
@@ -83,6 +85,8 @@ class TapToWalkControllerTest {
                 settingsRepository = settingsRepository,
                 locationRepository = locationRepository,
                 mapController = mapController,
+                walkFit = walkFitFlow,
+                onWalkStart = { walkStarts++ },
                 onShowDisclosure = {},
             )
     }
@@ -110,6 +114,42 @@ class TapToWalkControllerTest {
 
         val reaimed = TapToWalkOverlay.computeGroundWalkTarget(feet, GroundMap(storedCalibration, 1080.0, 2400.0), tap.x, tap.y)!!
         verify(exactly = 1) { mapController.walkTo(reaimed) }
+    }
+
+    @Test
+    fun walkFit_whileTapIsWalked_reaimsTapFromTapTimePosition() {
+        val tap = tapAbove(300.0)
+        controller.moveTo(tap, TapToWalkMove.WALK)
+        walkTargetFlow.value = TapToWalkOverlay.computeGroundWalkTarget(feet, provisional, tap.x, tap.y)!!
+
+        walkFitFlow.value = storedCalibration
+
+        val reaimed = TapToWalkOverlay.computeGroundWalkTarget(feet, GroundMap(storedCalibration, 1080.0, 2400.0), tap.x, tap.y)!!
+        verify(exactly = 1) { mapController.walkTo(reaimed) }
+    }
+
+    @Test
+    fun walkFit_winsOverTheStoredMapForANewTap() {
+        val turned = storedCalibration.copy(headingDeg = -150.0)
+        groundCalibrationFlow.value = storedScreen
+        walkFitFlow.value = turned
+        val tap = tapAbove(300.0)
+
+        controller.moveTo(tap, TapToWalkMove.WALK)
+
+        val expected = TapToWalkOverlay.computeGroundWalkTarget(feet, GroundMap(turned, 1080.0, 2400.0), tap.x, tap.y)!!
+        verify(exactly = 1) { mapController.walkTo(expected) }
+    }
+
+    @Test
+    fun walkedTap_startsAMeasuredWalk_butAReaimAndATeleportDoNot() {
+        val tap = tapAbove(300.0)
+        controller.moveTo(tap, TapToWalkMove.WALK)
+        walkTargetFlow.value = TapToWalkOverlay.computeGroundWalkTarget(feet, provisional, tap.x, tap.y)!!
+        walkFitFlow.value = storedCalibration
+        controller.moveTo(tap, TapToWalkMove.TELEPORT)
+
+        assertEquals(1, walkStarts)
     }
 
     @Test

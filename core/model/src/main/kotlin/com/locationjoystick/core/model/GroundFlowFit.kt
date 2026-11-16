@@ -1,6 +1,7 @@
 package com.locationjoystick.core.model
 
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sqrt
@@ -98,13 +99,22 @@ object GroundFlowFit {
     private const val STORE_MAX_MEDIAN_PX = 4.0
     private const val AGREE_HEADING_DEG = 20.0
     private const val AGREE_SCALE_RATIO = 1.4
-    private const val REWRITE_HEADING_DEG = 2.0 // a smaller drift is not worth a DataStore write
+    private const val REWRITE_HEADING_DEG = 6.0 // fits of one camera spread 3-4 degrees on real frames; each rewrite re-aims the walk
     private const val REWRITE_SCALE_FRACTION = 0.05
     private const val CHANGE_MIN_MOVES = 3 // a camera change must outlast one bad pair of screenshots
     private const val CHANGE_MIN_FLOWS = 10
     private const val CHANGE_MAX_MEDIAN_PX = 2.0
     private const val CAMERA_JUMP_FACTOR = 3.0 // a move this many times worse than the fit's median came from another camera
     private const val CAMERA_JUMP_FLOOR_PX = 4.0
+    private const val STEADY_SLACK_PX = 2.0 // reference px of flow that rain and sprites add to a still map
+    private const val STEADY_BURST = 1.5 // a game catch-up can show more than the mock moved since the last frame
+    private const val MIN_DIRECTION_FLOW_PX = 2.0 // a smaller flow has no reliable direction
+    private const val MIN_DIRECTION_FLOWS = 3
+    private const val HEADING_STEP_DEG = 2
+    private const val DIRECTION_INLIER_DEG = 30.0
+    private const val DIRECTION_MAX_MEDIAN_DEG = 20.0
+    private const val DIRECTION_MIN_INLIER_SHARE = 0.6 // burst catch-ups past the crop give random directions
+    private const val OUTPERFORM_FACTOR = 2.0 // a turned camera left the old map 3x to 15x worse on real frames
     private const val MAX_ITERS = 30
     private const val OUTLIER_SCALE = 3 * 1.4826
     private const val OUTLIER_FLOOR_PX = 2.0
@@ -182,6 +192,26 @@ object GroundFlowFit {
         return if (bands.any { hypot(it.fx, it.fy) >= MIN_FLOW_PX }) LegMove(d, bands) else null
     }
 
+    /**
+     * Whether the map moved between [a] and [b] no more than a [movedM] metre walk explains. A reference frame taken while
+     * the game still moves its camera biases every flow measured against it. A crop with no clear peak counts as moved.
+     */
+    fun steady(
+        a: Crops,
+        b: Crops,
+        movedM: Double,
+        lateralPxPerM: Double,
+    ): Boolean {
+        if (a.width != b.width || a.height != b.height) return false
+        val limit = (STEADY_SLACK_PX + STEADY_BURST * movedM * lateralPxPerM) * a.width / GROUND_MAP_REFERENCE_WIDTH
+        val flows =
+            DoubleArray(a.spectra.size) { i ->
+                val f = PhaseCorrelation.correlate(a.spectra[i], b.spectra[i])
+                if (f.response < MIN_RESPONSE) Double.MAX_VALUE else hypot(f.fx, f.fy) * DOWNSAMPLE
+            }
+        return median(flows) <= limit
+    }
+
     /** Heading and lateral scale that best explain [moves] on a [width] x [height] screen, or null when nothing plausible fits. */
     fun fit(
         moves: List<LegMove>,
@@ -226,22 +256,90 @@ object GroundFlowFit {
         move: LegMove,
         width: Int,
         height: Int,
-    ): Boolean {
-        val x = doubleArrayOf(fit.calibration.headingDeg, fit.calibration.lateralPxPerM)
-        val r = residuals(x, move.bands.map { move.d to it }, width, height)
-        return median(DoubleArray(r.size) { abs(r[it]) }) > maxOf(CAMERA_JUMP_FACTOR * fit.medianAbsPx, CAMERA_JUMP_FLOOR_PX)
+    ): Boolean =
+        medianResidual(fit.calibration, listOf(move), width, height) > maxOf(CAMERA_JUMP_FACTOR * fit.medianAbsPx, CAMERA_JUMP_FLOOR_PX)
+
+    /** Median absolute residual, device pixels, of [moves] under the map [cal]: how badly that map explains this walk. */
+    fun medianResidual(
+        cal: GroundCalibration,
+        moves: List<LegMove>,
+        width: Int,
+        height: Int,
+    ): Double {
+        val r = residuals(doubleArrayOf(cal.headingDeg, cal.lateralPxPerM), moves.flatMap { m -> m.bands.map { m.d to it } }, width, height)
+        return median(DoubleArray(r.size) { abs(r[it]) })
     }
 
-    /** Whether [fit], made from [moves] moves, may replace the [stored] map (null: none for this screen). */
+    /**
+     * Whether [fit] explains its own walk so much better than another map, whose median residual on the same moves is
+     * [otherMedianPx], that the other map belongs to another camera. Rain and animated sprites keep a real fit's residual
+     * at several pixels, so the test is relative, not a fixed pixel bar.
+     */
+    fun outperforms(
+        fit: GroundFit,
+        otherMedianPx: Double,
+    ): Boolean = otherMedianPx > maxOf(OUTPERFORM_FACTOR * fit.medianAbsPx, CAMERA_JUMP_FLOOR_PX)
+
+    /**
+     * Camera heading from the direction of the crop flows alone, or null without enough flows that agree. The game moves
+     * its map in bursts, so a flow's size rarely matches the mock move between two screenshots, but its direction does.
+     * [lateralPxPerM] only bends the predicted directions through the perspective; any plausible scale works.
+     */
+    fun heading(
+        moves: List<LegMove>,
+        width: Int,
+        height: Int,
+        lateralPxPerM: Double,
+    ): Double? {
+        val flows = moves.flatMap { m -> m.bands.filter { hypot(it.fx, it.fy) >= MIN_DIRECTION_FLOW_PX }.map { m.d to it } }
+        if (flows.size < MIN_DIRECTION_FLOWS) return null
+        var best: Pair<Double, DoubleArray>? = null
+        for (deg in -180 until 180 step HEADING_STEP_DEG) {
+            val map = GroundMap(calibration(deg.toDouble(), lateralPxPerM), width.toDouble(), height.toDouble())
+            val errs = DoubleArray(flows.size) { i -> directionError(map, flows[i].first, flows[i].second) }
+            if (best == null || median(errs.copyOf()) < median(best.second.copyOf())) best = deg.toDouble() to errs
+        }
+        val (deg, errs) = best ?: return null
+        val inliers = errs.count { it <= DIRECTION_INLIER_DEG }
+        val agree = median(errs.copyOf()) <= DIRECTION_MAX_MEDIAN_DEG && inliers >= MIN_DIRECTION_FLOWS
+        return deg.takeIf { agree && inliers >= DIRECTION_MIN_INLIER_SHARE * flows.size }
+    }
+
+    /** Angle, degrees, between the measured flow [b] and the flow [map] predicts for the move [d]; 180 past the horizon. */
+    private fun directionError(
+        map: GroundMap,
+        d: GroundOffset,
+        b: BandFlow,
+    ): Double {
+        val g = map.pixelToGround(b.cx, b.cy) ?: return 180.0
+        val q = map.groundToPixel(g.eastMeters - d.eastMeters, g.northMeters - d.northMeters)
+        val e = Math.toDegrees(atan2(b.fx, b.fy) - atan2(q.first - b.cx, q.second - b.cy))
+        return if (e.isFinite()) headingGap(e, 0.0) else 180.0
+    }
+
+    fun headingGap(
+        a: Double,
+        b: Double,
+    ): Double {
+        val raw = abs(a - b) % 360.0
+        return min(raw, 360.0 - raw)
+    }
+
+    /**
+     * Whether [fit], made from [moves] moves, may replace the [stored] map (null: none for this screen).
+     * [storedMedianPx] is the median residual of the same moves under the stored map, when known.
+     */
     fun replaces(
         stored: GroundCalibration?,
         fit: GroundFit,
         moves: Int,
+        storedMedianPx: Double? = null,
     ): Boolean {
+        val changed = storedMedianPx != null && outperforms(fit, storedMedianPx)
+        if (changed && moves >= CHANGE_MIN_MOVES && fit.flowCount >= CHANGE_MIN_FLOWS) return true
         if (fit.flowCount < STORE_MIN_FLOWS || fit.medianAbsPx > STORE_MAX_MEDIAN_PX) return false
         if (stored == null) return true
-        val raw = abs(fit.calibration.headingDeg - stored.headingDeg) % 360.0
-        val gap = min(raw, 360.0 - raw)
+        val gap = headingGap(fit.calibration.headingDeg, stored.headingDeg)
         val ratio = fit.calibration.lateralPxPerM / stored.lateralPxPerM
         if (gap <= AGREE_HEADING_DEG && ratio in 1 / AGREE_SCALE_RATIO..AGREE_SCALE_RATIO) {
             return gap > REWRITE_HEADING_DEG || abs(ratio - 1) > REWRITE_SCALE_FRACTION

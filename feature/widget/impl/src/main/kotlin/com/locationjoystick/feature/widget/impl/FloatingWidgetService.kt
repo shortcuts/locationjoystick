@@ -24,6 +24,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.location.AutoFitCoordinator
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.location.ScreenCaptureSource
@@ -136,6 +137,8 @@ class FloatingWidgetService :
 
     @Inject lateinit var screenCaptureSource: ScreenCaptureSource
 
+    @Inject lateinit var autoFit: AutoFitCoordinator
+
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
 
     @Inject lateinit var favoriteRepository: FavoriteRepository
@@ -208,6 +211,7 @@ class FloatingWidgetService :
                 captureRepository = captureCoordinatesRepository,
                 favoriteRepository = favoriteRepository,
                 routeRepository = routeRepository,
+                walkAiming = autoFit.aiming,
             )
         tapToWalk =
             TapToWalkController(
@@ -219,6 +223,8 @@ class FloatingWidgetService :
                 settingsRepository = settingsRepository,
                 locationRepository = locationRepository,
                 mapController = mapController,
+                walkFit = autoFit.walkFit,
+                onWalkStart = autoFit::startWalk,
                 onShowDisclosure = ::showAccessibilityDisclosure,
             )
         serviceBinder.bind()

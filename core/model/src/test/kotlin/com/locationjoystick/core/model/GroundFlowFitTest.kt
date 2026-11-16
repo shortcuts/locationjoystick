@@ -152,6 +152,8 @@ class GroundFlowFitTest {
     fun aFitThatAgreesWithTheStoredMapReplacesItOnlyPastASmallDrift() {
         val stored = GroundFlowFit.calibration(-12.0, 7.0)
         assertEquals(false, GroundFlowFit.replaces(stored, fit(-11.0, scale = 7.2), 2))
+        // Fits of one camera spread a few degrees on real frames; each rewrite would re-aim the walk.
+        assertEquals(false, GroundFlowFit.replaces(stored, fit(-8.0), 2))
         assertEquals(true, GroundFlowFit.replaces(stored, fit(-3.0, scale = 7.0), 2))
         assertEquals(true, GroundFlowFit.replaces(stored, fit(-12.0, scale = 8.0), 2))
     }
@@ -166,10 +168,66 @@ class GroundFlowFitTest {
     }
 
     @Test
+    fun aNoisyFitReplacesAStoredMapThatExplainsTheWalkFarWorse() {
+        val stored = GroundFlowFit.calibration(1.0, 9.0)
+        val noisy = fit(-150.0, flows = 20, median = 5.0)
+        assertEquals(true, GroundFlowFit.replaces(stored, noisy, 3, storedMedianPx = 20.0))
+        assertEquals(false, GroundFlowFit.replaces(stored, noisy, 3, storedMedianPx = 9.0))
+        assertEquals(false, GroundFlowFit.replaces(stored, noisy, 2, storedMedianPx = 20.0))
+    }
+
+    @Test
+    fun headingFromFlowDirectionIgnoresBurstyFlowSizes() {
+        for ((heading, bearing) in listOf(-16.0 to 0.0, 150.0 to 90.0, -100.0 to 225.0)) {
+            val truth = GroundFlowFit.calibration(heading, 9.0)
+            // The game moves its map in bursts: a flow can be a third or three times what the mock move predicts.
+            val bursty =
+                walk(truth, bearing, 3).mapIndexed { i, m ->
+                    val k = listOf(0.3, 3.0, 1.0)[i]
+                    m.copy(bands = m.bands.map { it.copy(fx = it.fx * k, fy = it.fy * k) })
+                }
+            val got = GroundFlowFit.heading(bursty, w, h, 7.0)
+            assertNotNull("heading $heading", got)
+            assertEquals("heading $heading", 0.0, GroundFlowFit.headingGap(heading, got!!), 6.0)
+        }
+    }
+
+    @Test
+    fun headingFromOneMoveIsEnoughToTellTheWayRound() {
+        val truth = GroundFlowFit.calibration(164.0, 9.0)
+        val got = GroundFlowFit.heading(walk(truth, 0.0, 1), w, h, 9.0)!!
+        assertEquals(0.0, GroundFlowFit.headingGap(164.0, got), 6.0)
+    }
+
+    @Test
+    fun flowsInRandomDirectionsGiveNoHeading() {
+        val bands = (0 until 10).map { BandFlow(10 * kotlin.math.cos(it * 2.4), 10 * kotlin.math.sin(it * 2.4), 0.5, 270.0, 700.0) }
+        assertNull(GroundFlowFit.heading(listOf(LegMove(GroundOffset(0.0, 1.5), bands)), w, h, 9.0))
+    }
+
+    @Test
+    fun aTurnedCameraLeavesALargeResidualUnderTheOldMap() {
+        val truth = GroundFlowFit.calibration(-16.0, 9.0)
+        val moves = walk(truth, 0.0, 3)
+        assertEquals(0.0, GroundFlowFit.medianResidual(truth, moves, w, h), 1.0)
+        assertEquals(true, GroundFlowFit.medianResidual(GroundFlowFit.calibration(164.0, 9.0), moves, w, h) > 10.0)
+    }
+
+    @Test
     fun aSlowWalkStepIsMeasuredAndHalfAMetreIsNot() {
         val cal = GroundFlowFit.calibration(-12.0, 7.0)
         assertEquals(3, walk(cal, 70.0, 3, stepM = 0.9).size)
         assertEquals(0, walk(cal, 70.0, 3, stepM = 0.5).size)
+    }
+
+    @Test
+    fun aShortMoveIsSteadyAndACameraStillCatchingUpIsNot() {
+        val cal = GroundFlowFit.calibration(-12.0, 7.0)
+        val ref = GroundFlowFit.crops(frame(cal, 0.0, 0.0))
+        assertEquals(true, GroundFlowFit.steady(ref, GroundFlowFit.crops(frame(cal, 0.3, 0.0)), 0.3, 7.0))
+        for ((e, n) in listOf(3.0 to 0.0, 0.0 to 3.0)) {
+            assertEquals("$e $n", false, GroundFlowFit.steady(ref, GroundFlowFit.crops(frame(cal, e + 0.3, n)), 0.3, 7.0))
+        }
     }
 
     @Test

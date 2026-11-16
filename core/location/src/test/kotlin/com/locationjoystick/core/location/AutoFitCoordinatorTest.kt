@@ -45,6 +45,9 @@ class AutoFitCoordinatorTest {
     private var scene = camera
     private var popup: GrayImage? = null
 
+    /** Where the fake game's camera trails the player, as (bearing, metres): a resume animation or a catch-up. */
+    private var trail: Pair<Double, Double>? = null
+
     @Before
     fun setUp() {
         locationRepository = LocationRepository()
@@ -54,7 +57,11 @@ class AutoFitCoordinatorTest {
         source = mockk()
         every { source.captureAllowed } returns tapToWalk
         coEvery { source.captureCrops() } answers
-            { GroundFlowFit.crops(popup ?: render(scene, locationRepository.currentPosition.value!!)) }
+            {
+                val at = locationRepository.currentPosition.value!!
+                val shown = trail?.let { (b, m) -> CalibrationWalkMath.commandedTarget(at, b, m) } ?: at
+                GroundFlowFit.crops(popup ?: render(scene, shown))
+            }
         settings = mockk(relaxed = true)
         every { settings.getGroundCalibration() } returns stored
         coEvery { settings.setGroundCalibration(any()) } answers { stored.value = firstArg() }
@@ -112,6 +119,196 @@ class AutoFitCoordinatorTest {
             val fit = stored.value!!
             assertEquals(0.0, angleGap(camera.headingDeg, fit.calibration.headingDeg), 10.0)
             assertEquals(camera.lateralPxPerM, fit.calibration.lateralPxPerM, camera.lateralPxPerM * 0.1)
+        }
+
+    @Test
+    fun `two moves under a turned camera publish the walk fit before any map is stored`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(150.0, 7.0)
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 3)
+            assertEquals(0.0, angleGap(150.0, c.walkFit.value!!.headingDeg), 5.0)
+            assertEquals(camera, stored.value!!.calibration)
+        }
+
+    @Test
+    fun `one move under a turned camera publishes nothing until a second move agrees`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(150.0, 7.0)
+            val c = coordinator()
+            c.startWalk()
+            c.tick()
+            step(c, 70.0, 4.0)
+            assertNull(c.walkFit.value)
+            assertEquals(true, c.aiming.value)
+            step(c, 70.0, 4.0)
+            assertEquals(0.0, angleGap(150.0, c.walkFit.value!!.headingDeg), 5.0)
+            assertEquals(false, c.aiming.value)
+        }
+
+    @Test
+    fun `a slow tap walk is confirmed three seconds after the tap`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(150.0, 7.0)
+            val c = coordinator()
+            c.tick()
+            c.startWalk()
+            c.tick()
+            repeat(3) { step(c, 70.0, 0.6, seconds = 1.0) }
+            assertEquals(false, c.aiming.value)
+            // A metre or two of flow gives a coarser heading; later moves refine it.
+            assertEquals(0.0, angleGap(150.0, c.walkFit.value!!.headingDeg), 10.0)
+        }
+
+    @Test
+    fun `a tap made mid-walk takes its reference frame one tick later`() =
+        runTest {
+            val c = coordinator()
+            c.tick()
+            locationRepository.updatePosition(CalibrationWalkMath.commandedTarget(start, 70.0, 0.6))
+            clockMs += 1000
+            c.startWalk()
+            c.tick()
+            coVerify(exactly = 0) { source.captureCrops() }
+            step(c, 200.0, 0.6, seconds = 1.0)
+            coVerify(exactly = 1) { source.captureCrops() }
+            repeat(3) { step(c, 200.0, 0.6, seconds = 1.0) }
+            assertEquals(false, c.aiming.value)
+        }
+
+    @Test
+    fun `a reference frame taken while the camera still moves is replaced`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(150.0, 7.0)
+            val c = coordinator()
+            c.tick()
+            trail = 160.0 to 3.0
+            c.startWalk()
+            c.tick()
+            trail = null
+            repeat(5) { step(c, 70.0, 0.6, seconds = 1.0) }
+            assertEquals(false, c.aiming.value)
+            assertEquals(0.0, angleGap(150.0, c.walkFit.value!!.headingDeg), 10.0)
+        }
+
+    @Test
+    fun `a tap made mid-walk that stops before its reference frame stops aiming`() =
+        runTest {
+            val c = coordinator()
+            c.tick()
+            locationRepository.updatePosition(CalibrationWalkMath.commandedTarget(start, 70.0, 0.6))
+            clockMs += 1000
+            c.startWalk()
+            c.tick()
+            assertEquals(true, c.aiming.value)
+            clockMs += 1000
+            c.tick()
+            assertEquals(false, c.aiming.value)
+        }
+
+    @Test
+    fun `a tap with tap to walk off does not aim`() =
+        runTest {
+            val c = coordinator()
+            tapToWalk.value = false
+            runCurrent()
+            c.startWalk()
+            c.tick()
+            assertEquals(false, c.aiming.value)
+        }
+
+    @Test
+    fun `a tap walk that stops before two moves agree stops aiming`() =
+        runTest {
+            val c = coordinator()
+            c.startWalk()
+            c.tick()
+            step(c, 70.0, 4.0)
+            assertEquals(true, c.aiming.value)
+            clockMs += 3000
+            c.tick()
+            assertEquals(false, c.aiming.value)
+        }
+
+    @Test
+    fun `a camera turned by thirty degrees is corrected`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(camera.headingDeg + 30.0, 7.0)
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 3)
+            assertEquals(0.0, angleGap(camera.headingDeg + 30.0, c.walkFit.value!!.headingDeg), 5.0)
+        }
+
+    @Test
+    fun `a tap takes a reference frame before the player moves and aims until two moves agree`() =
+        runTest {
+            storedCamera()
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 3)
+            assertEquals(false, c.aiming.value)
+            c.startWalk()
+            assertEquals(true, c.aiming.value)
+            c.tick()
+            coVerify(exactly = 4) { source.captureCrops() }
+            repeat(2) { step(c, 200.0, 4.0) }
+            assertEquals(false, c.aiming.value)
+            assertNull(c.walkFit.value)
+        }
+
+    @Test
+    fun `a walk the stored map already explains publishes no walk fit`() =
+        runTest {
+            storedCamera()
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 4)
+            assertNull(c.walkFit.value)
+        }
+
+    @Test
+    fun `the walk fit outlives the walk until a stored map replaces it`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(150.0, 7.0)
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 3)
+            c.tick()
+            assertNotNull(c.walkFit.value)
+            primeAndWalk(c, 70.0, 5)
+            assertEquals(0.0, angleGap(150.0, stored.value!!.calibration.headingDeg), 2.5)
+            assertNull(c.walkFit.value)
+        }
+
+    @Test
+    fun `a sharp turn starts the measured walk again`() =
+        runTest {
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 4)
+            assertEquals(3000L, c.tickIntervalMs())
+            step(c, 250.0, 4.0)
+            assertEquals(1000L, c.tickIntervalMs())
+        }
+
+    @Test
+    fun `a walk is sampled every second until it has a few moves`() =
+        runTest {
+            val c = coordinator()
+            assertEquals(1000L, c.tickIntervalMs())
+            primeAndWalk(c, 70.0, 4)
+            assertEquals(3000L, c.tickIntervalMs())
+        }
+
+    @Test
+    fun `a slow walk sampled every second is measured`() =
+        runTest {
+            val c = coordinator()
+            c.tick()
+            repeat(12) { step(c, 70.0, 0.3, seconds = 1.0) }
+            assertEquals(0.0, angleGap(camera.headingDeg, stored.value!!.calibration.headingDeg), 10.0)
         }
 
     @Test

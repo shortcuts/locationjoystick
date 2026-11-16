@@ -85,6 +85,7 @@ import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import kotlin.math.roundToInt
 import org.maplibre.android.geometry.LatLng as MapLatLng
@@ -142,6 +143,7 @@ internal fun MapFloatingView(
     onStartPastedRoute: ((points: List<LatLng>, config: RouteStartConfig) -> Unit)? = null,
     quickWalk: Boolean = false,
     hideTeleportFeatures: Boolean = false,
+    walkAiming: Boolean = false,
     showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     tileSource: MapTileSource = MapTileSource.DEFAULT,
     routeProgress: RouteProgress? = null,
@@ -334,6 +336,8 @@ internal fun MapFloatingView(
                 val waypoints = routeWaypoints
                 val walkStartSnap = walkStart
                 val target = walkTarget
+                // The remaining layer also draws routes, which never aim.
+                remainingWalkLineDashed(mapRef.value?.style, walkAiming && waypoints == null && ephemeralWaypoints == null)
                 if (waypoints != null && mapPosition != null) {
                     val mapWaypoints = proj.toMap(waypoints)
                     val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(mapWaypoints, mapPosition)
@@ -700,4 +704,14 @@ internal fun MapFloatingView(
             )
         }
     }
+}
+
+// A tap's direction stays a guess until the walk measures the camera; a solid line would claim a direction it does not know.
+private fun remainingWalkLineDashed(
+    style: Style?,
+    dashed: Boolean,
+) {
+    style?.getLayer(MapLibreLayerIds.TRACE_REMAINING)?.setProperties(
+        PropertyFactory.lineDasharray(if (dashed) arrayOf(1f, 2f) else arrayOf(1f, 0f)),
+    )
 }
