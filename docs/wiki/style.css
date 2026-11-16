@@ -19,7 +19,8 @@
   --danger:   #EF4444;
   --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --sans: Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --nav-w: 240px;
+  --nav-w: 260px;
+  --rail-w: 260px;
   --r: 12px;
   --r-sm: 8px;
   --r-pill: 999px;
@@ -70,8 +71,13 @@ table{font-variant-numeric:tabular-nums}
 /* ── Layout ── */
 .layout{
   display:grid;
-  grid-template-columns:var(--nav-w) 1fr;
+  grid-template-columns:var(--nav-w) minmax(0,1fr);
   min-height:100vh;
+}
+
+/* Right rail (outline + current screenshot) needs room: nav + text + rail. */
+@media(min-width:1200px){
+  .layout{grid-template-columns:var(--nav-w) minmax(0,1fr) var(--rail-w)}
 }
 
 /* ── Sidebar ── */
@@ -81,6 +87,7 @@ table{font-variant-numeric:tabular-nums}
   height:100vh;
   overflow-y:auto;
   border-right:1px solid var(--rule);
+  background:color-mix(in srgb,var(--surface) 45%,var(--bg));
   display:flex;
   flex-direction:column;
 }
@@ -145,10 +152,10 @@ nav a.active{
 
 /* ── Main ── */
 main{
-  max-width:700px;
+  max-width:760px;
   width:100%;
   margin:0 auto;
-  padding:48px 48px 80px;
+  padding:56px 48px 96px;
 }
 
 /* ── Type ── */
@@ -170,7 +177,7 @@ h2{
   color:var(--text);
   margin:56px 0 16px;
   padding-top:32px;
-  border-top:1px solid var(--border);
+  border-top:1px solid var(--rule);
   text-wrap:balance;
 }
 
@@ -295,7 +302,7 @@ blockquote{
 
 blockquote p, blockquote em{margin:0}
 
-/* On This Page list (built by wiki-init.js); shown only where the sidebar outline is hidden (phones). */
+/* On This Page list (built by wiki-init.js); shown only where the right rail is hidden. */
 .page-toc{
   display:none;
   flex-wrap:wrap;
@@ -316,7 +323,7 @@ blockquote p, blockquote em{margin:0}
   cursor:pointer;
 }
 
-@media(max-width:680px){
+@media(max-width:1199px){
   .page-toc{display:block}
   .page-toc a{display:block;padding:8px 0;min-height:48px}
 }
@@ -375,36 +382,64 @@ blockquote p, blockquote em{margin:0}
 }
 
 /* ── Feature sections ── */
+/* Below 1200px there is no rail, so each shot stays under its heading. From 1200px the rail shows it instead. */
 .shot img{
   display:block;
   width:100%;
-  max-width:240px;
+  max-width:200px;
   margin:0 0 16px;
   border:1px solid var(--border);
   border-radius:var(--r);
+  cursor:zoom-in;
 }
+@media(min-width:1200px){.has-shot > .shot{display:none}}
 
-/* Below 1000px the text column is too narrow for a side shot, so the shot stays under the heading. */
-@media(min-width:1000px){
-  .has-shot{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 200px;
-    column-gap:32px;
+/* ── Right rail ── */
+.rail{display:none}
+@media(min-width:1200px){
+  .rail{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    padding:56px 24px 24px 8px;
+    overflow-y:auto;
   }
-  .has-shot > *{grid-column:1}
-  .has-shot > .shot{grid-column:2;grid-row:1 / span 100;margin-top:8px}
-  .shot img{position:sticky;top:24px;margin:0}
 }
+.rail-title{
+  margin:0 0 8px;
+  font-size:0.75rem;
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text);
+}
+.rail .nav-outline{margin:0;border-left:2px solid var(--rule)}
+.rail-shot{margin:0;flex-shrink:0}
+.rail-shot button{display:block;padding:0;border:none;background:none;cursor:zoom-in;border-radius:var(--r)}
+.rail-shot img{display:block;width:100%;max-width:128px;border:1px solid var(--border);border-radius:var(--r)}
+.rail-shot button:hover img{border-color:var(--accent)}
+.rail-shot button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rail-shot figcaption{margin-top:8px;font-size:0.75rem;color:var(--muted)}
 
-/* Keeps the text column near 430px beside the 200px shot. */
-@media(min-width:1000px) and (max-width:1319px){
-  main{max-width:800px}
+/* ── Screenshot lightbox ── */
+.lightbox{
+  max-width:none;max-height:none;width:100%;height:100%;
+  padding:24px;border:none;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  color:var(--text);
+  align-items:center;justify-content:center;
 }
-
-/* Only 1320px and up leaves room for the 232px overhang into the right margin. */
-@media(min-width:1320px){
-  .has-shot{margin-right:-232px}
+.lightbox[open]{display:flex}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;border:1px solid var(--border);border-radius:var(--r);cursor:zoom-out}
+.lightbox-close{
+  position:absolute;top:16px;right:16px;width:44px;height:44px;
+  border:1px solid var(--border);border-radius:var(--r-pill);
+  background:var(--surface);color:var(--text);font-size:1.25rem;line-height:1;cursor:pointer;
 }
+.lightbox-close:hover{border-color:var(--accent);color:var(--accent)}
 
 .section-bullets{
   list-style:none;
@@ -590,10 +625,10 @@ ul.trouble li{
 }
 
 /* ── Nav extras ── */
-.nav-outline{display:flex;flex-direction:column;margin:2px 0 8px 26px;border-left:1px solid color-mix(in srgb,var(--border) 45%,transparent)}
-.nav-outline a{display:block;padding:4px 16px 4px 12px;margin-left:-1px;font-size:0.75rem;font-weight:400;line-height:1.35;color:var(--muted);background:none;border-left:2px solid transparent}
+.nav-outline{display:flex;flex-direction:column}
+.nav-outline a{display:block;padding:4px 8px 4px 14px;margin:0 0 0 -2px;font-size:0.8125rem;font-weight:400;line-height:1.35;color:var(--muted);background:none;border-left:2px solid transparent}
 .nav-outline a:hover{color:var(--text);background:none}
-.nav-outline a.nav-h3{display:none;padding-left:24px;font-size:0.6875rem}
+.nav-outline a.nav-h3{display:none;padding-left:26px;font-size:0.75rem}
 .nav-outline a.nav-h3.open{display:block}
 .nav-outline a.active{color:var(--accent);border-left-color:var(--accent);background:none}
 h2[id],h3[id]{scroll-margin-top:16px}
@@ -607,8 +642,10 @@ h2[id],h3[id]{scroll-margin-top:16px}
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:0.875rem;
-  font-weight:700;
+  font-size:0.75rem;
+  font-weight:600;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
   color:var(--text);
   padding:24px 24px 8px;
 }
@@ -704,7 +741,6 @@ nav details > a{display:block}
     min-height:48px;
   }
 
-  .nav-outline a{padding:7px 16px 7px 12px;min-height:48px}
 
   .sidebar-foot{display:none}
 
@@ -714,8 +750,6 @@ nav details > a{display:block}
   h2{font-size:1.25rem;margin-top:44px;padding-top:24px}
   h3{font-size:1.05rem}
   nav a{font-size:0.9375rem}
-  .nav-outline a{font-size:0.8125rem}
-  .nav-outline a.nav-h3{font-size:0.75rem}
   nav a.nav-ext{font-size:0.875rem}
   .nav-group{font-size:0.9375rem}
 

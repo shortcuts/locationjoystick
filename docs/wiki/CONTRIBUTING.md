@@ -42,7 +42,7 @@ Do not mix types on one page. If content fits multiple types (e.g. an explanatio
 
 ### Screenshots
 
-Put a screenshot in the section it illustrates. Wrap the section in `<section class="has-shot">` and place `<aside class="shot"><img class="phone-shot" …></aside>` right after the section heading. From 1000 px wide the screenshot sits beside the text and scrolls with that section only; from 1320 px it moves into the right margin. Below 1000 px it sits under the heading. Use one screenshot per section.
+Put a screenshot in the section it illustrates. Wrap the section in `<section class="has-shot">` and place `<aside class="shot"><img class="phone-shot" …></aside>` right after the section heading. From 1200 px wide the right rail shows the screenshot of the section being read; click it to enlarge. Below 1200 px it sits under the heading. Use one screenshot per section.
 
 Only the landing page carries a hero (`.hero`). Use `.btn` for the one primary action on a page, never two.
 
@@ -58,7 +58,7 @@ Only the landing page carries a hero (`.hero`). Use `.btn` for the one primary a
 Never use a `<table>`. Tables scroll sideways or squash on phones, and cells cannot hold lists or links cleanly. Give each entry a child heading instead.
 
 Rules:
-- Put one heading per entry, one level below the section heading (`<h3>` under `<h2>`, `<h4>` under `<h3>`). Add `class="item"` so the sidebar outline skips it.
+- Put one heading per entry, one level below the section heading (`<h3>` under `<h2>`, `<h4>` under `<h3>`). Add `class="item"` so the page outline skips it.
 - Give every item heading a unique `id`. Prefix it with the section `id` (e.g. `available-widget-controls-lock-joystick`).
 - Write the heading as the entry name only: the control, option, mode, or situation.
 - Below the heading, write the description in plain sentences. Use a bullet list for steps or sub-points.
@@ -181,7 +181,7 @@ Every real page (not a redirect stub) must have:
 ### Headings and IDs
 
 - Every page has exactly one `<h1>` with a unique `id` attribute.
-- Every `<h2>` and `<h3>` has a unique `id`. The sidebar outline uses these IDs to build the page's table of contents.
+- Every `<h2>` and `<h3>` has a unique `id`. The right-rail outline uses these IDs to build the page's table of contents.
 - Use descriptive IDs matching the heading text (e.g. `id="tap-to-move"` for "Tap to Move").
 
 ### Links and images

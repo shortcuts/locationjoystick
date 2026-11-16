@@ -164,9 +164,18 @@
   };
   document.head.appendChild(ds);
 
-  var pageLink = document.querySelector('nav a.active');
+  var rail = document.createElement('aside');
+  rail.className = 'rail';
+  rail.setAttribute('aria-label', 'On this page');
+  document.querySelector('.layout').appendChild(rail);
+
   var outlineHeads = document.querySelectorAll('main h2[id]:not(.item), main h3[id]:not(.item)');
-  if (pageLink && outlineHeads.length) {
+  var shotSections = Array.prototype.slice.call(document.querySelectorAll('main .has-shot'));
+  var spyFns = [];
+  var runSpy = function () { spyFns.forEach(function (f) { f(); }); };
+
+  if (outlineHeads.length) {
+    rail.insertAdjacentHTML('beforeend', '<p class="rail-title">On this page</p>');
     var outline = document.createElement('div');
     outline.className = 'nav-outline';
     var outlineLinks = [];
@@ -182,7 +191,7 @@
       outline.appendChild(a);
       outlineLinks.push(a);
     });
-    pageLink.after(outline);
+    rail.appendChild(outline);
 
     var activeLink = null;
     // Near page end the target heading cannot reach the top, so later headings also pass the line; pin the hash target until the user scrolls.
@@ -191,7 +200,7 @@
       var id = decodeURIComponent(location.hash.slice(1));
       pinned = Array.prototype.findIndex.call(outlineHeads, function (h) { return h.id === id; });
     };
-    var spy = function () {
+    spyFns.push(function () {
       var idx = 0;
       outlineHeads.forEach(function (h, i) {
         if (h.getBoundingClientRect().top <= window.innerHeight * 0.3) idx = i;
@@ -209,16 +218,63 @@
       outlineLinks.forEach(function (l, i) {
         if (l.classList.contains('nav-h3')) l.classList.toggle('open', outlineParent[i] === outlineParent[idx]);
       });
-      if (window.innerWidth > 680) next.scrollIntoView({ block: 'nearest' });
-    };
-    var io = new IntersectionObserver(spy, { rootMargin: '0px 0px -70% 0px' });
-    outlineHeads.forEach(function (h) { io.observe(h); });
-    window.addEventListener('hashchange', function () { pinHash(); spy(); });
+    });
+    window.addEventListener('hashchange', function () { pinHash(); runSpy(); });
     ['wheel', 'touchmove', 'keydown'].forEach(function (e) {
       window.addEventListener(e, function () { pinned = -1; }, { passive: true });
     });
     pinHash();
-    spy();
+  }
+
+  // Lightbox: one dialog reused by every screenshot.
+  var box = document.createElement('dialog');
+  box.className = 'lightbox';
+  box.setAttribute('aria-label', 'Screenshot');
+  box.innerHTML = '<button class="lightbox-close" type="button" aria-label="Close">&times;</button><img alt="">';
+  document.body.appendChild(box);
+  var boxImg = box.querySelector('img');
+  var openBox = function (img) {
+    boxImg.src = img.getAttribute('src');
+    boxImg.alt = img.alt;
+    box.showModal();
+  };
+  box.addEventListener('click', function () { box.close(); });
+
+  if (shotSections.length) {
+    var fig = document.createElement('figure');
+    fig.className = 'rail-shot';
+    fig.innerHTML = '<button type="button" aria-label="Enlarge screenshot"><img alt=""></button><figcaption></figcaption>';
+    rail.appendChild(fig);
+    var railImg = fig.querySelector('img');
+    var shown = null;
+    // Show the shot of the last section whose top passed the reading line; keep it while text without a shot scrolls by.
+    spyFns.push(function () {
+      var cur = shotSections[0];
+      shotSections.forEach(function (s) {
+        if (s.getBoundingClientRect().top <= window.innerHeight * 0.3) cur = s;
+      });
+      if (cur === shown) return;
+      shown = cur;
+      var src = cur.querySelector('.shot img');
+      railImg.src = src.getAttribute('src');
+      railImg.alt = src.alt;
+      fig.querySelector('figcaption').textContent = src.alt;
+    });
+    fig.querySelector('button').addEventListener('click', function () { openBox(railImg); });
+    document.querySelectorAll('main .shot img').forEach(function (img) {
+      img.addEventListener('click', function () { openBox(img); });
+    });
+  }
+
+  if (spyFns.length) {
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; runSpy(); });
+    }, { passive: true });
+    window.addEventListener('resize', runSpy);
+    runSpy();
   }
 
   // "On this page" list: the sidebar outline is hidden behind the menu button on phones, so CSS shows this one only there.
