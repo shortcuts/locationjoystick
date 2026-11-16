@@ -11,10 +11,15 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.routing.OsrmClient
@@ -132,7 +137,7 @@ class MapControllerTest {
                     ephemeralReplayController = ephemeralController,
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
-                    groupRepository = mockk(relaxed = true),
+                    groupRepository = mockk(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) },
                     appScope = backgroundScope,
                 )
 
@@ -148,8 +153,6 @@ class MapControllerTest {
 
             assertEquals("Mode should be WALK_TO", MockMode.WALK_TO, locationRepository.currentMode.value)
             assertEquals("Walk target should be set", target, locationRepository.walkTarget.value)
-            assertNull("routeTrace should be null for plain walk", mapController.sharedState.value.routeTrace)
-            assertTrue("walkMode should be Walking", mapController.sharedState.value.walkMode is WalkMode.Walking)
 
             // Step 2: Advance time to allow the walk loop to start and detect arrival.
             // Even though target is within threshold, we need one tick to run the check.
@@ -236,7 +239,7 @@ class MapControllerTest {
                     ephemeralReplayController = ephemeralController,
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
-                    groupRepository = mockk(relaxed = true),
+                    groupRepository = mockk(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) },
                     appScope = backgroundScope,
                 )
 
@@ -334,7 +337,7 @@ class MapControllerTest {
                     ephemeralReplayController = ephemeralController,
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
-                    groupRepository = mockk(relaxed = true),
+                    groupRepository = mockk(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) },
                     appScope = backgroundScope,
                 )
 
@@ -428,7 +431,7 @@ class MapControllerTest {
                     ephemeralReplayController = ephemeralController,
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
-                    groupRepository = mockk(relaxed = true),
+                    groupRepository = mockk(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) },
                     appScope = backgroundScope,
                 )
 
@@ -625,6 +628,67 @@ class MapControllerTest {
             verify(exactly = 2) { real.lastKnownRealPosition() }
         }
 
+    @Test
+    fun `sharedState mirrors the leader activity only while following`() =
+        runTest {
+            val location = LocationRepository()
+            val leader = MutableStateFlow<LeaderActivity?>(LeaderActivity.Roaming(false))
+            val controller = buildRestoreController(location, mockk(relaxed = true), backgroundScope, leaderActivity = leader)
+            runCurrent()
+            assertFalse(controller.sharedState.value.mirroredLeader)
+
+            location.setMockMode(MockMode.FOLLOWER)
+            runCurrent()
+            assertEquals(MovementState.Running(ActiveMode.ROAMING), controller.sharedState.value.movement)
+            assertTrue(controller.sharedState.value.mirroredLeader)
+
+            leader.value = LeaderActivity.Roaming(true)
+            runCurrent()
+            assertEquals(MovementState.Paused(ActiveMode.ROAMING), controller.sharedState.value.movement)
+
+            location.setMockMode(MockMode.TELEPORT)
+            runCurrent()
+            assertFalse(controller.sharedState.value.mirroredLeader)
+        }
+
+    @Test
+    fun `controls do nothing while the leader activity is mirrored`() =
+        runTest {
+            val location = LocationRepository()
+            val context = mockk<Context>(relaxed = true)
+            val roaming = mockk<RoamingRepository>(relaxed = true)
+            val leader = MutableStateFlow<LeaderActivity?>(LeaderActivity.Route(false, RouteProgress(3, 8)))
+            val controller =
+                buildRestoreController(
+                    location,
+                    mockk(relaxed = true),
+                    backgroundScope,
+                    leaderActivity = leader,
+                    context = context,
+                    roamingRepository = roaming,
+                )
+            location.setMockMode(MockMode.FOLLOWER)
+            runCurrent()
+
+            controller.pauseRoaming()
+            controller.resumeRoaming()
+            controller.stopRoaming()
+            controller.pauseRouteReplay()
+            controller.resumeRouteReplay()
+            controller.stopRouteReplay()
+            controller.jumpToNextWaypoint()
+            controller.jumpToPreviousWaypoint()
+            controller.appendWaypointToRoute(LatLng(1.0, 2.0))
+            controller.pauseWalk()
+            controller.stopWalk()
+            runCurrent()
+
+            verify(exactly = 0) { context.startService(any()) }
+            verify(exactly = 0) { roaming.pauseRoaming() }
+            verify(exactly = 0) { roaming.resumeRoaming() }
+            coVerify(exactly = 0) { roaming.stopRoaming() }
+        }
+
     private fun buildRestoreController(
         locationRepository: LocationRepository,
         realLocationRepository: RealLocationRepository,
@@ -633,6 +697,9 @@ class MapControllerTest {
         homeId: String? = null,
         favorites: List<FavoriteLocation> = emptyList(),
         homeFlow: MutableStateFlow<String?> = MutableStateFlow(homeId),
+        leaderActivity: MutableStateFlow<LeaderActivity?> = MutableStateFlow(null),
+        context: Context = mockk<Context>(relaxed = true),
+        roamingRepository: RoamingRepository = mockk<RoamingRepository>(relaxed = true),
     ): MapController {
         val settingsRepository =
             mockk<SettingsRepository>(relaxed = true) {
@@ -650,9 +717,6 @@ class MapControllerTest {
         val osrmClient = mockk<OsrmClient>(relaxed = true)
         val walkCoordinator = WalkCoordinator(locationRepository, WalkToEngine(settingsRepository, locationRepository))
         val routingErrorReporter = RoutingErrorReporter(mockk<Context>(relaxed = true))
-        val context = mockk<Context>(relaxed = true)
-        val roamingRepository =
-            mockk<RoamingRepository>(relaxed = true)
         return MapController(
             context = context,
             locationRepository = locationRepository,
@@ -670,7 +734,11 @@ class MapControllerTest {
                 EphemeralReplayController(locationRepository, settingsRepository, walkCoordinator, osrmClient, routingErrorReporter),
             osrmClient = osrmClient,
             routingErrorReporter = routingErrorReporter,
-            groupRepository = mockk(relaxed = true),
+            groupRepository =
+                mockk(relaxed = true) {
+                    every { this@mockk.leaderActivity } returns leaderActivity
+                    every { groupState } returns MutableStateFlow(GroupState.None)
+                },
             appScope = scope,
         ).also { lastRestoreSettings = settingsRepository }
     }

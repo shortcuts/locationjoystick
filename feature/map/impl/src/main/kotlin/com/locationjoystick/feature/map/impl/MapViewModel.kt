@@ -15,7 +15,6 @@ import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.advisoryPair
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.isRouteReplay
-import com.locationjoystick.core.location.isSpoofing
 import com.locationjoystick.core.location.nonPositionKey
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.FavoriteLocation
@@ -701,7 +700,7 @@ class MapViewModel
 
         private fun handleTapToTeleport(position: LatLng) {
             _uiState.update { it.copy(roamingPreviewWaypoints = null) }
-            if (mapController.sharedState.value.isSpoofing) {
+            if (mapController.isSpoofingLocally()) {
                 _uiState.update { it.copy(pendingTapPosition = position, isPendingTapSheetOpen = true) }
             } else {
                 mapController.teleportTo(position)
@@ -709,7 +708,7 @@ class MapViewModel
         }
 
         private fun handleSelectFavorite(favorite: FavoriteLocation) {
-            if (mapController.sharedState.value.isSpoofing) {
+            if (mapController.isSpoofingLocally()) {
                 _uiState.update { it.copy(favoriteTarget = favorite, pendingCameraTarget = favorite.position) }
             } else {
                 mapController.teleportTo(favorite.position)

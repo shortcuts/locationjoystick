@@ -28,6 +28,7 @@ import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.sortedBySavedItemMode
 import com.locationjoystick.core.model.speedProfileIdForKind
 import com.locationjoystick.core.model.toConfig
+import com.locationjoystick.core.model.visibleLeaderActivity
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.OsrmFailureReason
 import com.locationjoystick.core.routing.RoutingErrorReporter
@@ -43,7 +44,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -94,7 +94,26 @@ class MapController
     ) {
         @Suppress("ktlint:standard:property-naming")
         private val _sharedState = MutableStateFlow(MapSharedState())
-        val sharedState: StateFlow<MapSharedState> = _sharedState.asStateFlow()
+
+        /** [_sharedState] with the leader's activity layered on while following; controller logic keeps reading the local state. */
+        val sharedState: StateFlow<MapSharedState> =
+            combine(
+                _sharedState,
+                combine(groupRepository.leaderActivity, locationRepository.currentMode, ::visibleLeaderActivity),
+            ) { local, activity -> local.withLeaderActivity(activity) }
+                .stateIn(appScope, SharingStarted.Eagerly, _sharedState.value)
+
+        fun isSpoofingLocally(): Boolean = _sharedState.value.isSpoofing
+
+        private fun isMirroring(action: String): Boolean =
+            sharedState.value.mirroredLeader.also {
+                if (it) {
+                    Log.d(
+                        TAG,
+                        "$action ignored: the follower only looks at the leader's activity",
+                    )
+                }
+            }
 
         val completionMessages = locationRepository.completionEvents
 
@@ -522,11 +541,18 @@ class MapController
             job.start()
         }
 
-        fun pauseWalk() = walkCoordinator.pause()
+        fun pauseWalk() {
+            if (isMirroring("pauseWalk")) return
+            walkCoordinator.pause()
+        }
 
-        fun resumeWalk() = walkCoordinator.resume()
+        fun resumeWalk() {
+            if (isMirroring("resumeWalk")) return
+            walkCoordinator.resume()
+        }
 
         fun stopWalk() {
+            if (isMirroring("stopWalk")) return
             locationRepository.cancelWalkRoadRouteFetch()
             walkCoordinator.cancel()
             if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
@@ -595,6 +621,7 @@ class MapController
         }
 
         fun appendWaypointToRoute(position: LatLng) {
+            if (isMirroring("appendWaypointToRoute")) return
             context.startService(MockLocationIntentBuilder.appendWaypoint(context, position))
         }
 
@@ -637,10 +664,12 @@ class MapController
         }
 
         fun pauseRouteReplay() {
+            if (isMirroring("pauseRouteReplay")) return
             context.startService(MockLocationIntentBuilder.pauseRouteReplay(context))
         }
 
         fun resumeRouteReplay() {
+            if (isMirroring("resumeRouteReplay")) return
             appScope.launch {
                 val s = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
                 context.startService(MockLocationIntentBuilder.resumeRouteReplay(context, s))
@@ -648,14 +677,17 @@ class MapController
         }
 
         fun stopRouteReplay() {
+            if (isMirroring("stopRouteReplay")) return
             context.startService(MockLocationIntentBuilder.stopRouteReplay(context))
         }
 
         fun jumpToNextWaypoint() {
+            if (isMirroring("jumpToNextWaypoint")) return
             context.startService(MockLocationIntentBuilder.jumpToNextWaypoint(context))
         }
 
         fun jumpToPreviousWaypoint() {
+            if (isMirroring("jumpToPreviousWaypoint")) return
             context.startService(MockLocationIntentBuilder.jumpToPreviousWaypoint(context))
         }
 
@@ -687,14 +719,17 @@ class MapController
         }
 
         fun stopRoaming() {
+            if (isMirroring("stopRoaming")) return
             appScope.launch { roamingRepository.stopRoaming() }
         }
 
         fun pauseRoaming() {
+            if (isMirroring("pauseRoaming")) return
             roamingRepository.pauseRoaming()
         }
 
         fun resumeRoaming() {
+            if (isMirroring("resumeRoaming")) return
             roamingRepository.resumeRoaming()
         }
 

@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -142,6 +143,15 @@ class GroupRepositoryTest {
                 assertNull(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `leaveGroup clears leaderActivity`() =
+        runTest {
+            repository.setLeaderActivity(LeaderActivity.Roaming(false))
+            assertEquals(LeaderActivity.Roaming(false), repository.leaderActivity.value)
+            repository.leaveGroup()
+            assertNull(repository.leaderActivity.value)
         }
 
     @Test

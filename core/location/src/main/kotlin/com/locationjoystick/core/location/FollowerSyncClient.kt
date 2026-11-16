@@ -3,6 +3,8 @@ package com.locationjoystick.core.location
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +34,7 @@ data class FollowerPositionUpdate(
     val bearing: Float,
     val active: Boolean,
     val teleportSeq: Long = 0L,
+    val activity: LeaderActivity? = null,
 )
 
 /** The follower's own state, sent on each poll so the leader's status can list it. */
@@ -114,6 +117,7 @@ class FollowerSyncClient
                                                     bearing = update.bearing,
                                                     active = update.active,
                                                     teleportSeq = update.teleportSeq,
+                                                    activity = update.activity,
                                                 ),
                                             )
                                         }
@@ -222,9 +226,37 @@ class FollowerSyncClient
                     // Old leaders omit it: 0 forever, so the follower never sees a change and just walks.
                     teleportSeq = obj.optLong("teleportSeq", 0L),
                     ageMs = if (obj.has("ageMs")) obj.getLong("ageMs") else null,
+                    activity = parseActivity(obj),
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to parse position JSON", e)
                 null
             }
+
+        private fun parseActivity(obj: JSONObject): LeaderActivity? {
+            val paused = obj.optBoolean("activityPaused", false)
+            return when (obj.optString("activity")) {
+                "route" ->
+                    LeaderActivity.Route(
+                        paused,
+                        if (obj.has("routeCurrent") &&
+                            obj.has("routeTotal")
+                        ) {
+                            RouteProgress(obj.getInt("routeCurrent"), obj.getInt("routeTotal"))
+                        } else {
+                            null
+                        },
+                    )
+
+                "roaming" -> LeaderActivity.Roaming(paused)
+
+                "walking" ->
+                    LeaderActivity.Walking(
+                        paused,
+                        if (obj.has("walkLat") && obj.has("walkLon")) LatLng(obj.getDouble("walkLat"), obj.getDouble("walkLon")) else null,
+                    )
+
+                else -> null
+            }
+        }
     }

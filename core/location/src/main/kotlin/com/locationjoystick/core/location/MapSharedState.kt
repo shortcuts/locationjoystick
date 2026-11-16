@@ -1,9 +1,11 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.MovementState
@@ -39,6 +41,7 @@ data class MapSharedState(
     val debugStatsEnabled: Boolean = false,
     val isRoadRouteFetchInFlight: Boolean = false,
     val routeProgress: RouteProgress? = null,
+    val mirroredLeader: Boolean = false,
 )
 
 val MapSharedState.walkTarget: LatLng? get() = (walkMode as? WalkMode.Walking)?.target
@@ -49,6 +52,31 @@ val MapSharedState.isWalkActive: Boolean get() = walkMode !is WalkMode.Idle
 val MapSharedState.mockMode: MockMode get() = movement.mode
 val MapSharedState.isRouteReplay: Boolean get() = mockMode == MockMode.ROUTE_REPLAY
 val MapSharedState.isSpoofing: Boolean get() = mockLocationState == MockLocationState.RUNNING
+
+/** Shows [activity] through the fields every surface reads, so the follower's controls look as if it ran the activity itself. */
+fun MapSharedState.withLeaderActivity(activity: LeaderActivity?): MapSharedState {
+    if (activity == null) return this
+
+    fun movement(active: ActiveMode) = if (activity.paused) MovementState.Paused(active) else MovementState.Running(active)
+    return when (activity) {
+        is LeaderActivity.Route ->
+            copy(
+                movement = movement(ActiveMode.ROUTE_REPLAY),
+                mockLocationState = if (activity.paused) MockLocationState.PAUSED else MockLocationState.RUNNING,
+                routeProgress = activity.progress,
+                mirroredLeader = true,
+            )
+
+        is LeaderActivity.Roaming -> copy(movement = movement(ActiveMode.ROAMING), mirroredLeader = true)
+
+        is LeaderActivity.Walking ->
+            copy(
+                movement = movement(ActiveMode.WALK_TO),
+                walkMode = activity.target?.let { WalkMode.Walking(it, start = null) } ?: walkMode,
+                mirroredLeader = true,
+            )
+    }
+}
 
 fun MapSharedState.nonPositionKey(): Any =
     Triple(

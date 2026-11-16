@@ -1,8 +1,11 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.model.SyncPositionUpdate
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.HttpURLConnection
@@ -84,6 +87,28 @@ class LeaderSyncServerTest {
         val body = conn.inputStream.bufferedReader().readText()
         conn.disconnect()
         assertTrue(body.contains("\"teleportSeq\":3"))
+    }
+
+    @Test
+    fun `pushed walking activity is served with its target`() {
+        val port = server.start("gid")
+        server.push(
+            SyncPositionUpdate(1000L, 1.5, 2.5, 0f, 0f, 0, activity = LeaderActivity.Walking(false, LatLng(1.0, 2.0))),
+        )
+        val conn = URL("http://localhost:$port/position?token=gid").openConnection() as HttpURLConnection
+        val body = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+        assertTrue(body.contains("\"activity\":\"walking\",\"activityPaused\":false,\"walkLat\":1.0,\"walkLon\":2.0"))
+    }
+
+    @Test
+    fun `no activity adds no activity key`() {
+        val port = server.start("gid")
+        server.push(SyncPositionUpdate(1000L, 1.5, 2.5, 0f, 0f, 0))
+        val conn = URL("http://localhost:$port/position?token=gid").openConnection() as HttpURLConnection
+        val body = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+        assertFalse(body.contains("activity"))
     }
 
     @Test

@@ -1,6 +1,9 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
@@ -119,6 +122,33 @@ class FollowerSyncClientTest {
         client.startPolling("127.0.0.1", serverPort, "test-group") { update -> results.offer(update.teleportSeq) }
 
         assertEquals(3L, results.poll(3, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun `poll delivers each leader activity to callback`() {
+        val activities =
+            listOf(
+                LeaderActivity.Route(false, RouteProgress(3, 8)),
+                LeaderActivity.Route(true, null),
+                LeaderActivity.Roaming(true),
+                LeaderActivity.Walking(false, LatLng(1.0, 2.0)),
+                LeaderActivity.Walking(true, null),
+            )
+        activities.forEach { expected ->
+            server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(activity = expected))
+            val results = LinkedBlockingQueue<Any>()
+            client.startPolling("127.0.0.1", serverPort, "test-group") { update -> results.offer(update.activity ?: "none") }
+            assertEquals(expected, results.poll(3, TimeUnit.SECONDS))
+            client.stopPolling()
+        }
+    }
+
+    @Test
+    fun `poll without activity delivers null`() {
+        server.push(freshUpdate(lat = 1.0, lon = 2.0))
+        val results = LinkedBlockingQueue<Any>()
+        client.startPolling("127.0.0.1", serverPort, "test-group") { update -> results.offer(update.activity ?: "none") }
+        assertEquals("none", results.poll(3, TimeUnit.SECONDS))
     }
 
     @Test

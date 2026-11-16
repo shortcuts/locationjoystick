@@ -20,6 +20,7 @@ import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.model.LoopMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -139,6 +140,8 @@ class MapViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private val leaderActivityFlow = MutableStateFlow<LeaderActivity?>(null)
+
     private fun createMapController(): MapController =
         MapController(
             context = context,
@@ -155,7 +158,7 @@ class MapViewModelTest {
             ephemeralReplayController = ephemeralReplayController,
             osrmClient = osrmClient,
             routingErrorReporter = RoutingErrorReporter(mockk<android.content.Context>(relaxed = true)),
-            groupRepository = mockk(relaxed = true),
+            groupRepository = mockk(relaxed = true) { every { leaderActivity } returns leaderActivityFlow },
             appScope = CoroutineScope(testDispatcher),
         )
 
@@ -189,6 +192,21 @@ class MapViewModelTest {
         runTest {
             every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
             every { locationRepository.currentPosition } returns MutableStateFlow(null)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val position = LatLng(48.8566, 2.3522)
+            viewModel.onAction(MapAction.TapToTeleport(position))
+
+            assertEquals(position, viewModel.uiState.value.pendingTapPosition)
+        }
+
+    @Test
+    fun `tapToTeleport_withPausedMirroredRoute_opensChoiceSheet`() =
+        runTest {
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentMode } returns MutableStateFlow(MockMode.FOLLOWER)
+            leaderActivityFlow.value = LeaderActivity.Route(paused = true, progress = null)
             viewModel = createViewModel()
             testDispatcher.scheduler.advanceUntilIdle()
 

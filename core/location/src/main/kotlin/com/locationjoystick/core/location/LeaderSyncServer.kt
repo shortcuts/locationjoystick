@@ -4,6 +4,7 @@ import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +59,24 @@ private data class FollowerEntry(
 )
 
 private fun Boolean?.toJson(): String = this?.toString() ?: "null"
+
+/** Optional fields appended to the `/position` body; old followers read only the keys they know. */
+private fun activityJson(activity: LeaderActivity?): String {
+    if (activity == null) return ""
+    val kind =
+        when (activity) {
+            is LeaderActivity.Route -> "route"
+            is LeaderActivity.Roaming -> "roaming"
+            is LeaderActivity.Walking -> "walking"
+        }
+    val detail =
+        when (activity) {
+            is LeaderActivity.Route -> activity.progress?.let { ",\"routeCurrent\":${it.current},\"routeTotal\":${it.total}" }
+            is LeaderActivity.Walking -> activity.target?.let { ",\"walkLat\":${it.latitude},\"walkLon\":${it.longitude}" }
+            is LeaderActivity.Roaming -> null
+        }
+    return ",\"activity\":\"$kind\",\"activityPaused\":${activity.paused}${detail.orEmpty()}"
+}
 
 /** The API key lives only in [Running], so "API enabled without a running server" cannot exist. */
 sealed interface LeaderServerState {
@@ -266,7 +285,8 @@ class LeaderSyncServer
                                 "\"lon\":${update.longitude},\"speedMs\":${update.speedMs}," +
                                 "\"bearing\":${update.bearing},\"seq\":${update.seq}," +
                                 "\"followers\":$count,\"active\":${update.active}," +
-                                "\"teleportSeq\":${update.teleportSeq},\"ageMs\":${System.currentTimeMillis() - update.timestamp}}"
+                                "\"teleportSeq\":${update.teleportSeq},\"ageMs\":${System.currentTimeMillis() - update.timestamp}" +
+                                "${activityJson(update.activity)}}"
                         writer.print(
                             "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\n\r\n$body",
                         )

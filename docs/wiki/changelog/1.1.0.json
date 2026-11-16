@@ -2,6 +2,7 @@
   "version": "1.1.0",
   "date": "2026-11-12",
   "entries": [
+    { "category": "feat", "scope": "Group Sync", "summary": "A follower now sees what the leader is doing. Its map and floating widget show the leader's route, roaming or walk, playing or paused. These buttons only look: they do not control the leader." },
     { "category": "fix", "scope": "Map", "summary": "The stop counter for a chain of added points now counts the points you tapped, not every turn of the road. It also grows when you add a point." },
     { "category": "feat", "scope": "Routes", "summary": "Teleport routes now show the stop counter too." },
     { "category": "feat", "scope": "Map", "summary": "The suggested teleport wait now also shows on the route start sheet and the paste coordinates box, in the app and in the floating widget." },

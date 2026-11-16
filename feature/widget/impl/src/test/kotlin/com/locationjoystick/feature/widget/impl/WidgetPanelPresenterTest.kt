@@ -108,7 +108,7 @@ class WidgetPanelPresenterTest {
                 ephemeralReplayController = ephemeralReplayController,
                 osrmClient = mockk<OsrmClient>(relaxed = true),
                 routingErrorReporter = RoutingErrorReporter(mockk<android.content.Context>(relaxed = true)),
-                groupRepository = mockk(relaxed = true),
+                groupRepository = mockk(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) },
                 appScope = scope,
             )
 

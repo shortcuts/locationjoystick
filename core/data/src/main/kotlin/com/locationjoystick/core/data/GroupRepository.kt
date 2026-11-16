@@ -11,6 +11,7 @@ import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.LeaderActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -133,6 +134,14 @@ class GroupRepository
             _leaderPosition.value = position
         }
 
+        /** Follower-only, in-memory: what the leader is doing, for the follower's UI to mirror. */
+        private val _leaderActivity = MutableStateFlow<LeaderActivity?>(null)
+        val leaderActivity: StateFlow<LeaderActivity?> = _leaderActivity.asStateFlow()
+
+        fun setLeaderActivity(activity: LeaderActivity?) {
+            _leaderActivity.value = activity
+        }
+
         suspend fun leaveGroup() {
             dataStore.edit { prefs ->
                 prefs.remove(Keys.GROUP_ROLE)
@@ -144,6 +153,7 @@ class GroupRepository
                 prefs.remove(Keys.GROUP_FOLLOW_LEADER_TELEPORTS)
             }
             _leaderPosition.value = null
+            _leaderActivity.value = null
         }
 
         private val _pendingGroupInvite = MutableSharedFlow<GroupInvite>(replay = 1)

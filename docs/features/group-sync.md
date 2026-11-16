@@ -98,13 +98,28 @@ The content routes give JSON create, read, update and delete for favorites, rout
 
 Route replacement keeps the route's id and creation time, and is refused while that route is playing.
 
+## Leader activity
+
+A follower's map, floating map and floating widget show what the leader is doing, as if the follower did it: a route with its progress, roaming or a walk, each playing or paused. The leader adds optional fields to its sync update, not the Control API, because that API is off by default.
+
+Rules that must hold:
+
+- The mirror is look only. A follower's pause, resume or stop on a mirrored activity does nothing. Forwarding it to the leader was rejected: the leader's state belongs to the leader.
+- The surfaces carry no "Leader's" label. They read one published state, so they stay identical to a solo device.
+- The mirror shows only in follow mode. Leaving follow mode (a tap, a favorite, a route, the Group Sync switch) drops it without each exit path clearing it. Starting the follower's own activity leaves follow mode the same way.
+- The walk target is on the wire because every walk control keys on a target. The leader already shares its position, so the target adds little exposure.
+- The route trace and the roam path are not shared. Waypoints grow the payload.
+- An inactive leader sends no activity, and the follower clears it. A leader without the fields reads as "no activity". An old follower ignores them.
+- The follower's controller logic keeps reading its own state. Only the published state carries the mirror, so a mirrored roam never looks real to an engine.
+- Map taps that act on spoofing read the follower's own state. A paused mirrored route would otherwise make a tap teleport at once.
+
 ## Leader screen
 
 The Control API switch sits under Sharing and is enabled only once the server's address is known. It shows the address, port and key with copy buttons, a key regeneration action (the old key stops working at once), and a warning that the link is plain and local. The switch resets when the group is left or the app restarts. The key persists.
 
 ## Edge cases
 
-- The leader pauses a route, roam or walk: sharing continues with the frozen position, refreshed each tick, so followers do not go stale.
+- The leader pauses a route, roam or walk: sharing continues with the frozen position, refreshed each tick, so followers do not go stale. The follower shows the activity as paused.
 - The two device clocks differ: manual time can put them minutes apart. The leader therefore sends the age of its update, measured on its own clock, and the follower judges staleness by that age. An old leader that sends none falls back to comparing timestamps across the two clocks.
 - The leader stops spoofing (not pause): each update carries an active flag. A follower that sees inactive parks itself without stopping its service, so the notification and polling stay alive. When the leader is active again, the follower bootstraps as on first connect. A leader's stop keeps its server alive, so the group survives.
 - The user leaves the group while spoofing is stopped: the service ends, since nothing keeps it alive any more. Leaving while spoofing keeps spoofing.

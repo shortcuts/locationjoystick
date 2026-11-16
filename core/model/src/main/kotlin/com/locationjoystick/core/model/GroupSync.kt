@@ -50,6 +50,7 @@ data class SyncPositionUpdate(
     val active: Boolean = true,
     val teleportSeq: Long = 0L,
     val ageMs: Long? = null,
+    val activity: LeaderActivity? = null,
 )
 
 data class GroupInvite(

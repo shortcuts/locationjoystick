@@ -52,6 +52,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
@@ -146,6 +148,11 @@ class FloatingWidgetService :
     private val joystickVisibleFlow = MutableStateFlow(false)
     private val joystickLockedFlow = MutableStateFlow(false)
     private val activeProfileIdFlow = MutableStateFlow("walk")
+
+    // The bar reads the published state so a follower's bar shows the leader's activity.
+    private val barMovement by lazy { mapController.sharedState.map { it.movement }.distinctUntilChanged() }
+    private val barMockLocationState by lazy { mapController.sharedState.map { it.mockLocationState }.distinctUntilChanged() }
+    private val barRouteProgress by lazy { mapController.sharedState.map { it.routeProgress }.distinctUntilChanged() }
     private val profilesFlow = MutableStateFlow<List<com.locationjoystick.core.model.SpeedProfile>>(emptyList())
 
     private val stopPopupVisibleFlow = MutableStateFlow(false)
@@ -245,7 +252,7 @@ class FloatingWidgetService :
             }
         }
         lifecycleScope.launch {
-            locationRepository.currentMode.collect { mode ->
+            mapController.sharedState.map { it.mockMode }.distinctUntilChanged().collect { mode ->
                 if (!routeControlsActive(mode)) panelExpand.collapse(PanelExpandKey.ROUTE)
                 if (mode != MockMode.ROAMING) panelExpand.collapse(PanelExpandKey.ROAMING)
             }
@@ -331,11 +338,9 @@ class FloatingWidgetService :
             val features by settingsRepository.getWidgetFeatures().collectAsStateWithLifecycle(initialValue = emptyList())
             val joystickLocked by joystickLockedFlow.collectAsStateWithLifecycle()
             val activeProfileId by activeProfileIdFlow.collectAsStateWithLifecycle()
-            val movement by locationRepository.movement.collectAsStateWithLifecycle(initialValue = MovementState.Manual(MockMode.TELEPORT))
+            val movement by barMovement.collectAsStateWithLifecycle(initialValue = MovementState.Manual(MockMode.TELEPORT))
             val currentMode = movement.mode
-            val mockLocationState by locationRepository.mockLocationState.collectAsStateWithLifecycle(
-                initialValue = MockLocationState.IDLE,
-            )
+            val mockLocationState by barMockLocationState.collectAsStateWithLifecycle(initialValue = MockLocationState.IDLE)
             val routeExpanded by panelExpand.flow(PanelExpandKey.ROUTE).collectAsStateWithLifecycle()
             val roamingExpanded by panelExpand.flow(PanelExpandKey.ROAMING).collectAsStateWithLifecycle()
             val stopPopupVisible by stopPopupVisibleFlow.collectAsStateWithLifecycle()
@@ -356,7 +361,7 @@ class FloatingWidgetService :
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
             val reconnectStatus by screenCaptureSource.reconnectStatus.collectAsStateWithLifecycle()
             val reconnectEnabled by settingsRepository.getEffectiveReconnect().collectAsStateWithLifecycle(initialValue = false)
-            val routeProgress by locationRepository.routeProgress.collectAsStateWithLifecycle(initialValue = null)
+            val routeProgress by barRouteProgress.collectAsStateWithLifecycle(initialValue = null)
 
             val themeMode by settingsRepository.getThemeMode().collectAsStateWithLifecycle(
                 initialValue = ThemeMode.DARK,

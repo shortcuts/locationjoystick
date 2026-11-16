@@ -34,6 +34,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -574,7 +575,7 @@ class MapControllerWalkCancellationTest {
         val teleportUseCase =
             mockk<TeleportUseCase>(relaxed = true) { every { cooldownsFor(any()) } returns emptyFlow() }
         val startRouteReplayUseCase = mockk<StartRouteReplayUseCase>(relaxed = true)
-        val groupRepository = mockk<GroupRepository>(relaxed = true)
+        val groupRepository = mockk<GroupRepository>(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) }
 
         val mapController =
             MapController(

@@ -38,6 +38,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SyncPositionUpdate
 import com.locationjoystick.core.model.followerModeEnabled
 import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.leaderActivityOf
 import com.locationjoystick.core.model.role
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
@@ -973,6 +974,7 @@ class MockLocationService : Service() {
                     followerCatchUp.setTarget(LatLng(lat, lon), bearing, speedMs)
                     groupRepository.setLeaderPosition(LatLng(lat, lon))
                 }
+                groupRepository.setLeaderActivity(if (active) update.activity else null)
                 when (followerCatchUp.handleLeaderActiveUpdate(active, state.value)) {
                     FollowerActiveAction.BOOTSTRAP -> {
                         // Leader stop, move, start again counts as a teleport; the very first bootstrap
@@ -1011,6 +1013,7 @@ class MockLocationService : Service() {
         followerSyncClient.stopPolling()
         followerCatchUp.clear()
         groupRepository.setLeaderPosition(null)
+        groupRepository.setLeaderActivity(null)
         locationRepository.setMockMode(MockMode.TELEPORT)
         Log.i(TAG, "Exited FOLLOWER mode")
         stopSelfIfIdle()
@@ -1239,6 +1242,7 @@ class MockLocationService : Service() {
                 serviceScope.launch { settingsRepository.setLastLocation(pos) }
             }
             if (leaderSharingEnabled) {
+                val active = state.value != MockLocationState.IDLE && state.value != MockLocationState.ERROR
                 leaderSyncServer.push(
                     SyncPositionUpdate(
                         timestamp = System.currentTimeMillis(),
@@ -1247,8 +1251,18 @@ class MockLocationService : Service() {
                         speedMs = fix.speedMs,
                         bearing = fix.bearing,
                         seq = 0,
-                        active = state.value != MockLocationState.IDLE && state.value != MockLocationState.ERROR,
+                        active = active,
                         teleportSeq = teleportSeq.get(),
+                        activity =
+                            if (active) {
+                                leaderActivityOf(
+                                    locationRepository.currentMovement(),
+                                    locationRepository.routeProgress.value,
+                                    locationRepository.walkTarget.value,
+                                )
+                            } else {
+                                null
+                            },
                     ),
                 )
             }
