@@ -8,7 +8,7 @@ Installing another app needs `REQUEST_INSTALL_PACKAGES`. Play policy restricts i
 
 ## What it does
 
-It rewrites the installed APK into a clone under a random package ID, a user-chosen name and a shifted icon hue. It hides the package name, the label and the icon colours from other apps. The icon hue shift covers background and glyph with one record hue. The clone drops the `locationjoystick` scheme filter and the verified-link filter, because the host's asset-links file lists the original's signature.
+It rewrites the installed APK into a clone under a random package ID, a user-chosen name and a shifted icon hue. It hides the package name, the label and the icon colours from other apps. The icon hue shift covers background and glyph with one record hue. The clone drops the `locationjoystick` scheme filter and the verified-link filter, because the host's asset-links file lists the original's signature. It also drops the intent filters of the external teleport shim, so the clone never answers the same teleport command as the original.
 
 ## Remaining leaks
 

@@ -32,6 +32,7 @@ internal fun rewriteApk(
     }
 
     dropOriginalLinkFilters(manifest)
+    dropTeleportShimFilters(manifest)
 
     val table = apk.tableBlock
     table.getResource(manifest.applicationLabelReference).forEach { it.setValueAsString(record.name) }
@@ -54,6 +55,16 @@ internal fun dropOriginalLinkFilters(manifest: AndroidManifestBlock) {
                 element.searchAttributeByName("scheme")?.valueAsString == ORIGINAL_SCHEME ||
                     element.searchAttributeByName("host")?.valueAsString == ORIGINAL_LINK_HOST
             }
+        }
+    }
+}
+
+// The service stays so the settings toggle can still address it; without filters no outside command resolves.
+internal fun dropTeleportShimFilters(manifest: AndroidManifestBlock) {
+    manifest.applicationElement.listElements("service").forEach { service ->
+        val element = service as ResXmlElement
+        if (element.searchAttributeByName("name")?.valueAsString?.endsWith(".ExternalTeleportService") == true) {
+            element.removeElementsIf { (it as ResXmlElement).name == "intent-filter" }
         }
     }
 }

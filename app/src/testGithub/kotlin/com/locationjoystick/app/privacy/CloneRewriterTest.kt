@@ -39,6 +39,37 @@ class CloneRewriterTest {
         assertEquals(listOf<String?>("geo", "example.com"), remainingValues(manifest))
     }
 
+    private fun manifestWithShim(): AndroidManifestBlock {
+        val manifest = AndroidManifestBlock.empty()
+        val service = manifest.getOrCreateApplicationElement().newElement("service")
+        service.newAttribute().apply {
+            name = "name"
+            setValueAsString("com.locationjoystick.core.location.ExternalTeleportService")
+        }
+        service.newElement("intent-filter")
+        return manifest
+    }
+
+    private fun shimFilterCount(manifest: AndroidManifestBlock): Int =
+        (manifest.applicationElement.getElement("service") as ResXmlElement).listElements("intent-filter").count()
+
+    @Test
+    fun `drops the teleport shim intent filters`() {
+        val manifest = manifestWithShim()
+        dropTeleportShimFilters(manifest)
+        assertEquals(0, shimFilterCount(manifest))
+    }
+
+    @Test
+    fun `keeps the filters of other services`() {
+        val manifest = manifestWithShim()
+        (manifest.applicationElement.getElement("service") as ResXmlElement)
+            .searchAttributeByName("name")
+            .setValueAsString("com.example.OtherService")
+        dropTeleportShimFilters(manifest)
+        assertEquals(1, shimFilterCount(manifest))
+    }
+
     @Test
     fun `hue shift rotates orange to blue and keeps alpha and grey`() {
         assertEquals(0xFF007FFF.toInt(), shiftHue(0xFFFF8000.toInt(), 180))
