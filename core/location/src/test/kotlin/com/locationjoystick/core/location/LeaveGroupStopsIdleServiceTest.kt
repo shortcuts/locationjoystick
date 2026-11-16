@@ -17,7 +17,7 @@ class LeaveGroupStopsIdleServiceTest {
                 groupRepository = mockk(relaxed = true)
             }
 
-        if (state == MockLocationState.RUNNING) service.locationRepository.startSpoofing()
+        if (state == MockLocationState.RUNNING) service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         service.stubGroupMode()
         return service
     }

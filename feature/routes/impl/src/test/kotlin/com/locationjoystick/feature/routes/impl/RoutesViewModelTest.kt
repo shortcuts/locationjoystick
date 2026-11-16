@@ -234,7 +234,7 @@ class RoutesViewModelUiStateTest {
     fun playbackState_isPlaying_when_active_route_and_running() =
         runTest {
             locationRepository.setActiveRouteId("r1")
-            locationRepository.startSpoofing()
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
 
             viewModel.playbackState.test {
                 val state = awaitItem()
@@ -250,7 +250,7 @@ class RoutesViewModelUiStateTest {
         runTest {
             locationRepository.setActiveRouteId("r1")
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            locationRepository.startSpoofing()
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
             locationRepository.pauseReplay()
 
             viewModel.playbackState.test {

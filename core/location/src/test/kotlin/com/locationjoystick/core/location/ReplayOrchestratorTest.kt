@@ -107,7 +107,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handlePause_pausesEngine_and_emitsState() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         orchestrator.handlePause()
 
         verify { routeReplayEngine.pause() }
@@ -118,7 +118,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handleResume_whenServiceRejectsStart_keepsRepositoryState() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         locationRepository.sendSpoofingEvent(SpoofingEvent.FAIL)
         acceptEvents = false
 
@@ -132,7 +132,7 @@ class ReplayOrchestratorTest {
     fun handlePause_whenIdleOrNewWalkOwnsMovement_doesNothing() {
         orchestrator.handlePause()
         locationRepository.setWalkTarget(LatLng(1.0, 1.0))
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
 
         orchestrator.handlePause()
 
@@ -459,7 +459,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handleStop_whenRunning_callsStartUpdateLoop() =
         runTest {
-            locationRepository.startSpoofing()
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
             assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
 
             orchestrator.handleStop()
@@ -471,7 +471,7 @@ class ReplayOrchestratorTest {
     fun handleStop_whenPaused_returnsToRunningAndRestartsUpdateLoop() =
         runTest {
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            locationRepository.startSpoofing()
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
             locationRepository.pauseReplay()
             assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
 
@@ -500,7 +500,7 @@ class ReplayOrchestratorTest {
     @Test
     fun handleCancel_whenRunning_callsStartUpdateLoop() =
         runTest {
-            locationRepository.startSpoofing()
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
 
             orchestrator.handleCancel()
 
@@ -609,7 +609,7 @@ class ReplayOrchestratorTest {
 
     @Test
     fun handleResume_onComplete_doesNotCallStopSpoofing() {
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
         verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }

@@ -183,7 +183,7 @@ class JoystickLockBehaviorTest {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         locationRepository.setActiveRouteId("saved-route")
         locationRepository.setRouteWaypoints(waypoints)
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         every { mapController.pauseAutomatedMovement() } answers { locationRepository.pauseReplay() }
 
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)

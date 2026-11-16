@@ -301,7 +301,7 @@ class MapControllerWalkCancellationTest {
             harness.mapController.pauseAutomatedMovement()
             // What the service does on ACTION_EXIT_FOLLOWER.
             repo.setMockMode(MockMode.TELEPORT)
-            repo.startSpoofing()
+            repo.sendSpoofingEvent(SpoofingEvent.START)
 
             advanceTimeBy(AppConstants.SyncConstants.FOLLOWER_RESUME_IDLE_MS - 1_000)
             repo.setPositionInternal(LatLng(48.8570, 2.3522))
@@ -324,7 +324,7 @@ class MapControllerWalkCancellationTest {
                 flowOf(GroupState.Follower(groupId = "AB3X9K", host = "10.0.0.9", port = 8080, followerModeEnabled = true))
             val repo = harness.locationRepository
             repo.setMockMode(MockMode.FOLLOWER)
-            repo.startSpoofing()
+            repo.sendSpoofingEvent(SpoofingEvent.START)
             repo.setPositionInternal(LatLng(48.8566, 2.3522))
 
             // Favorite teleport / route start: the flag stays on, only the mode changes.
@@ -443,7 +443,7 @@ class MapControllerWalkCancellationTest {
             val harness = buildHarness(backgroundScope, mockk(relaxed = true))
             val repo = harness.locationRepository
             repo.setMockMode(MockMode.ROUTE_REPLAY)
-            repo.startSpoofing()
+            repo.sendSpoofingEvent(SpoofingEvent.START)
             repo.sendSpoofingEvent(SpoofingEvent.FAIL)
 
             harness.mapController.pauseAutomatedMovement()
@@ -457,7 +457,7 @@ class MapControllerWalkCancellationTest {
             val harness = buildHarness(backgroundScope, mockk(relaxed = true))
             val repo = harness.locationRepository
             repo.setMockMode(MockMode.ROUTE_REPLAY)
-            repo.startSpoofing()
+            repo.sendSpoofingEvent(SpoofingEvent.START)
             repo.setActiveRouteId("saved-route")
 
             repeat(3) { harness.mapController.pauseAutomatedMovement() }

@@ -144,10 +144,10 @@ class LocationRepositoryTest {
         }
 
     @Test
-    fun `stopSpoofing zeroes reportedSpeedMps`() {
+    fun `STOP event zeroes reportedSpeedMps`() {
         repository.setReportedSpeed(2f)
 
-        repository.stopSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.STOP)
 
         assertEquals(0f, repository.reportedSpeedMps.value)
     }
@@ -203,7 +203,7 @@ class LocationRepositoryTest {
             repository.observeState().test {
                 assertEquals(MockLocationState.IDLE, awaitItem())
 
-                repository.startSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.START)
 
                 assertEquals(MockLocationState.RUNNING, awaitItem())
                 cancelAndIgnoreRemainingEvents()
@@ -216,7 +216,7 @@ class LocationRepositoryTest {
             repository.observePosition().test {
                 awaitItem() // initial null
 
-                repository.startSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.START)
 
                 val pos = awaitItem()
                 assertNotNull(pos)
@@ -235,7 +235,7 @@ class LocationRepositoryTest {
             repository.observePosition().test {
                 assertEquals(existing, awaitItem())
 
-                repository.startSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.START)
 
                 // Position should remain unchanged (no new emission since position wasn't modified)
                 // Just verify the current value is still the existing position
@@ -249,12 +249,12 @@ class LocationRepositoryTest {
     @Test
     fun `stopSpoofing sets state to IDLE`() =
         runTest {
-            repository.startSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.START)
 
             repository.observeState().test {
                 assertEquals(MockLocationState.RUNNING, awaitItem())
 
-                repository.stopSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.STOP)
 
                 assertEquals(MockLocationState.IDLE, awaitItem())
                 cancelAndIgnoreRemainingEvents()
@@ -264,11 +264,11 @@ class LocationRepositoryTest {
     @Test
     fun `stopSpoofing is idempotent when called multiple times`() =
         runTest {
-            repository.startSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.START)
 
             // Double-call mirrors the onDestroy + onComplete race fixed in MockLocationService.
-            repository.stopSpoofing()
-            repository.stopSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.STOP)
+            repository.sendSpoofingEvent(SpoofingEvent.STOP)
 
             assertEquals(MockLocationState.IDLE, repository.mockLocationState.value)
         }
@@ -279,7 +279,7 @@ class LocationRepositoryTest {
         // the serviceScope.cancel race in MockLocationService.onDestroy() leaves
         // mockLocationState stuck at RUNNING after service destruction.
         val repo = LocationRepository()
-        repo.stopSpoofing() // direct synchronous call — would not compile if suspend
+        repo.sendSpoofingEvent(SpoofingEvent.STOP) // direct synchronous call — would not compile if suspend
         assertEquals(MockLocationState.IDLE, repo.mockLocationState.value)
     }
 
@@ -289,7 +289,7 @@ class LocationRepositoryTest {
     fun `pauseReplay in a running replay emits PAUSED and Paused`() =
         runTest {
             repository.setMockMode(MockMode.ROUTE_REPLAY)
-            repository.startSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.START)
 
             repository.observeState().test {
                 assertEquals(MockLocationState.RUNNING, awaitItem())
@@ -304,7 +304,7 @@ class LocationRepositoryTest {
 
     @Test
     fun `pauseReplay during a replay fetch holds the pause`() {
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.START)
         repository.beginRoadRouteFetch()
 
         repository.pauseReplay()
@@ -316,7 +316,7 @@ class LocationRepositoryTest {
     @Test
     fun `a second pauseReplay changes nothing`() {
         repository.setMockMode(MockMode.ROUTE_REPLAY)
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.START)
         repository.pauseReplay()
 
         repository.pauseReplay()
@@ -326,7 +326,7 @@ class LocationRepositoryTest {
 
     @Test
     fun `pauseReplay with no replay or replay fetch is rejected`() {
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.START)
 
         repository.pauseReplay()
 
@@ -346,11 +346,11 @@ class LocationRepositoryTest {
     @Test
     fun `stopSpoofing clears a replay pause`() {
         repository.setMockMode(MockMode.ROUTE_REPLAY)
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.START)
         repository.pauseReplay()
 
-        repository.stopSpoofing()
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.STOP)
+        repository.sendSpoofingEvent(SpoofingEvent.START)
 
         assertEquals(MovementState.Running(ActiveMode.ROUTE_REPLAY), repository.currentMovement())
         assertEquals(MockLocationState.RUNNING, repository.mockLocationState.value)
@@ -358,7 +358,7 @@ class LocationRepositoryTest {
 
     @Test
     fun `failing spoofing clears a pending replay pause`() {
-        repository.startSpoofing()
+        repository.sendSpoofingEvent(SpoofingEvent.START)
         repository.beginRoadRouteFetch()
         repository.pauseReplay()
 
@@ -391,7 +391,7 @@ class LocationRepositoryTest {
     @Test
     fun `reportError sets state to ERROR`() =
         runTest {
-            repository.startSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.START)
 
             repository.observeState().test {
                 assertEquals(MockLocationState.RUNNING, awaitItem())
@@ -489,7 +489,7 @@ class LocationRepositoryTest {
     fun `entering replay again resets its pause`() =
         runTest {
             repository.setMockMode(MockMode.ROUTE_REPLAY)
-            repository.startSpoofing()
+            repository.sendSpoofingEvent(SpoofingEvent.START)
             repository.pauseReplay()
             assertEquals(MovementState.Paused(ActiveMode.ROUTE_REPLAY), repository.movement.first())
 
@@ -663,7 +663,7 @@ class LocationRepositoryTest {
             repository.observeState().test {
                 assertEquals(MockLocationState.IDLE, awaitItem())
 
-                repository.startSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.START)
                 assertEquals(MockLocationState.RUNNING, awaitItem())
 
                 repository.setMockMode(MockMode.ROUTE_REPLAY)
@@ -676,7 +676,7 @@ class LocationRepositoryTest {
                 repository.sendSpoofingEvent(SpoofingEvent.FAIL)
                 assertEquals(MockLocationState.ERROR, awaitItem())
 
-                repository.stopSpoofing()
+                repository.sendSpoofingEvent(SpoofingEvent.STOP)
                 assertEquals(MockLocationState.IDLE, awaitItem())
 
                 cancelAndIgnoreRemainingEvents()

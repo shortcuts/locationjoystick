@@ -73,7 +73,7 @@ class RoamingRepositoryTest {
     fun `startRoaming is a no-op while a route is playing`() =
         runTest {
             fakeLocationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            fakeLocationRepository.startSpoofing()
+            fakeLocationRepository.sendSpoofingEvent(SpoofingEvent.START)
             val config = createDefaultConfig()
 
             val started = repository.startRoaming(config, speedMs = 1.4)
@@ -89,7 +89,7 @@ class RoamingRepositoryTest {
     fun `startRoaming stops a paused route then starts roaming`() =
         runTest {
             fakeLocationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            fakeLocationRepository.startSpoofing()
+            fakeLocationRepository.sendSpoofingEvent(SpoofingEvent.START)
             fakeLocationRepository.pauseReplay()
             fakeLocationRepository.setActiveRouteId("route-1")
             fakeLocationRepository.setRouteWaypoints(listOf(LatLng(1.0, 2.0), LatLng(3.0, 4.0)))

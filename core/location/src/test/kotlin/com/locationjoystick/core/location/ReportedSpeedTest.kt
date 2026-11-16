@@ -21,7 +21,7 @@ class ReportedSpeedTest {
     @Test
     fun `walk-to speed reaches reportedSpeedMps on publish`() {
         val service = newService()
-        service.locationRepository.startSpoofing()
+        service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         service.locationRepository.setMockMode(MockMode.WALK_TO)
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)
 
@@ -33,7 +33,7 @@ class ReportedSpeedTest {
     @Test
     fun `paused spoofing publishes zero speed`() {
         val service = newService()
-        service.locationRepository.startSpoofing()
+        service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         service.locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)
         service.locationRepository.pauseReplay()
@@ -46,7 +46,7 @@ class ReportedSpeedTest {
     @Test
     fun `roaming input alone does not change reportedSpeedMps`() {
         val service = newService()
-        service.locationRepository.startSpoofing()
+        service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
 
         service.locationRepository.setSpeedInternal(9f)
 

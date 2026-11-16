@@ -47,7 +47,7 @@ class AutoFitCoordinatorTest {
     @Before
     fun setUp() {
         locationRepository = LocationRepository()
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         locationRepository.setPositionInternal(start)
         locationRepository.setMockMode(MockMode.WALK_TO)
         source = mockk()

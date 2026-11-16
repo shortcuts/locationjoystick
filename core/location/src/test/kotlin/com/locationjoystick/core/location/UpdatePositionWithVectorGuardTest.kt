@@ -33,7 +33,7 @@ class UpdatePositionWithVectorGuardTest {
     fun `updatePositionWithVector is a no-op during running ROUTE_REPLAY`() {
         val service = newService()
         service.locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        service.locationRepository.startSpoofing()
+        service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         val before = service.getCurrentPosition()
 
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)
@@ -45,7 +45,7 @@ class UpdatePositionWithVectorGuardTest {
     fun `updatePositionWithVector applies during paused ROUTE_REPLAY`() {
         val service = newService()
         service.locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        service.locationRepository.startSpoofing()
+        service.locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         service.locationRepository.pauseReplay()
 
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)

@@ -211,7 +211,7 @@ class ControlApiRoutesTest {
         }
 
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         assertEquals(409, call("roam/start").first)
         verify(exactly = 2) { mapController.startRoaming(any(), any(), any()) }
     }
@@ -261,7 +261,7 @@ class ControlApiRoutesTest {
     fun `position and state reflect the repository`() {
         assertEquals(409, call("position", method = "GET").first)
         locationRepository.setPositionInternal(LatLng(7.0, 8.0))
-        locationRepository.startSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         val position = JSONObject(call("position", method = "GET").second)
         assertEquals(7.0, position.getDouble("lat"), 0.0)
         assertEquals("mock", position.getString("source"))

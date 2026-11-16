@@ -697,7 +697,7 @@ class MockLocationService : Service() {
         leaderSyncServer.stop()
         groupMode.stopAdvertising()
         followerSyncClient.stopPolling()
-        locationRepository.stopSpoofing()
+        locationRepository.sendSpoofingEvent(SpoofingEvent.STOP)
         locationRepository.setActiveRouteId(null)
         routeReplayEngine.cancelActiveReplay()
         teleportRouteEngine.cancelActiveReplay()

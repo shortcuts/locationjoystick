@@ -315,14 +315,6 @@ class LocationRepository
             return true
         }
 
-        fun startSpoofing() {
-            sendSpoofingEvent(SpoofingEvent.START)
-        }
-
-        fun stopSpoofing() {
-            sendSpoofingEvent(SpoofingEvent.STOP)
-        }
-
         fun setActiveRouteId(id: String?) {
             _activeRouteId.value = id
         }
