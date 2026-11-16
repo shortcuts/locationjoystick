@@ -9,10 +9,12 @@ import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.common.util.normalizePlantingRadii
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LoopMode
+import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.RouteStartConfig
@@ -49,6 +51,7 @@ class ControlApiRoutes
         private val server: LeaderSyncServer,
         private val mapController: MapController,
         private val locationRepository: LocationRepository,
+        private val realLocationRepository: RealLocationRepository,
         private val settingsRepository: SettingsRepository,
         private val routeRepository: RouteRepository,
         @param:ApplicationScope private val appScope: CoroutineScope,
@@ -58,10 +61,7 @@ class ControlApiRoutes
         /** Idempotent: re-registering overwrites the same handlers. */
         fun install() {
             get("state") { state() }
-            get("position") {
-                val p = locationRepository.currentPosition.value ?: return@get NO_POSITION
-                ApiResponse(200, latLngJson(p).toString())
-            }
+            get("position") { position() }
             get("search") { request -> search(request.query) }
             post("teleport") { json ->
                 val target = parseLatLng(json) ?: return@post BAD_COORDS
@@ -152,6 +152,31 @@ class ControlApiRoutes
         ) = server.registerApiRoute("POST", API_PREFIX + path) {
             action()
             OK
+        }
+
+        // While off, the in-memory position can be the map's startup fill, so read the saved or real one.
+        private fun position(): ApiResponse {
+            val spoofing =
+                locationRepository.mockLocationState.value.let {
+                    it == MockLocationState.RUNNING ||
+                        it == MockLocationState.PAUSED
+                }
+            val (p, source) =
+                if (spoofing) {
+                    locationRepository.currentPosition.value to "mock"
+                } else {
+                    runBlocking {
+                        val saved =
+                            settingsRepository.getLastLocation().first().takeIf {
+                                settingsRepository
+                                    .getRememberLastLocation()
+                                    .first()
+                            }
+                        saved?.let { it to "mock" } ?: (realLocationRepository.lastKnownRealPosition() to "real")
+                    }
+                }
+            if (p == null) return NO_POSITION
+            return ApiResponse(200, latLngJson(p).put("source", source).toString())
         }
 
         private fun state(): ApiResponse {

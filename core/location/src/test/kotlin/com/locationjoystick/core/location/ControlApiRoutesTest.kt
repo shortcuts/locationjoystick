@@ -6,6 +6,7 @@ import com.locationjoystick.core.common.geocoding.Geocoding
 import com.locationjoystick.core.common.geocoding.GeocodingProvider
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
@@ -44,6 +45,7 @@ class ControlApiRoutesTest {
     private val mapController: MapController = mockk(relaxed = true)
     private val locationRepository = LocationRepository()
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val realLocationRepository: RealLocationRepository = mockk(relaxed = true)
     private val routeRepository: RouteRepository = mockk(relaxed = true)
     private val context: Context = mockk(relaxed = true)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -56,10 +58,21 @@ class ControlApiRoutesTest {
         every { settingsRepository.getSpeedProfiles() } returns flowOf(listOf(walk, SpeedProfile("bike", "Bike", 20.0)))
         every { settingsRepository.getActiveSpeedProfile() } returns flowOf(walk)
         every { settingsRepository.getRoamingDefaults() } returns flowOf(RoamingDefaults())
+        every { settingsRepository.getRememberLastLocation() } returns flowOf(true)
+        every { settingsRepository.getLastLocation() } returns flowOf(null)
+        every { realLocationRepository.lastKnownRealPosition() } returns null
         every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(Route(id = "r1", name = "R", waypoints = emptyList()))
         every { routeRepository.getRouteWithWaypoints("nope") } returns flowOf(null)
-        ControlApiRoutes(context, server, mapController, locationRepository, settingsRepository, routeRepository, scope)
-            .install()
+        ControlApiRoutes(
+            context,
+            server,
+            mapController,
+            locationRepository,
+            realLocationRepository,
+            settingsRepository,
+            routeRepository,
+            scope,
+        ).install()
         port = server.start("gid")
         server.enableApi("k")
     }
@@ -249,11 +262,39 @@ class ControlApiRoutesTest {
         assertEquals(409, call("position", method = "GET").first)
         locationRepository.setPositionInternal(LatLng(7.0, 8.0))
         locationRepository.startSpoofing()
-        assertEquals(7.0, JSONObject(call("position", method = "GET").second).getDouble("lat"), 0.0)
+        val position = JSONObject(call("position", method = "GET").second)
+        assertEquals(7.0, position.getDouble("lat"), 0.0)
+        assertEquals("mock", position.getString("source"))
         val state = JSONObject(call("state", method = "GET").second)
         assertEquals(MockLocationState.RUNNING.name, state.getString("spoofState"))
         assertEquals("walk", state.getString("speedProfileId"))
         assertEquals(8.0, state.getJSONObject("position").getDouble("lon"), 0.0)
+    }
+
+    @Test
+    fun `position while off serves the saved location as mock`() {
+        every { settingsRepository.getLastLocation() } returns flowOf(LatLng(3.0, 4.0))
+        val (code, text) = call("position", method = "GET")
+        assertEquals(200, code)
+        assertEquals(3.0, JSONObject(text).getDouble("lat"), 0.0)
+        assertEquals("mock", JSONObject(text).getString("source"))
+    }
+
+    @Test
+    fun `position while off with remember off serves the real fix`() {
+        every { settingsRepository.getRememberLastLocation() } returns flowOf(false)
+        every { settingsRepository.getLastLocation() } returns flowOf(LatLng(3.0, 4.0))
+        every { realLocationRepository.lastKnownRealPosition() } returns LatLng(5.0, 6.0)
+        val (code, text) = call("position", method = "GET")
+        assertEquals(200, code)
+        assertEquals(5.0, JSONObject(text).getDouble("lat"), 0.0)
+        assertEquals("real", JSONObject(text).getString("source"))
+    }
+
+    @Test
+    fun `position while off ignores the in-memory startup position`() {
+        locationRepository.setPositionInternal(LatLng(7.0, 8.0))
+        assertEquals(409, call("position", method = "GET").first)
     }
 
     @Test

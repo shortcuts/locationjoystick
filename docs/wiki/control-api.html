@@ -64,7 +64,7 @@
     <h3 class="item" id="errors-405-method-not-allowed"><code>405</code> <code>method_not_allowed</code></h3>
     <p>Wrong method. The <code>Allow</code> header lists the right ones.</p>
     <h3 class="item" id="errors-409-no-position"><code>409</code> <code>no_position</code></h3>
-    <p>The device has no position yet. Start spoofing first.</p>
+    <p>The device has no position to report. While spoofing is off, it has no saved position and no real location yet.</p>
     <h3 class="item" id="errors-409-conflict"><code>409</code> <code>conflict</code></h3>
     <p>A route is playing, so you cannot start roaming or edit that route.</p>
     <h3 class="item" id="errors-413-payload-too-large"><code>413</code> <code>payload_too_large</code></h3>
@@ -105,8 +105,8 @@
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-position"><span class="method method-get">GET</span><code class="endpoint-path">/position</code></h3>
-      <p>Current position only.</p>
-      <p class="endpoint-returns">Returns <code>{"lat":double,"lon":double}</code>. Returns <code>409 no_position</code> if the device has no position.</p>
+      <p>Current position only. While spoofing is off, it returns the last remembered position when the app remembers it, otherwise the phone's real location.</p>
+      <p class="endpoint-returns">Returns <code>{"lat":double,"lon":double,"source":"mock"|"real"}</code>. <code>source</code> is <code>mock</code> for a spoofed or remembered position and <code>real</code> for the phone's real location. Returns <code>409 no_position</code> if no position is known.</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-search"><span class="method method-get">GET</span><code class="endpoint-path">/search</code></h3>
