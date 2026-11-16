@@ -69,30 +69,14 @@ def has_shot_rule(body):
     return found.group(1) if found else ""
 
 
-GRID_QUERY = "(min-width:1000px)"
-TEXT_BAND_QUERY = "(min-width:1000px) and (max-width:1319px)"
-WIDE_QUERY = "(min-width:1320px)"
+RAIL_QUERY = "(min-width:1200px)"
 
 
-def test_shot_floats_beside_text_from_1000px():
-    bodies = media_bodies(GRID_QUERY)
-    assert bodies, "no @media(min-width:1000px) block"
-    rules = [has_shot_rule(b) for b in bodies]
-    assert any("grid-template-columns:minmax(0,1fr) 200px" in r for r in rules), rules
-
-
-def test_right_margin_shot_only_from_1320px():
-    assert "margin-right:-232px" in has_shot_rule(media_bodies(WIDE_QUERY)[0])
-    bodies = media_bodies(GRID_QUERY)
-    assert bodies, "no @media(min-width:1000px) block"
-    for body in bodies:
-        assert "margin-right" not in has_shot_rule(body), body
-
-
-def test_text_column_stays_wide_beside_shot_1000_to_1319px():
-    bodies = media_bodies(TEXT_BAND_QUERY)
-    assert bodies, "no @media(min-width:1000px) and (max-width:1319px) block"
-    assert any(re.search(r"main\{[^}]*max-width:800px", b) for b in bodies)
+def test_shot_moves_to_right_rail_from_1200px():
+    bodies = media_bodies(RAIL_QUERY)
+    joined = "".join(bodies)
+    assert ".has-shot>.shot{display:none}" in re.sub(r"\s", "", joined), "inline shot stays beside the rail"
+    assert re.search(r"\.rail\{[^}]*display:flex", joined), "rail is not shown from 1200px"
 
 
 def mobile_rules():
@@ -120,9 +104,16 @@ def min_height_px(declarations):
 
 def test_mobile_nav_and_toc_links_are_tall_enough_to_tap():
     rules = mobile_rules()
-    for selector in ("nav a", ".nav-outline a", ".page-toc a"):
+    for selector in ("nav a",):
         heights = [min_height_px(d) for d in rules.get(selector, [])]
         assert max(heights, default=0.0) >= 48, f"{selector} min-height at 680px: {heights}"
+
+
+def test_page_toc_links_are_tall_enough_to_tap_where_rail_is_hidden():
+    body = "".join(media_bodies("(max-width:1199px)"))
+    found = re.search(r"\.page-toc a\{([^}]*)\}", body)
+    assert found, "no .page-toc a rule below 1200px"
+    assert min_height_px(found.group(1)) >= 48, found.group(1)
 
 
 DOCSEARCH_THEME_VARS = [
@@ -154,9 +145,8 @@ def test_docsearch_theme_vars_are_set_on_body_not_root():
 if __name__ == "__main__":
     test_item_headings_are_not_smaller_than_body()
     test_code_blocks_wrap_long_urls_on_phones()
-    test_shot_floats_beside_text_from_1000px()
-    test_right_margin_shot_only_from_1320px()
-    test_text_column_stays_wide_beside_shot_1000_to_1319px()
+    test_shot_moves_to_right_rail_from_1200px()
     test_mobile_nav_and_toc_links_are_tall_enough_to_tap()
+    test_page_toc_links_are_tall_enough_to_tap_where_rail_is_hidden()
     test_docsearch_theme_vars_are_set_on_body_not_root()
     print("ok")
