@@ -47,24 +47,31 @@ private const val ORIGINAL_SCHEME = "locationjoystick"
 private const val ORIGINAL_LINK_HOST = "locationjoystick.shrtcts.fr"
 
 // The host's asset-links file lists the original's signature, so verified links cannot work in a clone.
-internal fun dropOriginalLinkFilters(manifest: AndroidManifestBlock) {
-    manifest.applicationElement.listElements("activity").forEach { activity ->
-        (activity as ResXmlElement).removeElementsIf { filter ->
-            (filter as ResXmlElement).listElements("data").any { data ->
-                val element = data as ResXmlElement
-                element.searchAttributeByName("scheme")?.valueAsString == ORIGINAL_SCHEME ||
-                    element.searchAttributeByName("host")?.valueAsString == ORIGINAL_LINK_HOST
-            }
+internal fun dropOriginalLinkFilters(manifest: AndroidManifestBlock) =
+    dropIntentFilters(manifest, "activity", filter = { filter ->
+        filter.listElements("data").any { data ->
+            val element = data as ResXmlElement
+            element.searchAttributeByName("scheme")?.valueAsString == ORIGINAL_SCHEME ||
+                element.searchAttributeByName("host")?.valueAsString == ORIGINAL_LINK_HOST
         }
-    }
-}
+    })
 
 // The service stays so the settings toggle can still address it; without filters no outside command resolves.
-internal fun dropTeleportShimFilters(manifest: AndroidManifestBlock) {
-    manifest.applicationElement.listElements("service").forEach { service ->
-        val element = service as ResXmlElement
-        if (element.searchAttributeByName("name")?.valueAsString?.endsWith(".ExternalTeleportService") == true) {
-            element.removeElementsIf { (it as ResXmlElement).name == "intent-filter" }
+internal fun dropTeleportShimFilters(manifest: AndroidManifestBlock) =
+    dropIntentFilters(manifest, "service", component = {
+        it.searchAttributeByName("name")?.valueAsString?.endsWith(".ExternalTeleportService") == true
+    })
+
+private fun dropIntentFilters(
+    manifest: AndroidManifestBlock,
+    tag: String,
+    component: (ResXmlElement) -> Boolean = { true },
+    filter: (ResXmlElement) -> Boolean = { true },
+) {
+    manifest.applicationElement.listElements(tag).forEach { c ->
+        val element = c as ResXmlElement
+        if (component(element)) {
+            element.removeElementsIf { it is ResXmlElement && it.name == "intent-filter" && filter(it) }
         }
     }
 }
