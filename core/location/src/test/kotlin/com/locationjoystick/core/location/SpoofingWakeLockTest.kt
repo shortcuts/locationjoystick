@@ -1,8 +1,10 @@
 package com.locationjoystick.core.location
 
 import android.os.PowerManager
+import com.locationjoystick.core.model.ActiveMode
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -69,13 +71,37 @@ class SpoofingWakeLockTest {
     }
 
     @Test
-    fun `lock is needed only while running and moving`() {
-        val moving = listOf(MockMode.JOYSTICK, MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO, MockMode.FOLLOWER)
-        moving.forEach { assertTrue("$it", needsSpoofingWakeLock(MockLocationState.RUNNING, it)) }
-        assertFalse(needsSpoofingWakeLock(MockLocationState.RUNNING, MockMode.TELEPORT))
-        MockMode.entries.forEach { mode ->
-            listOf(MockLocationState.IDLE, MockLocationState.PAUSED, MockLocationState.ERROR).forEach { state ->
-                assertFalse("$state $mode", needsSpoofingWakeLock(state, mode))
+    fun `lock is needed while an engine runs or a manual mode moves`() {
+        val moving =
+            ActiveMode.entries.map { MovementState.Running(it) } +
+                listOf(MockMode.JOYSTICK, MockMode.FOLLOWER).map { MovementState.Manual(it) }
+        moving.forEach { assertTrue("$it", needsSpoofingWakeLock(MockLocationState.RUNNING, it, steering = false)) }
+        assertFalse(needsSpoofingWakeLock(MockLocationState.RUNNING, MovementState.Manual(MockMode.TELEPORT), steering = false))
+    }
+
+    @Test
+    fun `a paused engine holds the lock only while the joystick steers`() {
+        val paused =
+            ActiveMode.entries.map { MovementState.Paused(it) } +
+                ActiveMode.entries.map { MovementState.PausePending(MockMode.TELEPORT, it) }
+        listOf(MockLocationState.RUNNING, MockLocationState.PAUSED).forEach { state ->
+            paused.forEach { movement ->
+                assertFalse("$state $movement", needsSpoofingWakeLock(state, movement, steering = false))
+                assertTrue("$state $movement", needsSpoofingWakeLock(state, movement, steering = true))
+            }
+        }
+    }
+
+    @Test
+    fun `lock is never needed while idle or in error`() {
+        val all =
+            ActiveMode.entries.flatMap { listOf(MovementState.Running(it), MovementState.Paused(it)) } +
+                MockMode.entries.map { MovementState.Manual(it) }
+        listOf(MockLocationState.IDLE, MockLocationState.ERROR).forEach { state ->
+            all.forEach { movement ->
+                listOf(false, true).forEach { steering ->
+                    assertFalse("$state $movement $steering", needsSpoofingWakeLock(state, movement, steering))
+                }
             }
         }
     }

@@ -37,6 +37,7 @@ import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.followerModeEnabled
 import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.role
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
@@ -52,10 +53,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -201,6 +204,9 @@ class MockLocationService : Service() {
 
     @Volatile private var currentSpeedMs: Float = 0.0f
 
+    // The joystick moving the position; a paused engine keeps its mode, so the mode cannot show it.
+    private val steering = MutableStateFlow(false)
+
     @Volatile private var currentBearing: Float = 0.0f
 
     /** Realism settings observed from [SettingsRepository] and read each tick in [captureSnapshot]. */
@@ -345,9 +351,16 @@ class MockLocationService : Service() {
 
     private fun observeWakeLockNeed() {
         serviceScope.launch {
-            combine(locationRepository.mockLocationState, locationRepository.currentMode, ::needsSpoofingWakeLock)
+            combine(locationRepository.mockLocationState, locationRepository.movement, steering, ::needsSpoofingWakeLock)
                 .distinctUntilChanged()
                 .collect { if (it) wakeLock.acquire() else wakeLock.release() }
+        }
+        serviceScope.launch {
+            // Each pause starts unsteered, so a stale flag from an earlier stick never holds the lock.
+            locationRepository.movement
+                .map { it.isPaused }
+                .distinctUntilChanged()
+                .collect { steering.value = false }
         }
     }
 
@@ -811,6 +824,7 @@ class MockLocationService : Service() {
         writeCurrentPosition(lat, lon)
         currentSpeedMs = speedMs
         currentBearing = bearing
+        steering.value = speedMs > 0f
     }
 
     // Callers: JoystickOverlayService, on unlock/release — clears the stale motion vector left by
@@ -819,6 +833,7 @@ class MockLocationService : Service() {
     fun clearMotionVector() {
         currentSpeedMs = 0.0f
         currentBearing = 0.0f
+        steering.value = false
     }
 
     // WalkCoordinator's own arrival zero-tick reaches this service through an Intent

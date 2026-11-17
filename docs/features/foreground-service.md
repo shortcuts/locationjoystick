@@ -20,7 +20,7 @@ The service restarts itself with no intent after the system kills it, so the spo
 
 Route replay and walk-to can slow down when the screen locks, because some devices throttle background apps. While spoofing is active, the service holds a partial wake lock, so these engines keep advancing.
 
-The lock is held only while spoofing is running and a mode other than teleport is active (`needsSpoofingWakeLock`). A stationary session, a paused replay, a park, a stop and an error all release it. A second acquire keeps the first lock, so no path leaks one.
+The lock is held only while something moves (`needsSpoofingWakeLock`). A stationary session, a paused replay, walk or roam, a park, a stop and an error all release it. A paused engine keeps its mode while the joystick steers, so the joystick's own motion keeps the lock in that case. A second acquire keeps the first lock, so no path leaks one.
 
 Why not hold it for the whole session: Play vitals flags an app whose partial wake locks run too long with the screen off, and a stationary session has no engine to keep awake. The tradeoff: with the screen off and no movement, the idle position refresh can pause under Doze until movement resumes.
 
