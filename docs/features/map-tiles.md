@@ -19,6 +19,7 @@ Each item guards a failure we have hit. Breaking one blanks or slows the map.
 7. **Overlay maps use a texture view.** A default surface view inside an overlay window punches a transparent hole through to the app underneath: the location dot and buttons show, the streets do not. Overlay maps must be created with the overlay flag.
 8. **The empty style has a background layer.** It lives in the map module's assets. A light background means "tiles not here yet". Without it, the map shows a black void, which looks like a crash.
 9. **Ambient cache cap is set on every launch.** The native cache cap is process-local, so it must be set in install each time, after the library is initialised and the purge has run. There is no bulk tile download, because the OSM usage policy forbids it. Do not bump the cache marker for this change.
+10. **The app uses the OpenGL ES backend artifact, not the default Vulkan one.** The Vulkan surface-view renderer caused a resize ANR and a native render crash in the field. Raster tiles gain nothing from Vulkan.
 
 Tests cover the user-agent string, the interceptor's replacement of a generic agent and its referrer, the per-host limit, and the cache-file name matcher.
 
@@ -59,4 +60,5 @@ Do not bump the cache marker for camera changes. The marker is only for user-age
 - Ship a user-agent change without bumping the cache marker.
 - Lower the per-host limit, or build the client per view.
 - Put an overlay map on the default surface view.
+- Switch back to the default Vulkan artifact without a device check on several GPUs.
 - Animate the camera across a teleport-scale jump.

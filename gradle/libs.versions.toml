@@ -117,7 +117,7 @@ room-testing = { group = "androidx.room", name = "room-testing", version.ref = "
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Map
-maplibre-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
+maplibre-android-sdk = { group = "org.maplibre.gl", name = "android-sdk-opengl", version.ref = "maplibre" }
 
 # Networking
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
