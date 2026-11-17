@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "date": "2026-11-12",
+  "date": "2026-11-17",
   "entries": [
     { "category": "feat", "scope": "Group Sync", "summary": "A follower now sees what the leader is doing. Its map and floating widget show the leader's route, roaming or walk, playing or paused. These buttons only look: they do not control the leader." },
     { "category": "fix", "scope": "Map", "summary": "The stop counter for a chain of added points now counts the points you tapped, not every turn of the road. It also grows when you add a point." },
@@ -8,6 +8,12 @@
     { "category": "feat", "scope": "Map", "summary": "The suggested teleport wait now also shows on the route start sheet and the paste coordinates box, in the app and in the floating widget." },
     { "category": "feat", "scope": "Settings", "summary": "Added Privacy Mode to the GitHub download. It installs a renamed copy of the app, so other apps do not see its name." },
     { "category": "feat", "scope": "Settings", "summary": "New switch, Teleport from other apps. When you turn it on, other apps on your phone, such as Pokemod, can teleport you. It is off by default." },
-    { "category": "fix", "scope": "Routes", "summary": "A looping route now starts over at the first stop instead of walking back. To walk back and forth, tick Walk back and forth under Loop." }
+    { "category": "fix", "scope": "Routes", "summary": "A looping route now starts over at the first stop instead of walking back. To walk back and forth, tick Walk back and forth under Loop. The leg back to the first stop now follows roads." },
+    { "category": "feat", "scope": "Settings", "summary": "Tap to Walk can now walk in a straight line, walk via roads, or teleport. Pick one or more under Settings > Screen helpers > Tap to Walk. With more than one ticked, the app asks which move you want after each tap. Teleport is hidden when Hide teleport features is on." },
+    { "category": "fix", "scope": "Tap to Walk", "summary": "Tap to Walk is more reliable. The choice box now closes after a move." },
+    { "category": "feat", "scope": "Widget", "summary": "Press and hold the expand button on the floating map, then drag to resize it. The map remembers its size and place. If the map is short, scroll the buttons on its right side." },
+    { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect checks now run about every 15 seconds. The app taps once per check. After two failed taps in a row, it stops tapping and keeps watching, so the game does not warn you about too many failed connects." },
+    { "category": "feat", "scope": "Settings", "summary": "New switch, Reset A-GPS data on start. When it is on, the app resets your real GPS data each time spoofing starts." },
+    { "category": "fix", "scope": "Map", "summary": "A straight walk now draws the whole rest of the line to its target." }
   ]
 }
