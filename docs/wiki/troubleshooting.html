@@ -115,7 +115,17 @@
     <p>No <strong>⋮</strong> menu means your phone does not need this step.</p>
 
     <h2 id="game-blocks-location">A game shows a location or GPS error</h2>
-    <p>Games can detect mock location apps. This is outside this app's control.</p>
+    <p>locationjoystick does not modify any other app, and it does not need root. It uses the mock location feature that Android provides. A game can read that Android flag and refuse to run.</p>
+    <p>Some games also check whether the phone is rooted, or ask Google to confirm the phone is genuine (Play Integrity). Those checks run inside the game and Google's services. This app cannot pass them for you.</p>
+    <p>Some games only accept a spoofed location on a rooted phone. Rooting is risky: it can void the warranty and break banking apps. The app does not support it.</p>
+    <p>What you can try:</p>
+    <ol>
+      <li>Confirm locationjoystick is the selected mock location app. See <a href="#another-app-holds-slot">Another app holds the mock location slot</a>.</li>
+      <li>Set the game's location permission to <strong>Allow all the time</strong>. See <a href="#grant-location-all-the-time">GPS signal not detected</a>.</li>
+      <li>Stop Google location from resetting the spoof. See <a href="#spoofed-location-resets">Spoofed location jumps back</a>.</li>
+      <li>Try <a href="privacy-mode.html">Privacy Mode</a> if the game blocks apps by name. It does not hide the mock location flag.</li>
+      <li>Check that spoofing works on the <a href="map.html">Map</a> screen. If it does not, <a href="#report-a-crash">report the problem</a>.</li>
+    </ol>
 
     <h2 id="map-black-screen">The map is a black screen</h2>
     <ol>
