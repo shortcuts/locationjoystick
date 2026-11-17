@@ -3,6 +3,8 @@ package com.locationjoystick.core.location
 import android.annotation.SuppressLint
 import android.os.PowerManager
 import android.util.Log
+import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.MockMode
 
 private const val TAG = "MockLocationService"
 private const val WAKE_LOCK_TAG = "locationjoystick:spoofing"
@@ -25,7 +27,13 @@ internal fun releaseSpoofingWakeLock(wakeLock: PowerManager.WakeLock?) {
     wakeLock?.let { if (it.isHeld) it.release() }
 }
 
-/** Holds the spoofing wake lock only while actively spoofing (RUNNING/PAUSED). */
+// Play vitals counts screen-off lock time; a parked or stationary session has no engine to keep awake.
+internal fun needsSpoofingWakeLock(
+    state: MockLocationState,
+    mode: MockMode,
+): Boolean = state == MockLocationState.RUNNING && mode != MockMode.TELEPORT
+
+/** Holds the spoofing wake lock only while something is moving. */
 internal class SpoofingWakeLockHolder(
     private val powerManager: () -> PowerManager,
 ) {

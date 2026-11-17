@@ -53,6 +53,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -337,7 +339,16 @@ class MockLocationService : Service() {
             )
         createNotificationChannel()
         observeLocationState()
+        observeWakeLockNeed()
         observeGroupState()
+    }
+
+    private fun observeWakeLockNeed() {
+        serviceScope.launch {
+            combine(locationRepository.mockLocationState, locationRepository.currentMode, ::needsSpoofingWakeLock)
+                .distinctUntilChanged()
+                .collect { if (it) wakeLock.acquire() else wakeLock.release() }
+        }
     }
 
     private suspend fun setUpTestProvider() {
@@ -755,7 +766,6 @@ class MockLocationService : Service() {
         // Setting state to RUNNING triggers observeLocationState(), which calls
         // testProvider.setup() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
-        wakeLock.acquire()
         locationRepository.sendSpoofingEvent(SpoofingEvent.START)
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }

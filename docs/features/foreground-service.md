@@ -20,7 +20,9 @@ The service restarts itself with no intent after the system kills it, so the spo
 
 Route replay and walk-to can slow down when the screen locks, because some devices throttle background apps. While spoofing is active, the service holds a partial wake lock, so these engines keep advancing.
 
-The lock is taken when spoofing starts, and released on stop, on park, on destroy, and when spoofing ends in an error. A second acquire keeps the first lock, so a retry from error or pause never leaks one. Holding it while idle would drain the battery for nothing.
+The lock is held only while spoofing is running and a mode other than teleport is active (`needsSpoofingWakeLock`). A stationary session, a paused replay, a park, a stop and an error all release it. A second acquire keeps the first lock, so no path leaks one.
+
+Why not hold it for the whole session: Play vitals flags an app whose partial wake locks run too long with the screen off, and a stationary session has no engine to keep awake. The tradeoff: with the screen off and no movement, the idle position refresh can pause under Doze until movement resumes.
 
 The lock has no timeout, and lint's `WakelockTimeout` is suppressed on purpose. A session has no fixed length, and a timeout would end the lock mid-session. Renewing it would need a timer that can itself fail. The release paths above are the bound.
 
