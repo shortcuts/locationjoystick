@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1](https://github.com/shortcuts/locationjoystick/compare/v1.1.0...v1.1.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **location:** hold wake lock only while moving ([d0448d4](https://github.com/shortcuts/locationjoystick/commit/d0448d4000f7b74e8be07726a571d598d8c37245))
+* **location:** release wake lock while an engine is paused ([8bb454f](https://github.com/shortcuts/locationjoystick/commit/8bb454fc3a6b18af552940a29abe6d0fbcdeadb9))
+* **map:** use MapLibre OpenGL ES artifact ([01be6d5](https://github.com/shortcuts/locationjoystick/commit/01be6d5268e0ab038ab684bd4912e9aaa9311e77))
+
 ## [1.1.0](https://github.com/shortcuts/locationjoystick/compare/v1.0.2...v1.1.0) (2026-11-17)
 
 
