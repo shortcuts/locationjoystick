@@ -1570,6 +1570,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         lastCooldownEndFlow.value = ms
     }
 
+    private val lastStopFlow = MutableStateFlow(0L)
+
+    override fun getLastStopTime(): Flow<Long> = lastStopFlow
+
+    override suspend fun setLastStopTime(ms: Long) {
+        lastStopFlow.value = ms
+    }
+
     override fun getMapFollowsLocation(): Flow<Boolean> = mapFollowsLocationFlow
 
     override suspend fun setMapFollowsLocation(enabled: Boolean) {

@@ -239,6 +239,10 @@ class SettingsRepository
 
         fun getLastCooldownEndTime(): Flow<Long> = dataSource.getLastCooldownEndTime()
 
+        fun getLastStopTime(): Flow<Long> = dataSource.getLastStopTime()
+
+        suspend fun setLastStopTime(ms: Long) = dataSource.setLastStopTime(ms)
+
         /** Writes the teleport clock and the end of its advised cooldown together, so the two never disagree. */
         suspend fun recordTeleport(
             from: LatLng?,

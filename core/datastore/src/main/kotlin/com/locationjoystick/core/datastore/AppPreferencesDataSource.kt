@@ -184,6 +184,12 @@ interface PreferencesDataSource :
     /** Sets when the advised cooldown of the last teleport ends (epoch ms, 0 = none). */
     suspend fun setLastCooldownEndTime(ms: Long)
 
+    /** Gets when spoofing last stopped (epoch ms, 0 = never). */
+    fun getLastStopTime(): Flow<Long>
+
+    /** Sets when spoofing last stopped (epoch ms, 0 = never). */
+    suspend fun setLastStopTime(ms: Long)
+
     /** Gets whether the map camera should follow the spoofed location marker. */
     fun getMapFollowsLocation(): Flow<Boolean>
 
@@ -623,6 +629,10 @@ class AppPreferencesDataSource
             pref(Keys.LAST_COOLDOWN_END_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_COOLDOWN_END_MS)
 
         override suspend fun setLastCooldownEndTime(ms: Long) = setPref(Keys.LAST_COOLDOWN_END_MS, ms)
+
+        override fun getLastStopTime(): Flow<Long> = pref(Keys.LAST_STOP_TIME_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_STOP_TIME_MS)
+
+        override suspend fun setLastStopTime(ms: Long) = setPref(Keys.LAST_STOP_TIME_MS, ms)
 
         override fun getMapFollowsLocation(): Flow<Boolean> = pref(Keys.MAP_FOLLOWS_LOCATION, true)
 

@@ -101,12 +101,22 @@
         <div class="param"><dt><code>walk</code></dt><dd><code>{"target":{"lat","lon"} or null,"paused":boolean}</code>.</dd></div>
         <div class="param"><dt><code>roaming</code></dt><dd><code>{"active":boolean,"paused":boolean}</code>.</dd></div>
         <div class="param"><dt><code>speedProfileId</code></dt><dd>ID of the active speed profile, such as <code>walk</code>.</dd></div>
+        <div class="param"><dt><code>cooldown</code></dt><dd>The cooldown left from the last teleport, also while spoofing is off: <code>{"stoppedAt","lastTeleportAt","endsAt","remainingSeconds"}</code>. The three times are epoch milliseconds, or <code>null</code> when unknown. <code>remainingSeconds</code> is <code>0</code> once the cooldown has passed.</dd></div>
       </dl>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-position"><span class="method method-get">GET</span><code class="endpoint-path">/position</code></h3>
       <p>Current position only. While spoofing is off, it returns the last remembered position when the app remembers it, otherwise the phone's real location.</p>
       <p class="endpoint-returns">Returns <code>{"lat":double,"lon":double,"source":"mock"|"real"}</code>. <code>source</code> is <code>mock</code> for a spoofed or remembered position and <code>real</code> for the phone's real location. Returns <code>409 no_position</code> if no position is known.</p>
+    </div>
+    <div class="endpoint">
+      <h3 class="endpoint-head" id="ep-get-teleport-cooldown"><span class="method method-get">GET</span><code class="endpoint-path">/teleport/cooldown</code></h3>
+      <p>Check the suggested cooldown for a jump to one target. Use it before <a href="#ep-post-teleport"><code>/teleport</code></a>. It moves nothing.</p>
+      <dl class="params">
+        <div class="param"><dt><code>lat</code></dt><dd><span class="param-type">double</span> <span class="param-flag">required</span> Query parameter, -90 to 90.</dd></div>
+        <div class="param"><dt><code>lon</code></dt><dd><span class="param-type">double</span> <span class="param-flag">required</span> Query parameter, -180 to 180.</dd></div>
+      </dl>
+      <p class="endpoint-returns">Returns <code>{"cooldown":{"remainingSeconds","totalSeconds","distanceMeters","endsAt"}}</code>. <code>endsAt</code> is epoch milliseconds. When no wait applies, <code>remainingSeconds</code> and <code>totalSeconds</code> are <code>0</code> and the other two are <code>null</code>. Returns <code>400 bad_request</code> for missing or out-of-range coordinates.</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-search"><span class="method method-get">GET</span><code class="endpoint-path">/search</code></h3>

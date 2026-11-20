@@ -62,6 +62,7 @@ class ControlApiRoutes
         fun install() {
             get("state") { state() }
             get("position") { position() }
+            get("teleport/cooldown") { request -> teleportCooldown(request.query) }
             get("search") { request -> search(request.query) }
             post("teleport") { json ->
                 val target = parseLatLng(json) ?: return@post BAD_COORDS
@@ -112,12 +113,7 @@ class ControlApiRoutes
         }
 
         private fun search(rawQuery: String): ApiResponse {
-            val q =
-                rawQuery
-                    .split("&")
-                    .firstOrNull { it.startsWith("q=") }
-                    ?.substringAfter("=")
-                    ?.let { runCatching { URLDecoder.decode(it, "UTF-8") }.getOrNull() }
+            val q = queryParam(rawQuery, "q")
             if (q.isNullOrBlank()) return apiError(400, "bad_request", "Missing q")
             val hits =
                 runCatching { runBlocking { Geocoding.provider.search(q) } }
@@ -126,6 +122,16 @@ class ControlApiRoutes
             hits.forEach { results.put(JSONObject().put("name", it.displayName).put("lat", it.lat).put("lon", it.lon)) }
             return ApiResponse(200, JSONObject().put("results", results).toString())
         }
+
+        private fun queryParam(
+            rawQuery: String,
+            name: String,
+        ): String? =
+            rawQuery
+                .split("&")
+                .firstOrNull { it.startsWith("$name=") }
+                ?.substringAfter("=")
+                ?.let { runCatching { URLDecoder.decode(it, "UTF-8") }.getOrNull() }
 
         private fun get(
             path: String,
@@ -179,6 +185,43 @@ class ControlApiRoutes
             return ApiResponse(200, latLngJson(p).put("source", source).toString())
         }
 
+        /** Reads before any jump, so a client can see the cooldown without moving the phone. */
+        private fun teleportCooldown(rawQuery: String): ApiResponse {
+            val lat = queryParam(rawQuery, "lat")?.toDoubleOrNull() ?: Double.NaN
+            val lon = queryParam(rawQuery, "lon")?.toDoubleOrNull() ?: Double.NaN
+            if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return BAD_COORDS
+            val target = LatLng(lat, lon)
+            val state = runCatching { runBlocking { mapController.cooldownForPosition(target).first() } }.getOrNull()
+            val lastTeleportAt = runBlocking { settingsRepository.getLastTeleportTime().first() }
+            val cooldown = JSONObject()
+            if (state is CooldownState.Cooling) {
+                cooldown
+                    .put("remainingSeconds", state.remainingSeconds)
+                    .put("totalSeconds", state.totalSeconds)
+                    .put("distanceMeters", state.distanceMeters)
+                    .put("endsAt", lastTeleportAt + state.totalSeconds * 1000L)
+            } else {
+                cooldown
+                    .put("remainingSeconds", 0L)
+                    .put("totalSeconds", 0L)
+                    .put("distanceMeters", JSONObject.NULL)
+                    .put("endsAt", JSONObject.NULL)
+            }
+            return ApiResponse(200, JSONObject().put("cooldown", cooldown).toString())
+        }
+
+        private fun standingCooldownJson(): JSONObject {
+            val stoppedAt = runBlocking { settingsRepository.getLastStopTime().first() }
+            val lastTeleportAt = runBlocking { settingsRepository.getLastTeleportTime().first() }
+            val endsAt = runBlocking { settingsRepository.getLastCooldownEndTime().first() }
+            val remainingMs = endsAt - System.currentTimeMillis()
+            return JSONObject()
+                .put("stoppedAt", stoppedAt.takeIf { it > 0L } ?: JSONObject.NULL)
+                .put("lastTeleportAt", lastTeleportAt.takeIf { it > 0L } ?: JSONObject.NULL)
+                .put("endsAt", endsAt.takeIf { it > 0L } ?: JSONObject.NULL)
+                .put("remainingSeconds", if (remainingMs > 0L) (remainingMs + 999L) / 1000L else 0L)
+        }
+
         private fun state(): ApiResponse {
             val walkTarget = locationRepository.walkTarget.value
             val json =
@@ -199,7 +242,8 @@ class ControlApiRoutes
                         JSONObject()
                             .put("active", locationRepository.currentMovement().isActive(MockMode.ROAMING))
                             .put("paused", locationRepository.currentMovement().isPaused(MockMode.ROAMING)),
-                    ).put("speedProfileId", runBlocking { settingsRepository.getActiveSpeedProfile().first() }.id)
+                    ).put("cooldown", standingCooldownJson())
+                    .put("speedProfileId", runBlocking { settingsRepository.getActiveSpeedProfile().first() }.id)
             return ApiResponse(200, json.toString())
         }
 

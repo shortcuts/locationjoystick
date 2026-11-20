@@ -900,7 +900,10 @@ class MockLocationService : Service() {
         }
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
         val pos = positionRef.get()
-        serviceScope.launch { settingsRepository.setLastLocation(pos) }
+        serviceScope.launch {
+            settingsRepository.setLastLocation(pos)
+            settingsRepository.setLastStopTime(System.currentTimeMillis())
+        }
         testProvider.remove()
         wakeLock.release()
         locationRepository.sendSpoofingEvent(SpoofingEvent.STOP)

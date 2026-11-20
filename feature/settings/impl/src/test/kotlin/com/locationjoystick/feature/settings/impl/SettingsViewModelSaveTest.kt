@@ -829,6 +829,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setLastCooldownEndTime(ms: Long) = Unit
 
+    override fun getLastStopTime(): Flow<Long> = flowOf(0L)
+
+    override suspend fun setLastStopTime(ms: Long) = Unit
+
     override fun getMapFollowsLocation(): Flow<Boolean> = flowOf(true)
 
     override suspend fun setMapFollowsLocation(enabled: Boolean) = editSettings { copy(mapFollowsLocation = enabled) }
