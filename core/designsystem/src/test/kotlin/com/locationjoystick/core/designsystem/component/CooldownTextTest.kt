@@ -13,6 +13,7 @@ class CooldownTextTest {
             R.string.cooldown_distance_km to "km",
             R.string.cooldown_distance_m to "m",
             R.string.cooldown_advisory_label to "advisory",
+            R.string.cooldown_standing_label to "standing",
             R.string.cooldown_badge_suggested_wait to "wait",
             R.string.cooldown_badge_distance_away to "away",
             R.string.cooldown_badge_no_wait to "nowait",
@@ -23,6 +24,10 @@ class CooldownTextTest {
         s: Long,
         m: Double,
     ) = cooldownAdvisoryLabel(s, m, fake)
+
+    @Test
+    fun `standing label shows remaining time and finish time`() =
+        assertEquals("standing(ms(1,20),14:32)", cooldownStandingLabel(80, "14:32", fake))
 
     @Test
     fun `seconds under one minute`() = assertEquals("advisory(s(45),m(500.0))", advisory(45, 500.0))

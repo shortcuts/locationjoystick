@@ -50,6 +50,8 @@ internal object Keys {
     val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
     val JITTER_MAX_STEP_METERS = doublePreferencesKey("jitter_max_step_meters")
     val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
+    val LAST_COOLDOWN_END_MS = longPreferencesKey("last_cooldown_end_ms")
+    val LAST_STOP_TIME_MS = longPreferencesKey("last_stop_time_ms")
     val MAP_FOLLOWS_LOCATION = booleanPreferencesKey("map_follows_location")
     val REALISM_BEARING_HOLD_IDLE = booleanPreferencesKey("realism_bearing_hold_idle")
     val REALISM_ALTITUDE_ENABLED = booleanPreferencesKey("realism_altitude_enabled")

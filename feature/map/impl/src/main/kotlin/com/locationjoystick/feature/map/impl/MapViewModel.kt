@@ -93,6 +93,7 @@ class MapViewModel
             mapController.restoreLastLocationIfNeeded()
             observeSharedState()
             observeCooldownForPendingTap()
+            observeCooldownEnd()
             observeDeepLinkCoords()
             observeGpxOpen()
             observeMapFabFeatures()
@@ -185,6 +186,12 @@ class MapViewModel
                             )
                         }
                     }
+            }
+        }
+
+        private fun observeCooldownEnd() {
+            viewModelScope.launch {
+                settingsRepository.getLastCooldownEndTime().collect { end -> _uiState.update { it.copy(cooldownEndMs = end) } }
             }
         }
 

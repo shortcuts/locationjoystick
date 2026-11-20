@@ -152,4 +152,17 @@ class CooldownEngineTest {
             )
         assertEquals(CooldownState.Ready, result)
     }
+
+    // endMs
+
+    @Test
+    fun `endMs adds the tier of the jump to now`() {
+        assertEquals(1_000L + 120_000L, CooldownEngine.endMs(1_000L, LatLng(0.0, 0.0), LatLng(0.01, 0.0)))
+    }
+
+    @Test
+    fun `endMs is 0 without a previous position or for a jump under the first tier`() {
+        assertEquals(0L, CooldownEngine.endMs(1_000L, null, LatLng(0.01, 0.0)))
+        assertEquals(0L, CooldownEngine.endMs(1_000L, LatLng(0.0, 0.0), LatLng(0.0, 0.0)))
+    }
 }

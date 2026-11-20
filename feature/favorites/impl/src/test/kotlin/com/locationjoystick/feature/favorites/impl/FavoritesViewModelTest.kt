@@ -49,6 +49,7 @@ class FavoritesViewModelTest {
         favoriteRepository = FavoriteRepository(fakeFavoriteDao, testDispatcher)
         every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
         every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+        every { settingsRepository.getLastCooldownEndTime() } returns flowOf(0L)
         every { settingsRepository.getLastLocation() } returns flowOf(null)
         every { settingsRepository.getRecentSearches() } returns flowOf(emptyList())
         every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)

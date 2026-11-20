@@ -393,6 +393,8 @@ object AppConstants {
         const val FILE_NAME = "app_preferences"
         const val DEFAULT_REMEMBER_LAST_LOCATION = true
         const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
+        const val DEFAULT_LAST_COOLDOWN_END_MS = 0L
+        const val DEFAULT_LAST_STOP_TIME_MS = 0L
         const val DEFAULT_THEME_MODE = "DARK"
         const val DEFAULT_WHATS_NEW_LAST_SEEN_VERSION = ""
         const val DEFAULT_UPDATE_CHECK_LAST_CHECKED_AT_MS = 0L

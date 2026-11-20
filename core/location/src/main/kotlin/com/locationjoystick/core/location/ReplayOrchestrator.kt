@@ -76,7 +76,7 @@ internal class ReplayOrchestrator(
     private val onSpeedChange: (speedMs: Float) -> Unit,
     private val pushLocationUpdate: () -> Unit,
     private val startUpdateLoop: () -> Unit,
-    private val onTeleport: () -> Unit = {},
+    private val onTeleport: (prev: LatLng, pos: LatLng) -> Unit = { _, _ -> },
     private val plantingRadiusMeters: () -> Double = { AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS },
 ) {
     /** Tracks the active scope.launch job so new starts can cancel it before launching. */
@@ -359,7 +359,7 @@ internal class ReplayOrchestrator(
             val maxStepMeters =
                 lastSpeedMs * AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0 +
                     AppConstants.RouteConstants.WAYPOINT_SNAP_THRESHOLD_METERS
-            if (haversineDistance(prev, pos) > maxStepMeters) onTeleport()
+            if (haversineDistance(prev, pos) > maxStepMeters) onTeleport(prev, pos)
         }
         onPositionChange(pos.latitude, pos.longitude)
         bearingTracker.advance(pos)?.let { locationRepository.setBearingInternal(it) }

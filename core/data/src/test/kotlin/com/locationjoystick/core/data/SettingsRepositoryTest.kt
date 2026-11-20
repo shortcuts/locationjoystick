@@ -790,6 +790,27 @@ class SettingsRepositoryTest {
             }
         }
 
+    // recordTeleport
+
+    @Test
+    fun `recordTeleport stores the clock and the end of the tier for the jump`() =
+        runTest {
+            val before = System.currentTimeMillis()
+            repository.recordTeleport(LatLng(0.0, 0.0), LatLng(0.01, 0.0))
+            val after = System.currentTimeMillis()
+            val last = repository.getLastTeleportTime().first()
+            val end = repository.getLastCooldownEndTime().first()
+            assertTrue(last in before..after)
+            assertEquals(last + 120_000L, end)
+        }
+
+    @Test
+    fun `recordTeleport stores no end without a previous position`() =
+        runTest {
+            repository.recordTeleport(null, LatLng(0.01, 0.0))
+            assertEquals(0L, repository.getLastCooldownEndTime().first())
+        }
+
     // getMapFollowsLocation / setMapFollowsLocation
 
     @Test
@@ -1539,6 +1560,22 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setLastTeleportTime(ms: Long) {
         lastTeleportTimeFlow.value = ms
+    }
+
+    private val lastCooldownEndFlow = MutableStateFlow(0L)
+
+    override fun getLastCooldownEndTime(): Flow<Long> = lastCooldownEndFlow
+
+    override suspend fun setLastCooldownEndTime(ms: Long) {
+        lastCooldownEndFlow.value = ms
+    }
+
+    private val lastStopFlow = MutableStateFlow(0L)
+
+    override fun getLastStopTime(): Flow<Long> = lastStopFlow
+
+    override suspend fun setLastStopTime(ms: Long) {
+        lastStopFlow.value = ms
     }
 
     override fun getMapFollowsLocation(): Flow<Boolean> = mapFollowsLocationFlow

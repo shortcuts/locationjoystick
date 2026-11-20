@@ -44,6 +44,10 @@ class TeleportUseCaseTest {
             serviceStarter,
         )
 
+    init {
+        every { settingsRepository.getLastLocation() } returns flowOf(null)
+    }
+
     @Test
     fun `cooldownFor emits Ready when no teleport has occurred`() =
         runTest {
@@ -181,6 +185,17 @@ class TeleportUseCaseTest {
             verify(exactly = 0) { walkCoordinator.cancel() }
             assertEquals(MockMode.ROUTE_REPLAY, locationRepository.currentMode.value)
             assertEquals("route-1", locationRepository.activeRouteId.value)
+        }
+
+    @Test
+    fun `execute records the teleport from the saved position when stopped`() =
+        runTest {
+            val saved = LatLng(1.0, 2.0)
+            every { settingsRepository.getLastLocation() } returns flowOf(saved)
+
+            useCase.execute(LatLng(10.0, 20.0))
+
+            coVerify(exactly = 1) { settingsRepository.recordTeleport(saved, LatLng(10.0, 20.0)) }
         }
 
     @Test

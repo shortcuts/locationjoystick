@@ -9,4 +9,5 @@
     <string name="cooldown_badge_suggested_wait">"建议等待：%1$s"</string>
     <string name="cooldown_badge_distance_away">"距离 %1$s"</string>
     <string name="cooldown_badge_no_wait">"无需等待"</string>
+    <string name="cooldown_standing_label">"传送等待：%1$s · 至 %2$s"</string>
 </resources>

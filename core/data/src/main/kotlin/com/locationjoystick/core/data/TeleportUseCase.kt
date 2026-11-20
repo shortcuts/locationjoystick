@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
@@ -26,7 +27,7 @@ private const val TAG = "TeleportUseCase"
  * Responsibilities:
  * 1. Fire an [AppConstants.ServiceConstants.ACTION_UPDATE_POSITION] intent to MockLocationService.
  * 2. Persist [SettingsRepository.setLastLocation] so the last position is remembered.
- * 3. Persist [SettingsRepository.setLastTeleportTime] for cooldown tracking.
+ * 3. Persist [SettingsRepository.recordTeleport] for cooldown tracking and the standing countdown.
  * 4. Record [SettingsRepository.addSpoofHistory] for user-initiated jumps (not route-start preludes).
  *
  * Both [com.locationjoystick.feature.map.impl.MapViewModel] and
@@ -72,12 +73,13 @@ class TeleportUseCase
                         putExtra(AppConstants.ServiceConstants.EXTRA_LON, position.longitude)
                         putExtra(AppConstants.ServiceConstants.EXTRA_IS_TELEPORT, true)
                     }
+                // The live position is fresher while spoofing runs; the saved one covers a stopped session.
+                val previous = locationRepository.currentPosition.value ?: settingsRepository.getLastLocation().first()
                 serviceStarter.start(intent)
                 settingsRepository.setLastLocation(position)
-                val now = System.currentTimeMillis()
-                settingsRepository.setLastTeleportTime(now)
+                settingsRepository.recordTeleport(previous, position)
                 if (resetMovement) {
-                    settingsRepository.addSpoofHistory(position.latitude, position.longitude, now)
+                    settingsRepository.addSpoofHistory(position.latitude, position.longitude, System.currentTimeMillis())
                 }
                 Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
             } catch (e: Exception) {

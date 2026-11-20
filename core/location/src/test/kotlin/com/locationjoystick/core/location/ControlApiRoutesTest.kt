@@ -61,6 +61,9 @@ class ControlApiRoutesTest {
         every { settingsRepository.getRoamingDefaults() } returns flowOf(RoamingDefaults())
         every { settingsRepository.getRememberLastLocation() } returns flowOf(true)
         every { settingsRepository.getLastLocation() } returns flowOf(null)
+        every { settingsRepository.getLastStopTime() } returns flowOf(0L)
+        every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+        every { settingsRepository.getLastCooldownEndTime() } returns flowOf(0L)
         every { realLocationRepository.lastKnownRealPosition() } returns null
         every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(Route(id = "r1", name = "R", waypoints = emptyList()))
         every { routeRepository.getRouteWithWaypoints("nope") } returns flowOf(null)
@@ -127,6 +130,52 @@ class ControlApiRoutesTest {
         assertEquals("teleport_cooldown", warning.getString("code"))
         assertEquals(30, warning.getInt("remainingSeconds"))
         verify(exactly = 1) { mapController.teleportTo(LatLng(1.5, 2.5)) }
+    }
+
+    @Test
+    fun `state carries the stop time and the standing cooldown while spoofing is off`() {
+        val now = System.currentTimeMillis()
+        every { settingsRepository.getLastStopTime() } returns flowOf(now - 5_000L)
+        every { settingsRepository.getLastTeleportTime() } returns flowOf(now - 10_000L)
+        every { settingsRepository.getLastCooldownEndTime() } returns flowOf(now + 90_000L)
+        val cooldown = JSONObject(call("state", "GET", null).second).getJSONObject("cooldown")
+        assertEquals(now - 5_000L, cooldown.getLong("stoppedAt"))
+        assertEquals(now - 10_000L, cooldown.getLong("lastTeleportAt"))
+        assertEquals(now + 90_000L, cooldown.getLong("endsAt"))
+        assertEquals(90L, cooldown.getLong("remainingSeconds"))
+    }
+
+    @Test
+    fun `state cooldown is null and 0 when nothing is recorded`() {
+        val cooldown = JSONObject(call("state", "GET", null).second).getJSONObject("cooldown")
+        assertTrue(cooldown.isNull("stoppedAt"))
+        assertTrue(cooldown.isNull("lastTeleportAt"))
+        assertTrue(cooldown.isNull("endsAt"))
+        assertEquals(0L, cooldown.getLong("remainingSeconds"))
+    }
+
+    @Test
+    fun `teleport cooldown read reports the target cooldown without moving`() {
+        val now = System.currentTimeMillis()
+        every { settingsRepository.getLastTeleportTime() } returns flowOf(now - 10_000L)
+        every { mapController.cooldownForPosition(LatLng(1.5, 2.5)) } returns flowOf(CooldownState.Cooling(50, 60, 1234.0))
+        val (code, body) = call("teleport/cooldown?lat=1.5&lon=2.5", "GET", null)
+        assertEquals(200, code)
+        val cooldown = JSONObject(body).getJSONObject("cooldown")
+        assertEquals(50L, cooldown.getLong("remainingSeconds"))
+        assertEquals(60L, cooldown.getLong("totalSeconds"))
+        assertEquals(1234.0, cooldown.getDouble("distanceMeters"), 0.0)
+        assertEquals(now - 10_000L + 60_000L, cooldown.getLong("endsAt"))
+        verify(exactly = 0) { mapController.teleportTo(any()) }
+    }
+
+    @Test
+    fun `teleport cooldown read is ready for a free target and 400 for bad coordinates`() {
+        val cooldown = JSONObject(call("teleport/cooldown?lat=1.5&lon=2.5", "GET", null).second).getJSONObject("cooldown")
+        assertEquals(0L, cooldown.getLong("remainingSeconds"))
+        assertTrue(cooldown.isNull("endsAt"))
+        assertEquals(400, call("teleport/cooldown?lat=91&lon=2", "GET", null).first)
+        assertEquals(400, call("teleport/cooldown", "GET", null).first)
     }
 
     @Test

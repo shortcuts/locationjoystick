@@ -51,6 +51,17 @@ object CooldownEngine {
         return maxOf(0L, cooldownSeconds - elapsedSeconds)
     }
 
+    /** Epoch ms when the cooldown for the jump [from] to [to] ends; 0 when [from] is unknown or no wait applies. */
+    fun endMs(
+        nowMs: Long,
+        from: LatLng?,
+        to: LatLng,
+    ): Long {
+        if (from == null) return 0L
+        val total = cooldownSecondsForDistance(haversineMeters(from, to))
+        return if (total == 0L) 0L else nowMs + total * 1000L
+    }
+
     /**
      * Computes the full [CooldownState] for a pending teleport.
      *
