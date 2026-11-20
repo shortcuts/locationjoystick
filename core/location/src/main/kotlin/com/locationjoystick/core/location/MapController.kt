@@ -313,7 +313,10 @@ class MapController
                         when (prev) {
                             MockMode.WALK_TO -> {
                                 locationRepository.setRouteWaypoints(null)
-                                _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
+                                // The edge may be stale: a newer walk can already be running.
+                                _sharedState.update {
+                                    if (locationRepository.currentMode.value == MockMode.WALK_TO) it else it.copy(walkMode = WalkMode.Idle)
+                                }
                             }
 
                             MockMode.ROUTE_REPLAY -> {
@@ -467,7 +470,6 @@ class MapController
             expectedGeneration: Long,
         ): Boolean {
             val walking = WalkMode.Walking(target = position, start = _sharedState.value.currentPosition)
-            _sharedState.update { it.copy(walkMode = walking, routeTrace = null) }
             val started =
                 walkCoordinator.startWalk(position, appScope, expectedGeneration) { newPos, speedMs, bearing ->
                     context.startService(
@@ -480,8 +482,12 @@ class MapController
                         ),
                     )
                 }
-            if (!started) {
-                _sharedState.update { if (it.walkMode == walking) it.copy(walkMode = WalkMode.Idle) else it }
+            // Set after the start: the cancelled walk's TELEPORT edge can reach the mode observer late and must not clear this walk.
+            if (started) {
+                _sharedState.update {
+                    val isWalking = locationRepository.currentMode.value == MockMode.WALK_TO
+                    it.copy(walkMode = if (isWalking) walking else it.walkMode, routeTrace = null)
+                }
             }
             return started
         }

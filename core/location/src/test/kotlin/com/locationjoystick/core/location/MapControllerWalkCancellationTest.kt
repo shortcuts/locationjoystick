@@ -29,6 +29,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.spyk
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
@@ -37,6 +38,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -519,6 +521,29 @@ class MapControllerWalkCancellationTest {
             coVerify(exactly = 1) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
         }
 
+    @Test
+    fun `walkTo replacing a walk keeps the walk line when the mode observer lags`() =
+        runTest(StandardTestDispatcher()) {
+            val locationRepository = spyk(LocationRepository())
+            val harness = buildHarness(backgroundScope, mockk<OsrmClient>(relaxed = true), locationRepository)
+            val mapController = harness.mapController
+            runCurrent()
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            mapController.walkTo(LatLng(48.9000, 2.3522))
+            runCurrent()
+
+            // The observer reads the cancel's TELEPORT edge only after the new walk's state is set.
+            val second = LatLng(48.8700, 2.3000)
+            every { locationRepository.setWalkTarget(second) } answers {
+                runCurrent()
+                callOriginal()
+            }
+            mapController.walkTo(second)
+            runCurrent()
+
+            assertEquals(second, mapController.sharedState.value.walkTarget)
+        }
+
     private class Harness(
         val locationRepository: LocationRepository,
         val walkCoordinator: WalkCoordinator,
@@ -540,8 +565,8 @@ class MapControllerWalkCancellationTest {
     private fun buildHarness(
         scope: CoroutineScope,
         osrmClient: OsrmClient,
+        locationRepository: LocationRepository = LocationRepository(),
     ): Harness {
-        val locationRepository = LocationRepository()
         val settingsRepository =
             mockk<SettingsRepository>(relaxed = true) {
                 every { getActiveSpeedProfile() } returns flowOf(walkProfile)

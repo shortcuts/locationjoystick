@@ -52,5 +52,6 @@ If a road leg falls back to a straight line, the user is told.
 - A new walk cancels the previous one.
 - Moving the joystick pauses a walk and keeps its target, including during a road lookup. Releasing the stick does not resume it. Resume continues from the moved position. A new destination replaces a paused walk.
 - A cancelled walk must not clear the target of a newer walk, even when both have the same coordinates. The check and the clear happen under one lock.
+- A walk that replaces a walk sets its map walk state only after the walk coordinator starts it. The cancel flips the mode to teleport, and the map controller's mode observer can read that edge late. An observer that clears the walk state on every such edge draws no walk line for the new walk. The observer clears only while the mode is still teleport.
 - Walking here while a route plays asks the user to stop the route first.
 - Add next point while roaming does nothing. It is valid only during a walk or an ephemeral replay.
