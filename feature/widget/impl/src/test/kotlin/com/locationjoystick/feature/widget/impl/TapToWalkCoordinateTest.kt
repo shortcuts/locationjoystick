@@ -58,6 +58,21 @@ class TapToWalkCoordinateTest {
     }
 
     @Test
+    fun groundMap_pixelBelowFeet_walksOppositeTheCameraHeading() {
+        // Literal pixels, not groundToPixel: a sign flip shared by both directions would cancel in a round trip.
+        val belowFeet = 1900.0
+        val heading0 = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(0.0), 540.0, belowFeet)!!
+        assertEquals(true, heading0.latitude < feet.latitude)
+        val heading90 = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(90.0), 540.0, belowFeet)!!
+        assertEquals(true, heading90.longitude < feet.longitude)
+        val heading180 = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(180.0), 540.0, belowFeet)!!
+        assertEquals(true, heading180.latitude > feet.latitude)
+        val provisional = GroundMap(GroundFlowFit.provisional(), 1080.0, 2340.0)
+        val p = TapToWalkOverlay.computeGroundWalkTarget(feet, provisional, 540.0, belowFeet)!!
+        assertEquals(true, p.latitude < feet.latitude)
+    }
+
+    @Test
     fun groundMap_pastHorizon_returnsNull() {
         assertNull(TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(0.0), 540.0, -3000.0))
     }
