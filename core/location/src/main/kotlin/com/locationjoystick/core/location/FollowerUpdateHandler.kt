@@ -40,10 +40,11 @@ internal class FollowerUpdateHandler(
                 // (nothing reported yet) always snaps.
                 val resumed = followerCatchUp.consumePausedByLeader()
                 val snapNow = !resumed || shouldSnapToLeader(true, followLeaderTeleports(), hideTeleportFeatures())
-                val startAt = if (snapNow) LatLng(lat, lon) else currentPosition()
+                val before = currentPosition()
+                val startAt = if (snapNow) LatLng(lat, lon) else before
                 scope.launch {
                     startSpoofing(startAt.latitude, startAt.longitude)
-                    if (resumed && snapNow) settingsRepository.setLastTeleportTime(System.currentTimeMillis())
+                    if (resumed && snapNow) settingsRepository.recordTeleport(before, startAt)
                     // startSpoofing() unconditionally sets mode to TELEPORT — reassert
                     // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
                     locationRepository.setMockMode(MockMode.FOLLOWER)

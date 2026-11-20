@@ -51,6 +51,7 @@ data class MapUiState(
     val mapFeatureOrder: List<AppFeature> = AppFeature.DEFAULT_MAP_ORDER,
     val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val cooldownState: CooldownState = CooldownState.Ready,
+    val cooldownEndMs: Long = 0L,
     val favoriteCooldownStates: Map<String, CooldownState> = emptyMap(),
     val homeFavoriteId: String? = null,
     val isPendingTapSheetOpen: Boolean = false,

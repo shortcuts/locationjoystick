@@ -9,4 +9,5 @@
     <string name="cooldown_badge_suggested_wait">"Suggested wait: %1$s"</string>
     <string name="cooldown_badge_distance_away">"%1$s away"</string>
     <string name="cooldown_badge_no_wait">"No wait needed"</string>
+    <string name="cooldown_standing_label">"Teleport wait: %1$s · until %2$s"</string>
 </resources>

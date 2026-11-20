@@ -129,6 +129,7 @@ class MapViewModelTest {
         every { settingsRepository.getLastLocation() } returns flowOf(null)
         every { settingsRepository.getHomeFavoriteId() } returns flowOf(null)
         every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+        every { settingsRepository.getLastCooldownEndTime() } returns flowOf(0L)
         every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
         every { settingsRepository.getShowRouteJumpButtons() } returns flowOf(false)
 

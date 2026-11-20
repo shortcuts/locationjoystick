@@ -237,6 +237,18 @@ class SettingsRepository
 
         suspend fun setLastTeleportTime(ms: Long) = dataSource.setLastTeleportTime(ms)
 
+        fun getLastCooldownEndTime(): Flow<Long> = dataSource.getLastCooldownEndTime()
+
+        /** Writes the teleport clock and the end of its advised cooldown together, so the two never disagree. */
+        suspend fun recordTeleport(
+            from: LatLng?,
+            to: LatLng,
+        ) {
+            val now = System.currentTimeMillis()
+            dataSource.setLastTeleportTime(now)
+            dataSource.setLastCooldownEndTime(CooldownEngine.endMs(now, from, to))
+        }
+
         fun getMapFollowsLocation(): Flow<Boolean> = dataSource.getMapFollowsLocation()
 
         suspend fun setMapFollowsLocation(enabled: Boolean) = dataSource.setMapFollowsLocation(enabled)

@@ -178,6 +178,12 @@ interface PreferencesDataSource :
     /** Sets the timestamp (epoch ms) of the last teleport action. */
     suspend fun setLastTeleportTime(ms: Long)
 
+    /** Gets when the advised cooldown of the last teleport ends (epoch ms, 0 = none). */
+    fun getLastCooldownEndTime(): Flow<Long>
+
+    /** Sets when the advised cooldown of the last teleport ends (epoch ms, 0 = none). */
+    suspend fun setLastCooldownEndTime(ms: Long)
+
     /** Gets whether the map camera should follow the spoofed location marker. */
     fun getMapFollowsLocation(): Flow<Boolean>
 
@@ -612,6 +618,11 @@ class AppPreferencesDataSource
             pref(Keys.LAST_TELEPORT_TIME_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_TELEPORT_TIME_MS)
 
         override suspend fun setLastTeleportTime(ms: Long) = setPref(Keys.LAST_TELEPORT_TIME_MS, ms)
+
+        override fun getLastCooldownEndTime(): Flow<Long> =
+            pref(Keys.LAST_COOLDOWN_END_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_COOLDOWN_END_MS)
+
+        override suspend fun setLastCooldownEndTime(ms: Long) = setPref(Keys.LAST_COOLDOWN_END_MS, ms)
 
         override fun getMapFollowsLocation(): Flow<Boolean> = pref(Keys.MAP_FOLLOWS_LOCATION, true)
 

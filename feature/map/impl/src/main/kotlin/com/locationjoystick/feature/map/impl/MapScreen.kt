@@ -39,6 +39,7 @@ import com.locationjoystick.core.designsystem.component.LjOverlayPill
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSnackbarHost
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.designsystem.component.TeleportStandingCooldown
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildCirclePolygonGeoJson
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
@@ -469,6 +470,16 @@ internal fun MapScreen(
                         Modifier
                             .align(Alignment.TopStart)
                             .padding(top = paddingValues.calculateTopPadding() + LjSpacing.sm, start = LjSpacing.smMd),
+                )
+            }
+
+            if (!showSearch.value && !uiState.hideTeleportFeatures && uiState.cooldownEndMs > 0L) {
+                TeleportStandingCooldown(
+                    endMs = uiState.cooldownEndMs,
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = paddingValues.calculateTopPadding() + LjSpacing.sm),
                 )
             }
 

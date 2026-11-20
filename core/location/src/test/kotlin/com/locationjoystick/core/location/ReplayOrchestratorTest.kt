@@ -99,7 +99,7 @@ class ReplayOrchestratorTest {
                 onSpeedChange = { speedChanges.add(it) },
                 pushLocationUpdate = { },
                 startUpdateLoop = { startUpdateLoopCalled = true },
-                onTeleport = { teleportCount++ },
+                onTeleport = { _, _ -> teleportCount++ },
                 plantingRadiusMeters = { plantingRadius },
             )
     }

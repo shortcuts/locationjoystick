@@ -296,9 +296,9 @@ class MockLocationService : Service() {
                 onSpeedChange = { currentSpeedMs = it },
                 pushLocationUpdate = ::pushLocationUpdate,
                 startUpdateLoop = ::startUpdateLoop,
-                onTeleport = {
+                onTeleport = { from, to ->
                     teleportSeq.incrementAndGet()
-                    serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
+                    serviceScope.launch { settingsRepository.recordTeleport(from, to) }
                 },
                 plantingRadiusMeters = { realism.plantingRadiusMeters },
             )
@@ -988,11 +988,11 @@ class MockLocationService : Service() {
     }
 
     private fun snapToLeader(target: LatLng) {
+        val previous = locationRepository.currentPosition.value
         writeCurrentPosition(target.latitude, target.longitude, syncRepository = true)
         followerCatchUp.markArrived()
-        // Shares the same cooldown clock as every other teleport (Favorites, map long-press) —
-        // see CooldownEngine/settingsRepository.getLastTeleportTime().
-        serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
+        // Shares the same cooldown clock as every other teleport (Favorites, map long-press).
+        serviceScope.launch { settingsRepository.recordTeleport(previous, target) }
         Log.i(TAG, "Follower teleported to leader at (${target.latitude}, ${target.longitude})")
     }
 
