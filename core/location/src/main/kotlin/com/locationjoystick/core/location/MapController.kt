@@ -442,8 +442,9 @@ class MapController
             if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
                 ephemeralReplayController.clearPendingWaypoints()
-                _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
             }
+            // Not left to the mode observer: it misses the TELEPORT edge when another change follows at once.
+            _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
         }
 
         fun walkTo(position: LatLng) {

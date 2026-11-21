@@ -46,6 +46,8 @@ One smoke test class per screen, each checking that the screen loads, its main a
 
 `MovementSmokeTest` never calls a live OSRM server. A Hilt test module replaces only the road lookup with an `OsrmClient` that points at a local server (`FakeRoad`), which answers with scripted road shapes, including a road that overlaps itself to reproduce the loop. A live server would make the road tests slow, flaky and rate-limited. The joystick test goes through the Control API, because the overlay service cannot be driven in-process.
 
+`PositionChangeMatrixTest` (`:core:location`) chains every ordered pair of position-change entry points, plus triples of the walk-setting ones, over the real `MapController`, `WalkCoordinator` and `LocationRepository`. It runs each chain in a settled and a back-to-back schedule, because the shipped walk-line bug came from a late mode-observer edge that an unconfined dispatcher hides. The floating map and Tap to Walk end in the same `MapController` calls as the in-app map, so they have no steps of their own. When you add an entry point, add one `Kind` with its action and its expected state. A cell that fails on a real product defect goes in `KNOWN_GAPS` with its backlog id.
+
 Helpers are in the smoke test helper file.
 
 ## Driving the app on a device (agents)
