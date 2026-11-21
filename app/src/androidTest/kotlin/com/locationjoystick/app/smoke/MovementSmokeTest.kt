@@ -10,6 +10,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.ControlApiRoutes
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.location.MapController
+import com.locationjoystick.core.location.WalkMode
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
@@ -111,6 +112,20 @@ class MovementSmokeTest : BaseSmokeTest() {
         assertTrue("walk never asked the fake road", FakeRoad.requestCount >= 1)
         assertPassedNear(detourPoint(ORIGIN, STOP_1))
         assertNoBacktrack(recorder.positions, listOf(STOP_1))
+    }
+
+    @Test
+    fun chained_walks_keep_the_walk_state() {
+        fun walkingTo(target: LatLng) = (mapController.sharedState.value.walkMode as? WalkMode.Walking)?.target == target
+        mapController.walkTo(STOP_1)
+        recorder.waitUntil(what = "walk to stop 1") { walkingTo(STOP_1) }
+        mapController.walkViaRoads(STOP_2)
+        recorder.waitUntil(what = "road walk to stop 2") { walkingTo(STOP_2) }
+        mapController.walkTo(STOP_3)
+        recorder.waitUntil(what = "walk to stop 3") { walkingTo(STOP_3) }
+        mapController.teleportTo(ORIGIN)
+        recorder.waitUntil(what = "idle after teleport") { mapController.sharedState.value.walkMode == WalkMode.Idle }
+        assertNull(locationRepository.walkTarget.value)
     }
 
     @Test

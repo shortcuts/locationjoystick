@@ -1,42 +1,26 @@
 package com.locationjoystick.core.location
 
-import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.data.FavoriteRepository
-import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RealLocationRepository
-import com.locationjoystick.core.data.RoamingRepository
-import com.locationjoystick.core.data.RouteRepository
-import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.SpoofingEvent
-import com.locationjoystick.core.data.TeleportUseCase
-import com.locationjoystick.core.data.WalkCoordinator
-import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
-import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.SavedItemSortMode
-import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.routing.OsrmClient
-import com.locationjoystick.core.routing.RoutingErrorReporter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.spyk
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -60,8 +44,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapControllerWalkCancellationTest {
-    private val walkProfile = SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = 1.4)
-
     @Before
     fun setUp() {
         mockkObject(MockLocationIntentBuilder)
@@ -519,96 +501,26 @@ class MapControllerWalkCancellationTest {
             coVerify(exactly = 1) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
         }
 
-    private class Harness(
-        val locationRepository: LocationRepository,
-        val walkCoordinator: WalkCoordinator,
-        val ephemeralController: EphemeralReplayController,
-        val mapController: MapController,
-        val teleportUseCase: TeleportUseCase,
-        val groupRepository: GroupRepository,
-        val context: Context,
-        val roamingRepository: RoamingRepository,
-    ) {
-        fun setRoamingActive() {
-            locationRepository.setMockMode(MockMode.ROAMING)
-            coEvery { roamingRepository.stopRoaming() } answers {
-                locationRepository.setMockMode(MockMode.TELEPORT)
+    @Test
+    fun `walkTo replacing a walk keeps the walk line when the mode observer lags`() =
+        runTest(StandardTestDispatcher()) {
+            val locationRepository = spyk(LocationRepository())
+            val harness = buildHarness(backgroundScope, mockk<OsrmClient>(relaxed = true), locationRepository)
+            val mapController = harness.mapController
+            runCurrent()
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            mapController.walkTo(LatLng(48.9000, 2.3522))
+            runCurrent()
+
+            // The observer reads the cancel's TELEPORT edge only after the new walk's state is set.
+            val second = LatLng(48.8700, 2.3000)
+            every { locationRepository.setWalkTarget(second) } answers {
+                runCurrent()
+                callOriginal()
             }
+            mapController.walkTo(second)
+            runCurrent()
+
+            assertEquals(second, mapController.sharedState.value.walkTarget)
         }
-    }
-
-    private fun buildHarness(
-        scope: CoroutineScope,
-        osrmClient: OsrmClient,
-    ): Harness {
-        val locationRepository = LocationRepository()
-        val settingsRepository =
-            mockk<SettingsRepository>(relaxed = true) {
-                every { getActiveSpeedProfile() } returns flowOf(walkProfile)
-                every { getRoutesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
-                every { getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
-                every { getHomeFavoriteId() } returns flowOf(null)
-                every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
-                every { getRecentSearches() } returns flowOf(emptyList())
-                every { getRoamingDefaults() } returns flowOf(RoamingDefaults())
-                every { getSettingsSnapshot() } returns emptyFlow()
-                every { getRememberLastLocation() } returns flowOf(false)
-            }
-        val walkToEngine = WalkToEngine(settingsRepository, locationRepository)
-        val walkCoordinator = WalkCoordinator(locationRepository, walkToEngine)
-        val routingErrorReporter = RoutingErrorReporter(mockk<android.content.Context>(relaxed = true))
-        val ephemeralController =
-            EphemeralReplayController(
-                locationRepository,
-                settingsRepository,
-                walkCoordinator,
-                osrmClient,
-                routingErrorReporter,
-            )
-
-        val context = mockk<Context>(relaxed = true)
-        val roamingRepository =
-            mockk<RoamingRepository>(relaxed = true)
-        val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
-        val favoriteRepository =
-            mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
-        val teleportUseCase =
-            mockk<TeleportUseCase>(relaxed = true) { every { cooldownsFor(any()) } returns emptyFlow() }
-        val startRouteReplayUseCase = mockk<StartRouteReplayUseCase>(relaxed = true)
-        val groupRepository = mockk<GroupRepository>(relaxed = true) { every { leaderActivity } returns MutableStateFlow(null) }
-
-        val mapController =
-            MapController(
-                context = context,
-                locationRepository = locationRepository,
-                routeRepository = routeRepository,
-                favoriteRepository = favoriteRepository,
-                settingsRepository = settingsRepository,
-                roamingRepository = roamingRepository,
-                walkCoordinator = walkCoordinator,
-                teleportUseCase = teleportUseCase,
-                serviceStarter = mockk(relaxed = true),
-                realLocationRepository =
-                    mockk<RealLocationRepository> {
-                        every { lastKnownRealPosition() } returns null
-                        every { hasFinePermission() } returns false
-                    },
-                startRouteReplayUseCase = startRouteReplayUseCase,
-                ephemeralReplayController = ephemeralController,
-                osrmClient = osrmClient,
-                routingErrorReporter = routingErrorReporter,
-                groupRepository = groupRepository,
-                appScope = scope,
-            )
-        return Harness(
-            locationRepository,
-            walkCoordinator,
-            ephemeralController,
-            mapController,
-            teleportUseCase,
-            groupRepository,
-            context,
-            roamingRepository,
-        )
-    }
 }
