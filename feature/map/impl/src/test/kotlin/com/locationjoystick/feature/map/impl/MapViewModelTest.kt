@@ -419,6 +419,7 @@ class MapViewModelTest {
     fun `walkLoop_breaksWhenWalkTargetClearedExternally`() =
         runTest {
             val target = LatLng(48.0, 2.0)
+            every { locationRepository.currentMode } returns MutableStateFlow(MockMode.WALK_TO)
 
             viewModel.onAction(MapAction.LongPressTapToWalk(target))
             testDispatcher.scheduler.advanceUntilIdle()
@@ -437,6 +438,7 @@ class MapViewModelTest {
     fun `walkLoop_remainsActiveWhilePausedExternally`() =
         runTest {
             val target = LatLng(48.0, 2.0)
+            every { locationRepository.currentMode } returns MutableStateFlow(MockMode.WALK_TO)
 
             viewModel.onAction(MapAction.LongPressTapToWalk(target))
             testDispatcher.scheduler.advanceUntilIdle()
