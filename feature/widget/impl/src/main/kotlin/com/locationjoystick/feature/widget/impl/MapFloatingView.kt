@@ -458,6 +458,28 @@ internal fun MapFloatingView(
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
+            if (compact) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .floatingMapResizeGesture(
+                                resizable = true,
+                                onTap = {},
+                                onResizeStart = onResizeStart,
+                                onResize = onResize,
+                                onResizeEnd = onResizeEnd,
+                                immediate = true,
+                            ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        LjIcons.OpenInFull,
+                        contentDescription = stringResource(R.string.map_floating_view_resize_map),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
             IconButton(onClick = onDismiss) {
                 Icon(
                     LjIcons.Close,

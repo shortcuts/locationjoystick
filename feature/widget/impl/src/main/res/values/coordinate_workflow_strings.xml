@@ -2,6 +2,7 @@
 <resources>
     <string name="widget_panel_presenter_capture_invalid_route">"Need a name and at least 2 points."</string>
     <string name="map_floating_view_move_map">"Move map"</string>
+    <string name="map_floating_view_resize_map">"Resize map"</string>
     <string name="map_floating_view_close">"Close"</string>
     <string name="map_floating_view_expand_map">"Expand map"</string>
     <string name="map_floating_view_shrink_map">"Shrink map"</string>

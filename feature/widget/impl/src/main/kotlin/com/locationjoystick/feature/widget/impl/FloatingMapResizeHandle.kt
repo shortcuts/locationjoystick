@@ -28,7 +28,8 @@ private class ResizeGestureState {
 
 /**
  * Tap calls [onTap]; long press then drag calls [onResizeStart], [onResize] and [onResizeEnd] with raw screen
- * coordinates. Raw coordinates stay valid while the window resizes under the finger; local deltas would not.
+ * coordinates. [immediate] skips the long press and resizes from the first touch, for a dedicated handle.
+ * Raw coordinates stay valid while the window resizes under the finger; local deltas would not.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -38,6 +39,7 @@ internal fun Modifier.floatingMapResizeGesture(
     onResizeStart: (rawX: Float, rawY: Float) -> Unit,
     onResize: (rawX: Float, rawY: Float) -> Unit,
     onResizeEnd: () -> Unit,
+    immediate: Boolean = false,
 ): Modifier {
     val view = LocalView.current
     val slop = remember(view) { ViewConfiguration.get(view.context).scaledTouchSlop }
@@ -69,7 +71,12 @@ internal fun Modifier.floatingMapResizeGesture(
                 state.lastY = event.rawY
                 state.movedPastSlop = false
                 state.resizing = false
-                if (resizable) view.postDelayed(longPress, ViewConfiguration.getLongPressTimeout().toLong())
+                if (resizable && immediate) {
+                    state.resizing = true
+                    currentOnResizeStart(state.lastX, state.lastY)
+                } else if (resizable) {
+                    view.postDelayed(longPress, ViewConfiguration.getLongPressTimeout().toLong())
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 state.lastX = event.rawX

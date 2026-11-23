@@ -51,6 +51,7 @@ import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.QrCode
@@ -136,6 +137,7 @@ object LjIcons {
     val Folder = Icons.Rounded.Folder
     val Fullscreen = Icons.Rounded.Fullscreen
     val FullscreenExit = Icons.Rounded.FullscreenExit
+    val OpenInFull = Icons.Rounded.OpenInFull
     val Explore = Icons.Rounded.Explore
     val Favorite = Icons.Rounded.Favorite
     val Groups = Icons.Rounded.Groups

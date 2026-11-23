@@ -2,6 +2,7 @@
 <resources>
     <string name="widget_panel_presenter_capture_invalid_route">"请输入名称并至少添加 2 个坐标点。"</string>
     <string name="map_floating_view_move_map">"移动地图"</string>
+    <string name="map_floating_view_resize_map">"调整地图大小"</string>
     <string name="map_floating_view_close">"关闭"</string>
     <string name="map_floating_view_expand_map">"展开地图"</string>
     <string name="map_floating_view_shrink_map">"收起地图"</string>
