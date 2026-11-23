@@ -40,6 +40,5 @@ fun finishDrawnLine(points: List<LatLng>): List<LatLng>? {
     if (simplified.size < 2) return null
     val max = AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS
     if (simplified.size <= max) return simplified
-    val step = (simplified.size - 1).toDouble() / (max - 1)
-    return List(max) { simplified[(it * step).toInt()] }
+    return List(max) { simplified[(it * (simplified.size - 1L) / (max - 1)).toInt()] }
 }

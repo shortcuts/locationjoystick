@@ -7,6 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 
 class DrawnLineTest {
@@ -76,5 +77,19 @@ class DrawnLineTest {
         assertEquals(zigzag.first(), line.first())
         assertEquals(zigzag.last(), line.last())
         assertTrue(line.zipWithNext().all { (a, b) -> a != b })
+    }
+
+    @Test
+    fun `the cap keeps the true end point when float steps would drift`() {
+        val spiral =
+            List(10_004) {
+                LatLng(
+                    origin.latitude + (0.0007 + it * 1e-8) * sin(it * 0.5),
+                    origin.longitude + (0.0007 + it * 1e-8) * cos(it * 0.5),
+                )
+            }
+        val line = finishDrawnLine(spiral)!!
+        assertEquals(AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS, line.size)
+        assertEquals(spiral.last(), line.last())
     }
 }
