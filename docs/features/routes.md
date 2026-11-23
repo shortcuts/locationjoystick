@@ -65,6 +65,7 @@ The map's add menu and the widget use the same form. They offer the same actions
 - One valid point: teleport, walk, or walk via roads.
 - Several valid points: route actions, and a start-route button.
 - Saving a favorite uses the first point. Saving a route needs at least two points.
+- A line drawn on the map opens this sheet pre-filled ([draw-line.md](draw-line.md)).
 
 ### Play without saving
 

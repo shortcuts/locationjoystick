@@ -79,6 +79,7 @@ The floating map is a map view inside an overlay window ([map.md](map.md), [map-
 - A drag on the resize button beside the close button resizes the compact window at once. A long press on the expand button, then a drag, does the same. The window's left and bottom edges stay fixed and the top-right corner follows the finger. The gesture reads raw screen coordinates (`floatingMapResizeGesture`): the buttons sit on the moving corner, so local deltas would under-count. A plain tap still toggles expanded.
 - Size and position persist in DataStore (`FloatingMapRect`) and are clamped on every read and after rotation. Leaving fullscreen resets the window to the app default and clears the stored value. The rect is device-specific pixels, so it is not part of export or import.
 - The icon column scrolls when the window is too short. The move, expand and close controls sit outside the scroll area so they stay reachable at the minimum size.
+- Draw line mode works here too, through the same layer as the main map ([draw-line.md](draw-line.md)). Its state is local to the composable, so closing the window ends it.
 - Its centre button follows the spoofed position while spoofing. When idle, it falls back to the last point the map camera was moved to.
 
 ### Route controls on the floating map

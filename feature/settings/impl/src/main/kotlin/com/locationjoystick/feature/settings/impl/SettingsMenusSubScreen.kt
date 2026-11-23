@@ -204,6 +204,14 @@ private fun featureMeta(feature: AppFeature): FeatureMeta =
             )
         }
 
+        AppFeature.DRAW_LINE -> {
+            FeatureMeta(
+                stringResource(R.string.settings_menus_feature_draw_line),
+                stringResource(R.string.settings_menus_feature_draw_line_desc),
+                LjIcons.Gesture,
+            )
+        }
+
         AppFeature.SPEED_CYCLE -> {
             FeatureMeta(
                 stringResource(R.string.settings_menus_feature_speed_cycle),

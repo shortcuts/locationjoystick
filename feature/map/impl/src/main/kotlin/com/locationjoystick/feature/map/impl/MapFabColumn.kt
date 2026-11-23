@@ -23,6 +23,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.feature.map.impl.R
+import com.locationjoystick.core.map.R as CoreMapR
 
 @Composable
 internal fun MapFabColumn(
@@ -290,6 +291,19 @@ internal fun MapFabColumn(
                             containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
                             contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                             onClick = { onAction(MapAction.OpenPasteCoordinates) },
+                        )
+                    }
+                }
+
+                AppFeature.DRAW_LINE -> {
+                    if (enabled) {
+                        val drawState = activityState(uiState.isDrawLineActive, false)
+                        LjMapIconButton(
+                            icon = LjIcons.Gesture,
+                            contentDescription = stringResource(CoreMapR.string.map_draw_line_cd),
+                            containerColor = drawState.containerColor(MaterialTheme.colorScheme),
+                            contentColor = drawState.contentColor(MaterialTheme.colorScheme),
+                            onClick = { onAction(MapAction.ToggleDrawLine) },
                         )
                     }
                 }

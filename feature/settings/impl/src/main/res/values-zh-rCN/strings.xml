@@ -186,6 +186,8 @@
     <string name="settings_menus_feature_roaming_desc">"配置并在指定半径内开始随机行走。"</string>
     <string name="settings_menus_feature_search">"搜索"</string>
     <string name="settings_menus_feature_search_desc">"按名称查找地点并跳转过去。"</string>
+    <string name="settings_menus_feature_draw_line">"画线"</string>
+    <string name="settings_menus_feature_draw_line_desc">"在地图上拖动手指画线，然后沿线行走或保存为路线。"</string>
     <string name="settings_menus_feature_speed_cycle">"速度切换"</string>
     <string name="settings_menus_feature_speed_cycle_desc">"单击即可循环切换所有速度预设。"</string>
     <string name="settings_menus_drag_to_reorder_cd">"拖动以重新排序 %1$s"</string>

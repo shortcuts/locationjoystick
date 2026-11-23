@@ -534,6 +534,12 @@ object AppConstants {
         fun releaseUrl(version: String) = "https://github.com/${AppInfo.GITHUB_REPO_SLUG}/releases/tag/v$version"
     }
 
+    /** Freehand line drawing (see docs/features/draw-line.md). */
+    object DrawConstants {
+        const val MIN_POINT_SPACING_METERS = 2.0
+        const val SIMPLIFY_EPSILON_METERS = 2.0
+    }
+
     /** Hot locations list published in the wiki and cached on-device (see docs/features/favorites.md). */
     object HotLocationsConstants {
         const val URL = "${AppInfo.DOCS_URL}hot/locations.json"

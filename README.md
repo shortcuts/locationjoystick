@@ -47,6 +47,7 @@ Move a floating joystick, long-press the map to walk somewhere, replay a saved r
 - Long-press the [map](https://locationjoystick.shrtcts.fr/map.html) to teleport or walk to a spot.
 - Draw or import [routes](https://locationjoystick.shrtcts.fr/routes.html) and replay them. Import GPX files or paste coordinates.
 - Save [favorites](https://locationjoystick.shrtcts.fr/favorites.html) and search and sort them.
+- [Draw a line](https://locationjoystick.shrtcts.fr/draw-line.html) on the map with your finger, then walk it or save it as a route.
 - Let the app roam at random, or preview planting circles and spiral roaming.
 - [Capture](https://locationjoystick.shrtcts.fr/capture.html) locations from shared map links, then save them as a route.
 - Tap the game screen to walk toward that spot, without opening the app. See [Tap to Walk](https://locationjoystick.shrtcts.fr/tap-to-walk-in-a-game.html).

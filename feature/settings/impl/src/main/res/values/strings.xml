@@ -186,6 +186,8 @@
     <string name="settings_menus_feature_roaming_desc">"Configure and start random walking within a radius."</string>
     <string name="settings_menus_feature_search">"Search"</string>
     <string name="settings_menus_feature_search_desc">"Find and jump to a place by name."</string>
+    <string name="settings_menus_feature_draw_line">"Draw line"</string>
+    <string name="settings_menus_feature_draw_line_desc">"Drag a finger on the map to draw a line, then walk it or save it as a route."</string>
     <string name="settings_menus_feature_speed_cycle">"Speed cycle"</string>
     <string name="settings_menus_feature_speed_cycle_desc">"Cycles through all speed profiles with a single tap."</string>
     <string name="settings_menus_drag_to_reorder_cd">"Drag to reorder %1$s"</string>

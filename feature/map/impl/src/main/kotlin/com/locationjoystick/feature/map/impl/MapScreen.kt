@@ -54,6 +54,7 @@ import com.locationjoystick.core.map.maplibre.applyZoomBounds
 import com.locationjoystick.core.map.maplibre.followOrSnapTo
 import com.locationjoystick.core.map.maplibre.rememberMapView
 import com.locationjoystick.core.map.projection.projection
+import com.locationjoystick.core.map.ui.DrawLineLayer
 import com.locationjoystick.core.map.ui.MapAttribution
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
@@ -437,6 +438,14 @@ internal fun MapScreen(
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+
+            if (uiState.isDrawLineActive) {
+                DrawLineLayer(
+                    map = mapRef.value,
+                    projection = proj,
+                    onLine = { onAction(MapAction.DrawLineFinished(it)) },
+                )
+            }
 
             MapAttribution(
                 tileSource = tileSource,

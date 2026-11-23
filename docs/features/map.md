@@ -51,6 +51,7 @@ The library's own attribution button is hidden on every map. Each surface shows 
 ## Interactions
 
 - Long-press opens a sheet with walk and teleport choices.
+- Draw line mode puts a transparent layer over the map and hands the drawn points to the paste sheet ([draw-line.md](draw-line.md)).
 - Tapping a route point selects it. In route edit mode, tapping empty map adds a waypoint.
 - Camera follow stops when the user drags the map. The centre button is always available.
 - While spoofing runs or is paused, the centre button follows the mock position. While idle, it jumps to the marker, or to the last point the camera was moved to when there is no marker. It never asks the device for a GPS fix: a fix request lags the button and stacks up on repeated taps.

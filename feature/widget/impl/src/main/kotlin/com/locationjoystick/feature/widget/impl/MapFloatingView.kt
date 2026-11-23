@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
+import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
 import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.ActivityState
@@ -61,6 +62,7 @@ import com.locationjoystick.core.map.maplibre.applyZoomBounds
 import com.locationjoystick.core.map.maplibre.followOrSnapTo
 import com.locationjoystick.core.map.maplibre.rememberMapView
 import com.locationjoystick.core.map.projection.projection
+import com.locationjoystick.core.map.ui.DrawLineLayer
 import com.locationjoystick.core.map.ui.MapAttribution
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
@@ -88,6 +90,7 @@ import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import kotlin.math.roundToInt
+import com.locationjoystick.core.map.R as CoreMapR
 import org.maplibre.android.geometry.LatLng as MapLatLng
 
 @Composable
@@ -182,6 +185,8 @@ internal fun MapFloatingView(
     val shareContext = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var showPasteCoordinates by remember { mutableStateOf(false) }
+    var isDrawingLine by remember { mutableStateOf(false) }
+    var drawnLineText by remember { mutableStateOf("") }
     var showFavoritesPicker by remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
     var northLocked by rememberSaveable { mutableStateOf(true) }
@@ -376,6 +381,19 @@ internal fun MapFloatingView(
             },
             modifier = Modifier.fillMaxSize(),
         )
+
+        if (isDrawingLine) {
+            DrawLineLayer(
+                map = mapRef.value,
+                projection = proj,
+                onLine = {
+                    drawnLineText = formatCapturedPointsForClipboard(it)
+                    isDrawingLine = false
+                    showSearch = false
+                    showPasteCoordinates = true
+                },
+            )
+        }
 
         MapAttribution(
             tileSource = tileSource,
@@ -630,6 +648,19 @@ internal fun MapFloatingView(
                     },
                 )
             }
+            if (AppFeature.DRAW_LINE in enabledMapFabFeatures) {
+                val drawState = activityState(isDrawingLine, false)
+                LjMapIconButton(
+                    icon = LjIcons.Gesture,
+                    contentDescription = stringResource(CoreMapR.string.map_draw_line_cd),
+                    containerColor = drawState.containerColor(MaterialTheme.colorScheme),
+                    contentColor = drawState.contentColor(MaterialTheme.colorScheme),
+                    onClick = {
+                        drawnLineText = ""
+                        isDrawingLine = !isDrawingLine
+                    },
+                )
+            }
             val progress = routeProgress
             if (isRouteReplay && progress != null) {
                 RouteProgressBadgeInMapFabSlot(
@@ -641,7 +672,10 @@ internal fun MapFloatingView(
 
         if (showPasteCoordinates) {
             OverlayPasteCoordinatesSheet(
-                onDismiss = { showPasteCoordinates = false },
+                onDismiss = {
+                    showPasteCoordinates = false
+                    drawnLineText = ""
+                },
                 onTeleport = onTeleport,
                 onWalk = onWalkTo,
                 onWalkViaRoads = onWalkViaRoads,
@@ -650,6 +684,7 @@ internal fun MapFloatingView(
                 onStartRoute = { points, config -> startPastedRoute?.invoke(points, config) },
                 hideTeleportFeatures = hideTeleportFeatures,
                 cooldownFor = cooldownForPosition.asAdvisory(),
+                initialText = drawnLineText,
             )
         }
 

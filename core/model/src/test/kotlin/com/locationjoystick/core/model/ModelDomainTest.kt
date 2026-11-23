@@ -45,6 +45,9 @@ class ModelDomainTest {
         assertFalse(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.PASTE_COORDINATES))
         assertTrue(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.ROAMING))
         assertFalse(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.CAPTURE_COORDINATES))
+        assertEquals(setOf(FeatureSurface.MAP), AppFeature.DRAW_LINE.surfaces)
+        assertFalse(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.DRAW_LINE))
+        assertFalse(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.DRAW_LINE))
         assertTrue(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.SEARCH))
     }
 

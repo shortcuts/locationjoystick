@@ -23,6 +23,7 @@
       { href: 'favorites.html', label: 'Favorites' },
       { href: 'location-links.html', label: 'Location Links' },
       { href: 'capture.html', label: 'Capture' },
+      { href: 'draw-line.html', label: 'Draw a line' },
       { href: 'group.html', label: 'Group Sync' },
     ] },
     { group: 'Configure', items: [

@@ -602,7 +602,7 @@ private fun featureIcon(
         AppFeature.MAP_FLOATING -> LjIcons.Map
         AppFeature.PASTE_COORDINATES -> LjIcons.ContentPaste
         AppFeature.ROAMING -> LjIcons.Explore
-        AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {
+        AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE -> {
             error("$feature is map-only and never appears in the widget panel")
         }
     }
@@ -617,7 +617,7 @@ private fun AppFeature.toContentDescription(): String =
         AppFeature.SPEED_CYCLE -> stringResource(R.string.widget_feature_speed_cycle_cd)
         AppFeature.MAP_FLOATING -> stringResource(R.string.widget_feature_open_map_cd)
         AppFeature.PASTE_COORDINATES -> stringResource(R.string.widget_paste_coordinates)
-        AppFeature.ROAMING, AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES ->
+        AppFeature.ROAMING, AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE ->
             error(
                 "$this is map-only and never appears in the widget panel",
             )

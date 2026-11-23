@@ -1240,6 +1240,22 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `toggling draw line flips the mode and a finished line opens the paste sheet and ends the mode`() =
+        runTest {
+            viewModel = createViewModel()
+            viewModel.onAction(MapAction.ToggleDrawLine)
+            assertTrue(viewModel.uiState.value.isDrawLineActive)
+
+            viewModel.onAction(MapAction.DrawLineFinished(listOf(LatLng(1.25, 2.5), LatLng(3.0, 4.0))))
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isDrawLineActive)
+            assertTrue(state.showPasteCoordinatesSheet)
+            assertEquals(PasteSheetTitle.DEFAULT, state.pasteSheetTitle)
+            assertEquals("1.250000, 2.500000\n3.000000, 4.000000", state.pasteInitialText)
+        }
+
+    @Test
     fun `pending GPX open is still delivered to a second map ViewModel`() =
         runTest {
             viewModel = createViewModel()

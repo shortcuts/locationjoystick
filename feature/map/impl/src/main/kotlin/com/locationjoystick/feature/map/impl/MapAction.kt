@@ -184,6 +184,12 @@ sealed interface MapAction {
 
     data object ClosePasteCoordinates : MapAction
 
+    data object ToggleDrawLine : MapAction
+
+    data class DrawLineFinished(
+        val points: List<LatLng>,
+    ) : MapAction
+
     data object OpenCaptureCoordinates : MapAction
 
     data object CloseCaptureCoordinates : MapAction

@@ -220,16 +220,24 @@ class MapViewModel
         private fun observeGpxOpen() {
             viewModelScope.launch {
                 gpxOpenRepository.pending.collect { pending ->
-                    _uiState.update {
-                        it.copy(
-                            showPasteCoordinatesSheet = true,
-                            pasteSheetTitle = PasteSheetTitle.GPX,
-                            pasteInitialText = formatCapturedPointsForClipboard(pending.points),
-                            pasteInitialRouteName = pending.suggestedName,
-                            pasteFormNonce = it.pasteFormNonce + 1,
-                        )
-                    }
+                    showPasteSheetWith(PasteSheetTitle.GPX, pending.points, pending.suggestedName)
                 }
+            }
+        }
+
+        private fun showPasteSheetWith(
+            title: PasteSheetTitle,
+            points: List<LatLng>,
+            routeName: String,
+        ) {
+            _uiState.update {
+                it.copy(
+                    showPasteCoordinatesSheet = true,
+                    pasteSheetTitle = title,
+                    pasteInitialText = formatCapturedPointsForClipboard(points),
+                    pasteInitialRouteName = routeName,
+                    pasteFormNonce = it.pasteFormNonce + 1,
+                )
             }
         }
 
@@ -595,6 +603,15 @@ class MapViewModel
                             pasteFormNonce = it.pasteFormNonce + 1,
                         )
                     }
+                }
+
+                MapAction.ToggleDrawLine -> {
+                    _uiState.update { it.copy(isDrawLineActive = !it.isDrawLineActive) }
+                }
+
+                is MapAction.DrawLineFinished -> {
+                    _uiState.update { it.copy(isDrawLineActive = false) }
+                    showPasteSheetWith(PasteSheetTitle.DEFAULT, action.points, "")
                 }
 
                 MapAction.ClosePasteCoordinates -> {

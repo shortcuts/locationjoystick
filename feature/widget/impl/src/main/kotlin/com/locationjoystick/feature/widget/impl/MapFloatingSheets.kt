@@ -113,6 +113,7 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleportFeatures: Boolean = false,
     cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
+    initialText: String = "",
 ) {
     Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
     Box(
@@ -137,6 +138,7 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
                     onStartRoute = onStartRoute,
                     hideTeleportFeatures = hideTeleportFeatures,
                     cooldownFor = cooldownFor,
+                    initialText = initialText,
                 )
             }
         }

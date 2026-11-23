@@ -36,6 +36,7 @@ data class MapUiState(
     val showRoutesSheet: Boolean = false,
     val isRouteControlsExpanded: Boolean = false,
     val showPasteCoordinatesSheet: Boolean = false,
+    val isDrawLineActive: Boolean = false,
     val pasteSheetTitle: PasteSheetTitle = PasteSheetTitle.DEFAULT,
     val pasteInitialText: String = "",
     val pasteInitialRouteName: String = "",

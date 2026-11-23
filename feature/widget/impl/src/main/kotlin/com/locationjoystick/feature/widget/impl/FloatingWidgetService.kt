@@ -541,7 +541,7 @@ class FloatingWidgetService :
                 onRoamingIconClicked()
             }
 
-            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {}
+            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE -> {}
         }
     }
 
