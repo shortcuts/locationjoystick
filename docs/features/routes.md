@@ -14,7 +14,7 @@ Key files: the routes feature module (screens, view models), `:core:common/util/
 
 A route is stored as one row with its waypoints in a child table. Waypoints keep their order index. The app reads a route as one observable value so screens update when it changes.
 
-Routes can also come from GPX files. The sizes and point limits are constants in the code. Points beyond the limit are dropped, and the user is told how many.
+Routes can also come from GPX files. The sizes and point limits are constants in the code. A route above the point limit is skipped whole, and the user is told how many points the limit allows.
 
 Export writes one GPX track per route through the same file that parses it, and escapes the name: an unescaped `&` made the file unreadable on re-import.
 

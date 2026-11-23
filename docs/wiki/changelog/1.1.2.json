@@ -1,0 +1,7 @@
+{
+  "version": "1.1.2",
+  "date": "2026-11-23",
+  "entries": [
+    { "category": "fix", "scope": "Routes", "summary": "Large GPX routes now import. A GPS Joystick export with thousands of points no longer gets skipped." }
+  ]
+}

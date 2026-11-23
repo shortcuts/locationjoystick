@@ -301,8 +301,8 @@ object AppConstants {
         /** Maximum backup file size accepted for import (10 MB). Larger files are rejected to prevent OOM. */
         const val MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024L
 
-        /** GPS Joystick (and similar) tracks larger than this are skipped with a notice instead of imported. */
-        const val MAX_GPX_ROUTE_WAYPOINTS = 2_000
+        /** GPX routes above this point count are skipped with a notice. Guards replay and map load, not file size. */
+        const val MAX_GPX_ROUTE_WAYPOINTS = 10_000
     }
 
     object NotificationConstants {
