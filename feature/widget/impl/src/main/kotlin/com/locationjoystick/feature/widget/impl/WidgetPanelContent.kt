@@ -191,6 +191,11 @@ internal sealed interface WidgetPanelSection {
         val onClick: () -> Unit,
         val onConfirm: (Double) -> Unit,
     ) : WidgetPanelSection
+
+    data class PauseResume(
+        val parked: Boolean,
+        val onClick: () -> Unit,
+    ) : WidgetPanelSection
 }
 
 @Composable
@@ -517,6 +522,22 @@ internal fun WidgetPanel(
                                 AltitudeOverrideInput(prefillMeters = section.prefillMeters, onConfirm = section.onConfirm)
                             }
                         }
+                    }
+
+                    is WidgetPanelSection.PauseResume -> {
+                        WidgetIconButton(
+                            icon = if (section.parked) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription =
+                                stringResource(
+                                    if (section.parked) {
+                                        R.string.widget_panel_resume_spoofing_cd
+                                    } else {
+                                        R.string.widget_panel_pause_spoofing_cd
+                                    },
+                                ),
+                            tint = if (section.parked) LjSuccess else WidgetInactiveTint,
+                            onClick = section.onClick,
+                        )
                     }
                 }
             }

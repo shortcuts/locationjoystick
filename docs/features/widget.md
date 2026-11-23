@@ -103,6 +103,12 @@ An optional button in the widget panel opens an inline numeric field with the cu
 
 The panel's overlay window is non-focusable by design, so it never takes focus from the app underneath. The altitude field is the one exception: while it is open, the window becomes focusable, so the keyboard can appear. It goes back to non-focusable when the field closes.
 
+## Pause and resume button
+
+An optional widget panel button that runs the same park as Pause in the long-press popup, and Start to resume. It is a panel section, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the button must not show there.
+
+It is the one control that stays enabled while parked. The others fade, but this one is the way back, so a faded button would strand the user.
+
 ## Debug stats
 
 An optional block in the expanded panel shows live position, speed, altitude, accuracy, bearing and tick rate. It is for diagnosis, so it reads the same tick as the mock location loop.

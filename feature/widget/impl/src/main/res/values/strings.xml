@@ -26,6 +26,8 @@
     <string name="widget_panel_expand_cd">"Expand widget"</string>
     <string name="widget_panel_resume_cd">"Resume"</string>
     <string name="widget_panel_pause_cd">"Pause"</string>
+    <string name="widget_panel_pause_spoofing_cd">"Pause spoofing"</string>
+    <string name="widget_panel_resume_spoofing_cd">"Resume spoofing"</string>
     <string name="widget_panel_routes_picker_cd">"Routes picker"</string>
     <string name="widget_panel_state_running">"Running"</string>
     <string name="widget_panel_state_paused">"Paused"</string>

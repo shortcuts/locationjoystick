@@ -1171,6 +1171,25 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `getPauseResumeButtonEnabled defaults to false`() =
+        runTest {
+            repository.getPauseResumeButtonEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setPauseResumeButtonEnabled persists true`() =
+        runTest {
+            repository.setPauseResumeButtonEnabled(true)
+            repository.getPauseResumeButtonEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `getAltitudeJitterRadius defaults to ALTITUDE_SIGMA_METERS`() =
         runTest {
             repository.getAltitudeJitterRadius().test {
@@ -1839,6 +1858,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
         altitudeOverrideButtonEnabledFlow.value = enabled
+    }
+
+    private val pauseResumeButtonEnabledFlow = MutableStateFlow(false)
+
+    override fun getPauseResumeButtonEnabled(): Flow<Boolean> = pauseResumeButtonEnabledFlow
+
+    override suspend fun setPauseResumeButtonEnabled(enabled: Boolean) {
+        pauseResumeButtonEnabledFlow.value = enabled
     }
 
     private val debugStatsEnabledFlow = MutableStateFlow(false)

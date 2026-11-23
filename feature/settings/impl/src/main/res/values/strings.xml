@@ -148,6 +148,8 @@
     <string name="settings_menus_show_route_jump_buttons_desc">"Adds Previous waypoint and Next waypoint buttons to route replay controls. They jump between waypoints at once. Off by default."</string>
     <string name="settings_menus_show_altitude_override_button">"Show altitude override button"</string>
     <string name="settings_menus_show_altitude_override_button_desc">"Adds a button to the floating widget for typing in a fixed altitude from anywhere. Off by default."</string>
+    <string name="settings_menus_show_pause_resume_button">"Show pause button"</string>
+    <string name="settings_menus_show_pause_resume_button_desc">"Adds a button to the floating widget that pauses and resumes spoofing. Resume returns to the last spoofed position. Off by default."</string>
     <string name="settings_menus_capture">"Capture"</string>
     <string name="settings_menus_capture_desc">"Collects map links from other apps into a list, jumps to them, or both. These are the same settings as the Capture page. Deep links (geo:, google.navigation:, and share-to-app links) always work and need no setup here."</string>
     <string name="settings_menus_capture_browser_automatic">"Automatic"</string>

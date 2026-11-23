@@ -26,6 +26,8 @@
     <string name="widget_panel_expand_cd">"展開浮動小工具"</string>
     <string name="widget_panel_resume_cd">"繼續"</string>
     <string name="widget_panel_pause_cd">"暫停"</string>
+    <string name="widget_panel_pause_spoofing_cd">"暫停模擬定位"</string>
+    <string name="widget_panel_resume_spoofing_cd">"恢復模擬定位"</string>
     <string name="widget_panel_routes_picker_cd">"路線選取"</string>
     <string name="widget_panel_state_running">"執行中"</string>
     <string name="widget_panel_state_paused">"已暫停"</string>

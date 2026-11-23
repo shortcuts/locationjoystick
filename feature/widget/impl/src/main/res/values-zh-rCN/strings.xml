@@ -26,6 +26,8 @@
     <string name="widget_panel_expand_cd">"展开悬浮窗"</string>
     <string name="widget_panel_resume_cd">"继续"</string>
     <string name="widget_panel_pause_cd">"暂停"</string>
+    <string name="widget_panel_pause_spoofing_cd">"暂停模拟定位"</string>
+    <string name="widget_panel_resume_spoofing_cd">"恢复模拟定位"</string>
     <string name="widget_panel_routes_picker_cd">"路线选择"</string>
     <string name="widget_panel_state_running">"运行中"</string>
     <string name="widget_panel_state_paused">"已暂停"</string>

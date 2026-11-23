@@ -127,6 +127,7 @@ internal class SettingsSnapshotStore(
                 settings.altitudeJitterRadiusMeters.coerceJitterRadius()
             prefs[Keys.PLANTING_RADIUS_METERS] = clampPlantingRadius(settings.plantingRadiusMeters)
             prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = settings.altitudeOverrideButtonEnabled
+            prefs[Keys.PAUSE_RESUME_BUTTON_ENABLED] = settings.pauseResumeButtonEnabled
             prefs[Keys.DEBUG_STATS_ENABLED] = settings.debugStatsEnabled
             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] = snapshot.jitterSpeedIdleVariationPct.coerceSpeedVariationPct()
             prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] = snapshot.jitterSpeedMovingVariationPct.coerceSpeedVariationPct()
@@ -179,6 +180,7 @@ private fun Preferences.toSettingsSnapshot(): SettingsSnapshot {
                 altitudeJitterRadiusMeters = prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] ?: DEFAULT_ALTITUDE_JITTER_RADIUS_METERS,
                 plantingRadiusMeters = prefs[Keys.PLANTING_RADIUS_METERS] ?: DEFAULT_PLANTING_RADIUS_METERS,
                 altitudeOverrideButtonEnabled = prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] ?: false,
+                pauseResumeButtonEnabled = prefs[Keys.PAUSE_RESUME_BUTTON_ENABLED] ?: false,
                 debugStatsEnabled = prefs[Keys.DEBUG_STATS_ENABLED] ?: false,
                 rememberLastLocation =
                     prefs[Keys.REMEMBER_LAST_LOCATION] ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,

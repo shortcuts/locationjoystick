@@ -383,6 +383,10 @@ fun SettingsRoute(
                     viewModel.setAltitudeOverrideButtonEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetPauseResumeButtonEnabled -> {
+                    viewModel.setPauseResumeButtonEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetDebugStatsEnabled -> {
                     viewModel.setDebugStatsEnabled(action.enabled)
                 }

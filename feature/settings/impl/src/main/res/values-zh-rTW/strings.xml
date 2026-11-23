@@ -132,6 +132,8 @@
     <string name="settings_menus_show_route_jump_buttons_desc">"在路線重播控制列中加入「上一個途經點／下一個途經點」按鈕，可在途經點之間立即瞬移。預設關閉。"</string>
     <string name="settings_menus_show_altitude_override_button">"顯示海拔覆蓋按鈕"</string>
     <string name="settings_menus_show_altitude_override_button_desc">"在浮動小工具中加入一個按鈕，可隨時手動輸入固定海拔。預設關閉。"</string>
+    <string name="settings_menus_show_pause_resume_button">"顯示暫停按鈕"</string>
+    <string name="settings_menus_show_pause_resume_button_desc">"在浮動小工具中加入一個按鈕，可暫停和恢復模擬定位。恢復後回到上次模擬的位置。預設關閉。"</string>
     <string name="settings_menus_capture">"擷取"</string>
     <string name="settings_menus_capture_desc">"將其他應用程式中的地圖連結收集到清單、立即跳轉，或兩者皆有 — 與擷取頁面上的設定相同。深層連結（geo:、google.navigation: 以及分享到本應用程式的連結）一律自動生效，此處無需任何設定。"</string>
     <string name="settings_menus_capture_browser_automatic">"自動"</string>

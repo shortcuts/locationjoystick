@@ -361,6 +361,8 @@ class FloatingWidgetService :
             )
             val isAltitudeOverrideButtonVisible by
                 settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val isPauseResumeButtonVisible by
+                settingsRepository.getPauseResumeButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isAltitudeExpanded by panelExpand.flow(PanelExpandKey.ALTITUDE).collectAsStateWithLifecycle()
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
@@ -445,6 +447,14 @@ class FloatingWidgetService :
                                         reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
                                     onClick = { panelExpand.toggle(PanelExpandKey.ALTITUDE) },
                                     onConfirm = { onConfirmAltitude(it) },
+                                ),
+                            )
+                        }
+                        if (isPauseResumeButtonVisible) {
+                            add(
+                                WidgetPanelSection.PauseResume(
+                                    parked = !masterToggle.spoofingActive,
+                                    onClick = { if (masterToggle.spoofingActive) masterToggle.onPark() else masterToggle.onStart() },
                                 ),
                             )
                         }

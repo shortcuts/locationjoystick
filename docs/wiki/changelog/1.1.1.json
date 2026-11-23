@@ -2,6 +2,7 @@
   "version": "1.1.1",
   "date": "2026-11-17",
   "entries": [
+    { "category": "feat", "scope": "Widget", "summary": "New switch, Show pause button, under Settings > Menus. It adds a widget button that pauses your fake location and resumes it at the same place. It is off by default and does not show on the floating map." },
     { "category": "fix", "scope": "Battery", "summary": "The app no longer keeps your phone awake while nothing moves. It holds the wake lock only while you walk, roam or replay a route, and lets go when you pause." },
     { "category": "fix", "scope": "Map", "summary": "The map now uses a version of the map engine that works on more phones." }
   ]
