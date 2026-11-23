@@ -869,10 +869,13 @@ class MockLocationService : Service() {
      * the floating widget stays on screen. Joystick overlay still stops.
      */
     fun parkSpoofingKeepWidget() {
-        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(true) }
         serviceScope.launch { replayOrchestrator.handleStop() }
-        tearDownSpoofing(stopService = false)
-        Log.i(TAG, "Spoofing parked; widget overlay kept")
+        // The flag must be stored before teardown emits IDLE, or the idle observer stops the widget.
+        serviceScope.launch {
+            settingsRepository.setKeepWidgetOnIdle(true)
+            tearDownSpoofing(stopService = false)
+            Log.i(TAG, "Spoofing parked; widget overlay kept")
+        }
     }
 
     private fun stopOverlayServices(action: IdleOverlayStopAction) {
