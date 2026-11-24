@@ -17,49 +17,40 @@ class MapUiStateTest {
 
     @Test
     fun `hasModalSheetOpen is true while the routes sheet is open`() {
-        assertTrue(MapUiState(showRoutesSheet = true).hasModalSheetOpen)
+        assertTrue(MapUiState(activeSheet = ActiveSheet.Routes).hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is true while the favorites sheet is open`() {
-        assertTrue(MapUiState(showFavoritesSheet = true).hasModalSheetOpen)
+        assertTrue(MapUiState(activeSheet = ActiveSheet.Favorites()).hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is true while the paste coordinates sheet is open`() {
-        assertTrue(MapUiState(showPasteCoordinatesSheet = true).hasModalSheetOpen)
+        assertTrue(MapUiState(activeSheet = ActiveSheet.Paste(PasteSheetTitle.DEFAULT, "", "")).hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is true while the tap sheet is open with a position`() {
-        assertTrue(MapUiState(isPendingTapSheetOpen = true, pendingTapPosition = position).hasModalSheetOpen)
+        assertTrue(MapUiState(activeSheet = ActiveSheet.PendingTap, pendingTapPosition = position).hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is false when the tap sheet is open without a position`() {
-        assertFalse(MapUiState(isPendingTapSheetOpen = true).hasModalSheetOpen)
+        assertFalse(MapUiState(activeSheet = ActiveSheet.PendingTap).hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is true while the roaming sheet is open and expanded`() {
-        val state = MapUiState(showRoamingSheet = true, roamingDraft = RoamingDefaults())
+        val state = MapUiState(activeSheet = ActiveSheet.Roaming(RoamingDefaults()))
         assertTrue(state.hasModalSheetOpen)
     }
 
     @Test
     fun `hasModalSheetOpen is false when the roaming sheet is minimized`() {
         val state =
-            MapUiState(
-                showRoamingSheet = true,
-                roamingDraft = RoamingDefaults(),
-                isRoamingSheetMinimized = true,
-            )
+            MapUiState(activeSheet = ActiveSheet.Roaming(RoamingDefaults(), minimized = true))
         assertFalse(state.hasModalSheetOpen)
-    }
-
-    @Test
-    fun `hasModalSheetOpen is false when the roaming sheet has no draft`() {
-        assertFalse(MapUiState(showRoamingSheet = true).hasModalSheetOpen)
     }
 
     @Test

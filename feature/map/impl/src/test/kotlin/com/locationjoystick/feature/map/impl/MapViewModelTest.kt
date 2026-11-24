@@ -1149,6 +1149,7 @@ class MapViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             val favorite = FavoriteLocation("1", "Tokyo", LatLng(35.6762, 139.6503), 0L)
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
             viewModel.onAction(MapAction.SelectFavorite(favorite))
 
             assertEquals(favorite, viewModel.uiState.value.favoriteTarget)
@@ -1162,6 +1163,7 @@ class MapViewModelTest {
             viewModel = createViewModel()
             testDispatcher.scheduler.advanceUntilIdle()
 
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
             viewModel.onAction(MapAction.SelectFavorite(FavoriteLocation("1", "X", LatLng(1.0, 2.0), 0L)))
             viewModel.onAction(MapAction.DeselectFavorite)
 
@@ -1538,5 +1540,58 @@ class MapViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
 
             coVerify { favoriteRepository.addFavorite(any(), eq("Paris"), eq(position), any()) }
+        }
+
+    @Test
+    fun `PinCoordinateTarget over the routes sheet closes it`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+
+            viewModel.onAction(MapAction.PinCoordinateTarget(LatLng(1.0, 2.0)))
+
+            assertEquals(ActiveSheet.PendingTap, viewModel.uiState.value.activeSheet)
+            assertEquals(false, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
+    fun `PinCoordinateTarget over the favorites sheet closes it`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
+
+            viewModel.onAction(MapAction.PinCoordinateTarget(LatLng(1.0, 2.0)))
+
+            assertEquals(ActiveSheet.PendingTap, viewModel.uiState.value.activeSheet)
+        }
+
+    @Test
+    fun `SaveFavoriteAt keeps the tap sheet open`() =
+        runTest {
+            coEvery { favoriteRepository.addFavorite(any(), any(), any(), any()) } returns Result.success(Unit)
+            viewModel.onAction(MapAction.PinCoordinateTarget(LatLng(1.0, 2.0)))
+
+            viewModel.onAction(MapAction.SaveFavoriteAt("Paris", LatLng(1.0, 2.0)))
+
+            assertEquals(ActiveSheet.PendingTap, viewModel.uiState.value.activeSheet)
+        }
+
+    @Test
+    fun `a pin replaces a minimized roaming sheet`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.MinimizeRoamingSheet)
+
+            viewModel.onAction(MapAction.PinCoordinateTarget(LatLng(1.0, 2.0)))
+
+            assertEquals(ActiveSheet.PendingTap, viewModel.uiState.value.activeSheet)
+        }
+
+    @Test
+    fun `ClearMap leaves the routes sheet open`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+
+            viewModel.onAction(MapAction.ClearMap)
+
+            assertEquals(ActiveSheet.Routes, viewModel.uiState.value.activeSheet)
         }
 }

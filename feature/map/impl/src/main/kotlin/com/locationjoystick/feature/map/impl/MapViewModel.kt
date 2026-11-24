@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
@@ -70,8 +71,15 @@ class MapViewModel
                     isUserPanning = true,
                     pendingCameraTarget = position,
                     pendingTapPosition = null,
-                    isPendingTapSheetOpen = false,
                 )
+            }
+            sheet(SheetEvent.ClosePendingTap)
+        }
+
+        private fun sheet(event: SheetEvent) {
+            _uiState.update { s ->
+                s.activeSheet.next(event)?.let { s.copy(activeSheet = it) }
+                    ?: s.also { Log.w(TAG, "ignored sheet event $event from ${s.activeSheet}") }
             }
         }
 
@@ -230,31 +238,13 @@ class MapViewModel
             points: List<LatLng>,
             routeName: String,
         ) {
-            _uiState.update {
-                it.copy(
-                    showPasteCoordinatesSheet = true,
-                    pasteSheetTitle = title,
-                    pasteInitialText = formatCapturedPointsForClipboard(points),
-                    pasteInitialRouteName = routeName,
-                    pasteFormNonce = it.pasteFormNonce + 1,
-                )
-            }
+            sheet(SheetEvent.OpenPaste(title, formatCapturedPointsForClipboard(points), routeName))
+            _uiState.update { it.copy(pasteFormNonce = it.pasteFormNonce + 1) }
         }
 
-        private fun hidePasteCoordinatesSheet(resetForm: Boolean = false) {
+        private fun hidePasteCoordinatesSheet() {
             gpxOpenRepository.consume()
-            _uiState.update {
-                if (resetForm) {
-                    it.copy(
-                        showPasteCoordinatesSheet = false,
-                        pasteSheetTitle = PasteSheetTitle.DEFAULT,
-                        pasteInitialText = "",
-                        pasteInitialRouteName = "",
-                    )
-                } else {
-                    it.copy(showPasteCoordinatesSheet = false)
-                }
-            }
+            sheet(SheetEvent.ClosePaste)
         }
 
         fun onAction(action: MapAction) {
@@ -267,28 +257,31 @@ class MapViewModel
                 is MapAction.ConfirmTeleport -> {
                     mapController.teleportTo(action.position)
                     launchAfterLinkIfPinned(action.position)
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false) }
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 is MapAction.ClearPendingTap -> {
-                    _uiState.update { it.copy(isPendingTapSheetOpen = false) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 MapAction.ClearPinnedPoint -> {
                     linkPinnedTarget = null
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false) }
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 is MapAction.StopRouteAndTeleport -> {
                     mapController.stopRouteOnly()
                     mapController.teleportTo(action.position)
                     launchAfterLinkIfPinned(action.position)
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false) }
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 is MapAction.SetLocationTo -> {
                     mapController.teleportTo(action.position)
-                    _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
+                    sheet(SheetEvent.CloseFavorites)
                 }
 
                 // Walk
@@ -306,20 +299,22 @@ class MapViewModel
 
                 is MapAction.WalkStraightTo -> {
                     mapController.walkTo(action.position)
-                    _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
+                    sheet(SheetEvent.CloseFavorites)
                 }
 
                 is MapAction.StopRouteAndWalkTo -> {
                     mapController.stopRouteOnly()
                     mapController.walkTo(action.position)
                     launchAfterLinkIfPinned(action.position)
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false) }
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 is MapAction.FinishRouteAndWalkTo -> {
                     mapController.appendWaypointToRoute(action.position)
                     launchAfterLinkIfPinned(action.position)
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false) }
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                    sheet(SheetEvent.ClosePendingTap)
                 }
 
                 is MapAction.AddEphemeralWaypoint -> {
@@ -348,14 +343,12 @@ class MapViewModel
                     _uiState.update {
                         it.copy(
                             pendingTapPosition = null,
-                            isPendingTapSheetOpen = false,
                             isWalkControlsExpanded = false,
                             roamingPreviewWaypoints = null,
-                            showRoamingSheet = false,
-                            roamingDraft = null,
-                            isRoamingSheetMinimized = false,
                         )
                     }
+                    sheet(SheetEvent.ClosePendingTap)
+                    sheet(SheetEvent.CloseRoaming)
                     hidePasteCoordinatesSheet()
                 }
 
@@ -366,13 +359,15 @@ class MapViewModel
                     when {
                         state != com.locationjoystick.core.model.MockLocationState.IDLE &&
                             state != com.locationjoystick.core.model.MockLocationState.ERROR ->
-                            _uiState.update {
-                                it.copy(
-                                    isUserPanning = false,
-                                    pendingCameraTarget = target,
-                                    pendingTapPosition = null,
-                                    isPendingTapSheetOpen = false,
-                                )
+                            {
+                                _uiState.update {
+                                    it.copy(
+                                        isUserPanning = false,
+                                        pendingCameraTarget = target,
+                                        pendingTapPosition = null,
+                                    )
+                                }
+                                sheet(SheetEvent.ClosePendingTap)
                             }
 
                         // Idle: jump to the marker synchronously. A GPS query here made the button lag and stack.
@@ -390,15 +385,15 @@ class MapViewModel
 
                 // Favorites
                 MapAction.OpenFavoritesPicker -> {
-                    _uiState.update { it.copy(showFavoritesSheet = true) }
+                    sheet(SheetEvent.OpenFavorites)
                 }
 
                 MapAction.CloseFavoritesPicker -> {
-                    _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
+                    sheet(SheetEvent.CloseFavorites)
                 }
 
                 MapAction.DeselectFavorite -> {
-                    _uiState.update { it.copy(favoriteTarget = null) }
+                    sheet(SheetEvent.DeselectFavorite)
                 }
 
                 is MapAction.SelectFavorite -> {
@@ -415,18 +410,18 @@ class MapViewModel
 
                 // Routes
                 MapAction.OpenRoutesSheet -> {
-                    _uiState.update { it.copy(showRoutesSheet = true) }
+                    sheet(SheetEvent.OpenRoutes)
                 }
 
                 MapAction.CloseRoutesSheet -> {
-                    _uiState.update { it.copy(showRoutesSheet = false) }
+                    sheet(SheetEvent.CloseRoutes)
                 }
 
                 is MapAction.StartRouteReplay -> {
                     viewModelScope.launch { settingsRepository.setRouteStartConfig(action.config) }
                     mapController.startRouteReplay(action.routeId, action.config)
                     if (!action.config.followRoadsToStart) {
-                        _uiState.update { it.copy(showRoutesSheet = false) }
+                        sheet(SheetEvent.CloseRoutes)
                     }
                 }
 
@@ -457,25 +452,13 @@ class MapViewModel
 
                 // Roaming
                 MapAction.OpenRoamingSheet -> {
-                    _uiState.update {
-                        it.copy(
-                            showRoamingSheet = true,
-                            roamingDraft = mapController.sharedState.value.roamingDefaults,
-                            roamingPreviewWaypoints = null,
-                            isRoamingSheetMinimized = false,
-                        )
-                    }
+                    sheet(SheetEvent.OpenRoaming(mapController.sharedState.value.roamingDefaults))
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 MapAction.DismissRoamingSheet -> {
-                    _uiState.update {
-                        it.copy(
-                            showRoamingSheet = false,
-                            roamingDraft = null,
-                            roamingPreviewWaypoints = null,
-                            isRoamingSheetMinimized = false,
-                        )
-                    }
+                    sheet(SheetEvent.CloseRoaming)
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 MapAction.GenerateRoamingPreview -> {
@@ -483,96 +466,76 @@ class MapViewModel
                 }
 
                 MapAction.MinimizeRoamingSheet -> {
-                    _uiState.update { it.copy(isRoamingSheetMinimized = true) }
+                    sheet(SheetEvent.MinimizeRoaming)
                 }
 
                 MapAction.ExpandRoamingSheet -> {
-                    _uiState.update { it.copy(isRoamingSheetMinimized = false) }
+                    sheet(SheetEvent.ExpandRoaming)
                 }
 
                 is MapAction.UpdateRoamingRadius -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(radiusMeters = action.meters)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(radiusMeters = action.meters) })
                 }
 
                 is MapAction.UpdateRoamingDistance -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(distanceMeters = action.meters)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(distanceMeters = action.meters) })
                 }
 
                 is MapAction.SelectRoamingSpeedProfile -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(speedProfileId = action.id)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(speedProfileId = action.id) })
                 }
 
                 is MapAction.SelectPlantingSpeedProfile -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingSpeedProfileId = action.id)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingSpeedProfileId = action.id) })
                 }
 
                 is MapAction.ToggleRoamingFollowRoads -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(followRoads = action.enabled)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(followRoads = action.enabled) })
                 }
 
                 is MapAction.ToggleRoamingReturnToStart -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(returnToInitialLocation = action.enabled)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(returnToInitialLocation = action.enabled) })
                 }
 
                 is MapAction.UpdateRoamingKind -> {
-                    _uiState.update { s ->
-                        val sameKind = s.roamingDraft?.kind == action.kind
-                        s.copy(
-                            roamingDraft = s.roamingDraft?.copy(kind = action.kind),
-                            roamingPreviewWaypoints = if (sameKind) s.roamingPreviewWaypoints else null,
-                        )
-                    }
+                    val sameKind = _uiState.value.roamingDraft?.kind == action.kind
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(kind = action.kind) })
+                    if (!sameKind) _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 is MapAction.UpdatePlantingStartRadius -> {
-                    _uiState.update { s ->
-                        s.copy(
-                            roamingDraft = s.roamingDraft?.copy(plantingStartRadiusMeters = action.meters),
-                            roamingPreviewWaypoints = null,
-                        )
-                    }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingStartRadiusMeters = action.meters) })
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 is MapAction.UpdatePlantingEndRadius -> {
-                    _uiState.update { s ->
-                        s.copy(
-                            roamingDraft = s.roamingDraft?.copy(plantingEndRadiusMeters = action.meters),
-                            roamingPreviewWaypoints = null,
-                        )
-                    }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingEndRadiusMeters = action.meters) })
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 is MapAction.TogglePlantingInfiniteLoops -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingInfiniteLoops = action.enabled)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingInfiniteLoops = action.enabled) })
                 }
 
                 is MapAction.TogglePlantingExpandOnly -> {
-                    _uiState.update { s ->
-                        s.copy(
-                            roamingDraft = s.roamingDraft?.copy(plantingExpandOnly = action.enabled),
-                            roamingPreviewWaypoints = null,
-                        )
-                    }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingExpandOnly = action.enabled) })
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 is MapAction.UpdatePlantingLoopCount -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingLoopCount = action.count)) }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingLoopCount = action.count) })
                 }
 
                 is MapAction.UpdatePlantingSpacing -> {
-                    _uiState.update { s ->
-                        s.copy(
-                            roamingDraft = s.roamingDraft?.copy(plantingSpacingMeters = action.meters),
-                            roamingPreviewWaypoints = null,
-                        )
-                    }
+                    sheet(SheetEvent.UpdateRoamingDraft { it.copy(plantingSpacingMeters = action.meters) })
+                    _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                 }
 
                 MapAction.StartRoaming -> {
                     val draft = _uiState.value.roamingDraft ?: return
                     val position = mapController.sharedState.value.currentPosition ?: return
                     mapController.startRoaming(draft, position, _uiState.value.roamingPreviewWaypoints)
-                    _uiState.update { it.copy(showRoamingSheet = false, roamingDraft = null, isRoamingSheetMinimized = false) }
+                    sheet(SheetEvent.CloseRoaming)
                 }
 
                 MapAction.StopRoaming -> {
@@ -594,15 +557,8 @@ class MapViewModel
 
                 MapAction.OpenPasteCoordinates -> {
                     gpxOpenRepository.consume()
-                    _uiState.update {
-                        it.copy(
-                            showPasteCoordinatesSheet = true,
-                            pasteSheetTitle = PasteSheetTitle.DEFAULT,
-                            pasteInitialText = "",
-                            pasteInitialRouteName = "",
-                            pasteFormNonce = it.pasteFormNonce + 1,
-                        )
-                    }
+                    sheet(SheetEvent.OpenPaste(PasteSheetTitle.DEFAULT, "", ""))
+                    _uiState.update { it.copy(pasteFormNonce = it.pasteFormNonce + 1) }
                 }
 
                 MapAction.ToggleDrawLine -> {
@@ -615,7 +571,7 @@ class MapViewModel
                 }
 
                 MapAction.ClosePasteCoordinates -> {
-                    hidePasteCoordinatesSheet(resetForm = true)
+                    hidePasteCoordinatesSheet()
                 }
 
                 MapAction.OpenCaptureCoordinates -> {
@@ -709,11 +665,10 @@ class MapViewModel
                 it.copy(
                     pendingTapPosition = coords,
                     pendingCameraTarget = coords,
-                    isPendingTapSheetOpen = true,
-                    showPasteCoordinatesSheet = false,
                     roamingPreviewWaypoints = null,
                 )
             }
+            sheet(SheetEvent.OpenPendingTap)
         }
 
         private fun launchAfterLinkIfPinned(position: LatLng) {
@@ -725,7 +680,8 @@ class MapViewModel
         private fun handleTapToTeleport(position: LatLng) {
             _uiState.update { it.copy(roamingPreviewWaypoints = null) }
             if (mapController.isSpoofingLocally()) {
-                _uiState.update { it.copy(pendingTapPosition = position, isPendingTapSheetOpen = true) }
+                _uiState.update { it.copy(pendingTapPosition = position) }
+                sheet(SheetEvent.OpenPendingTap)
             } else {
                 mapController.teleportTo(position)
             }
@@ -733,10 +689,12 @@ class MapViewModel
 
         private fun handleSelectFavorite(favorite: FavoriteLocation) {
             if (mapController.isSpoofingLocally()) {
-                _uiState.update { it.copy(favoriteTarget = favorite, pendingCameraTarget = favorite.position) }
+                sheet(SheetEvent.SelectFavorite(favorite))
+                _uiState.update { it.copy(pendingCameraTarget = favorite.position) }
             } else {
                 mapController.teleportTo(favorite.position)
-                _uiState.update { it.copy(showFavoritesSheet = false, pendingCameraTarget = favorite.position) }
+                sheet(SheetEvent.CloseFavorites)
+                _uiState.update { it.copy(pendingCameraTarget = favorite.position) }
             }
         }
 

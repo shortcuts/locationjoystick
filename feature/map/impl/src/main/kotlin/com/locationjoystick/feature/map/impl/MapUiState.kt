@@ -24,30 +24,21 @@ data class MapUiState(
     val movement: MovementState = MovementState.Manual(MockMode.JOYSTICK),
     val routes: List<Route> = emptyList(),
     val isUserPanning: Boolean = false,
-    val showFavoritesSheet: Boolean = false,
+    val activeSheet: ActiveSheet = ActiveSheet.None,
     val favorites: List<FavoriteLocation> = emptyList(),
-    val favoriteTarget: FavoriteLocation? = null,
     val pendingCameraTarget: LatLng? = null,
     val pendingTapPosition: LatLng? = null,
     val routeTrace: List<LatLng>? = null,
     val walkMode: WalkMode = WalkMode.Idle,
     val isWalkControlsExpanded: Boolean = false,
     val isRouteReplay: Boolean = false,
-    val showRoutesSheet: Boolean = false,
     val isRouteControlsExpanded: Boolean = false,
-    val showPasteCoordinatesSheet: Boolean = false,
     val isDrawLineActive: Boolean = false,
-    val pasteSheetTitle: PasteSheetTitle = PasteSheetTitle.DEFAULT,
-    val pasteInitialText: String = "",
-    val pasteInitialRouteName: String = "",
     val pasteFormNonce: Int = 0,
     val showCaptureCoordinatesSheet: Boolean = false,
-    val showRoamingSheet: Boolean = false,
-    val roamingDraft: RoamingDefaults? = null,
     val isRoamingControlsExpanded: Boolean = false,
     val roamingPreviewWaypoints: List<LatLng>? = null,
     val isRoamingPreviewLoading: Boolean = false,
-    val isRoamingSheetMinimized: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val mapFeatureOrder: List<AppFeature> = AppFeature.DEFAULT_MAP_ORDER,
     val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
@@ -55,7 +46,6 @@ data class MapUiState(
     val cooldownEndMs: Long = 0L,
     val favoriteCooldownStates: Map<String, CooldownState> = emptyMap(),
     val homeFavoriteId: String? = null,
-    val isPendingTapSheetOpen: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
     val lastRouteStartConfig: RouteStartConfig? = null,
     val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
@@ -92,11 +82,19 @@ val MapUiState.isRoutePaused: Boolean
 val MapUiState.showJitterRadiusOverlay: Boolean
     get() = debugStatsEnabled && currentPosition != null && jitterRadiusMeters > 0.0
 
+val MapUiState.showFavoritesSheet: Boolean get() = activeSheet is ActiveSheet.Favorites
+val MapUiState.favoriteTarget: FavoriteLocation? get() = (activeSheet as? ActiveSheet.Favorites)?.target
+val MapUiState.showRoutesSheet: Boolean get() = activeSheet is ActiveSheet.Routes
+val MapUiState.showPasteCoordinatesSheet: Boolean get() = activeSheet is ActiveSheet.Paste
+val MapUiState.pasteSheetTitle: PasteSheetTitle
+    get() = (activeSheet as? ActiveSheet.Paste)?.title ?: PasteSheetTitle.DEFAULT
+val MapUiState.pasteInitialText: String get() = (activeSheet as? ActiveSheet.Paste)?.initialText ?: ""
+val MapUiState.pasteInitialRouteName: String get() = (activeSheet as? ActiveSheet.Paste)?.initialRouteName ?: ""
+val MapUiState.isPendingTapSheetOpen: Boolean get() = activeSheet is ActiveSheet.PendingTap
+val MapUiState.showRoamingSheet: Boolean get() = activeSheet is ActiveSheet.Roaming
+val MapUiState.roamingDraft: RoamingDefaults? get() = (activeSheet as? ActiveSheet.Roaming)?.draft
+val MapUiState.isRoamingSheetMinimized: Boolean get() = (activeSheet as? ActiveSheet.Roaming)?.minimized == true
+
 // Mirrors the modal sheets rendered in MapScreen; a minimized roaming sheet is not modal.
 val MapUiState.hasModalSheetOpen: Boolean
-    get() =
-        showRoutesSheet ||
-            showFavoritesSheet ||
-            showPasteCoordinatesSheet ||
-            (isPendingTapSheetOpen && pendingTapPosition != null) ||
-            (showRoamingSheet && !isRoamingSheetMinimized && roamingDraft != null)
+    get() = activeSheet.isModal && (activeSheet !is ActiveSheet.PendingTap || pendingTapPosition != null)
