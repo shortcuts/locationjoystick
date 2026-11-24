@@ -12,7 +12,7 @@ Key files: the widget module's service and panel presenter, and the settings scr
 
 ### Pause and stop
 
-Long-pressing the launcher icon offers Pause and Stop while spoofing is active.
+The widget panel always carries a Pause button (Start while parked) and a Stop button. Neither depends on a setting or a gesture.
 
 - **Pause** parks mock location: spoofing stops, and the joystick and any route, walk or roam stop with it. The widget stays on screen and its controls fade until Start. Start resumes at the last location.
 - **Stop** ends everything and removes the widget.
@@ -104,11 +104,13 @@ An optional button in the widget panel opens an inline numeric field with the cu
 
 The panel's overlay window is non-focusable by design, so it never takes focus from the app underneath. The altitude field is the one exception: while it is open, the window becomes focusable, so the keyboard can appear. It goes back to non-focusable when the field closes.
 
-## Pause and resume button
+## Pause and stop buttons
 
-An optional widget panel button that runs the same park as Pause in the long-press popup, and Start to resume. It is a panel section, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the button must not show there.
+Both are panel sections, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the buttons must not show there.
 
-It is the one control that stays enabled while parked. The others fade, but this one is the way back, so a faded button would strand the user.
+They are the only controls that stay enabled while parked. The others fade. Pause becomes Start, the way back, so a faded button would strand the user. Stop is the only way to remove the widget.
+
+A long-press popup on the round button once offered the same park. It was removed because a hidden gesture and a setting duplicated one path.
 
 ## Debug stats
 

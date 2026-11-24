@@ -551,10 +551,6 @@ class SettingsViewModel
             save { settingsRepository.setAltitudeOverrideButtonEnabled(enabled) }
         }
 
-        fun setPauseResumeButtonEnabled(enabled: Boolean) {
-            save { settingsRepository.setPauseResumeButtonEnabled(enabled) }
-        }
-
         fun setDebugStatsEnabled(enabled: Boolean) {
             save { settingsRepository.setDebugStatsEnabled(enabled) }
         }

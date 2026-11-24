@@ -2,7 +2,7 @@
   "version": "1.1.2",
   "date": "2026-11-23",
   "entries": [
-    { "category": "feat", "scope": "Widget", "summary": "New switch, Show pause button, under Settings > Menus. It adds a widget button that pauses your fake location and resumes it at the same place. It is off by default and does not show on the floating map." },
+    { "category": "feat", "scope": "Widget", "summary": "The widget panel now has Pause and Stop buttons. They replace the press-and-hold menu on the round button. Pause keeps your fake location until you resume it at the same place. Neither shows on the floating map." },
     { "category": "fix", "scope": "Routes", "summary": "Large GPX routes now import. A GPS Joystick export with thousands of points no longer gets skipped." }
   ]
 }

@@ -9,8 +9,6 @@
     <string name="map_floating_view_unlock_map_rotation">"Unlock map rotation"</string>
     <string name="map_floating_view_lock_north_at_top">"Lock north at top"</string>
     <string name="map_floating_view_paste_coordinates">"Paste coordinates"</string>
-    <string name="widget_panel_content_pause_spoofing">"Pause spoofing"</string>
-    <string name="widget_panel_content_start_spoofing">"Start spoofing"</string>
     <string name="widget_panel_content_stop_spoofing">"Stop spoofing"</string>
     <string name="widget_panel_content_stop_roaming">"Stop roaming"</string>
     <string name="widget_panel_content_open_capture">"Open capture"</string>

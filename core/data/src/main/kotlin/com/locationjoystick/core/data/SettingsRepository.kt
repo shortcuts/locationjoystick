@@ -418,10 +418,6 @@ class SettingsRepository
 
         suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = dataSource.setAltitudeOverrideButtonEnabled(enabled)
 
-        fun getPauseResumeButtonEnabled(): Flow<Boolean> = dataSource.getPauseResumeButtonEnabled()
-
-        suspend fun setPauseResumeButtonEnabled(enabled: Boolean) = dataSource.setPauseResumeButtonEnabled(enabled)
-
         fun getDebugStatsEnabled(): Flow<Boolean> = dataSource.getDebugStatsEnabled()
 
         suspend fun setDebugStatsEnabled(enabled: Boolean) = dataSource.setDebugStatsEnabled(enabled)

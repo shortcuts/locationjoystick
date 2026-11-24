@@ -158,8 +158,6 @@ class FloatingWidgetService :
     private val barRouteProgress by lazy { mapController.sharedState.map { it.routeProgress }.distinctUntilChanged() }
     private val profilesFlow = MutableStateFlow<List<com.locationjoystick.core.model.SpeedProfile>>(emptyList())
 
-    private val stopPopupVisibleFlow = MutableStateFlow(false)
-
     // One expand/collapse StateFlow per panel section (route, roaming, paste/capture,
     // altitude override), keyed by PanelExpandKey.
     private val panelExpand = PanelExpandFlows()
@@ -349,7 +347,6 @@ class FloatingWidgetService :
             val mockLocationState by barMockLocationState.collectAsStateWithLifecycle(initialValue = MockLocationState.IDLE)
             val routeExpanded by panelExpand.flow(PanelExpandKey.ROUTE).collectAsStateWithLifecycle()
             val roamingExpanded by panelExpand.flow(PanelExpandKey.ROAMING).collectAsStateWithLifecycle()
-            val stopPopupVisible by stopPopupVisibleFlow.collectAsStateWithLifecycle()
             val pasteCaptureExpanded by panelExpand.flow(PanelExpandKey.PASTE_CAPTURE).collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
@@ -361,8 +358,6 @@ class FloatingWidgetService :
             )
             val isAltitudeOverrideButtonVisible by
                 settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
-            val isPauseResumeButtonVisible by
-                settingsRepository.getPauseResumeButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isAltitudeExpanded by panelExpand.flow(PanelExpandKey.ALTITUDE).collectAsStateWithLifecycle()
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
@@ -401,24 +396,9 @@ class FloatingWidgetService :
                 val masterToggle =
                     MasterToggleState(
                         spoofingActive = mockLocationState != MockLocationState.IDLE,
-                        stopPopupVisible = stopPopupVisible,
                         onToggle = {
-                            stopPopupVisibleFlow.value = false
                             if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
                             isPanelExpandedFlow.value = !isPanelExpandedFlow.value
-                        },
-                        onLongPress = { stopPopupVisibleFlow.value = !stopPopupVisibleFlow.value },
-                        onPark = { parkSpoofingKeepWidget() },
-                        onStart = {
-                            stopPopupVisibleFlow.value = false
-                            mapController.startSpoofing()
-                        },
-                        onStop = {
-                            stopPopupVisibleFlow.value = false
-                            mapController.stopSpoofing()
-                            // Close immediately. After Pause the mock service is already IDLE, so
-                            // its overlay collector will not run again; Stop still must dismiss us.
-                            stopSelf()
                         },
                     )
 
@@ -450,14 +430,24 @@ class FloatingWidgetService :
                                 ),
                             )
                         }
-                        if (isPauseResumeButtonVisible) {
-                            add(
-                                WidgetPanelSection.PauseResume(
-                                    parked = !masterToggle.spoofingActive,
-                                    onClick = { if (masterToggle.spoofingActive) masterToggle.onPark() else masterToggle.onStart() },
-                                ),
-                            )
-                        }
+                        add(
+                            WidgetPanelSection.PauseResume(
+                                parked = !masterToggle.spoofingActive,
+                                onClick = {
+                                    if (masterToggle.spoofingActive) parkSpoofingKeepWidget() else mapController.startSpoofing()
+                                },
+                            ),
+                        )
+                        add(
+                            WidgetPanelSection.Stop(
+                                onClick = {
+                                    mapController.stopSpoofing()
+                                    // Close immediately. After Pause the mock service is already IDLE, so
+                                    // its overlay collector will not run again; Stop still must dismiss us.
+                                    stopSelf()
+                                },
+                            ),
+                        )
                     }
 
                 WidgetPanel(

@@ -279,12 +279,6 @@ interface PreferencesDataSource :
     /** Sets whether the floating widget's altitude override button is shown. */
     suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean)
 
-    /** Gets whether the floating widget's pause/resume button is shown. */
-    fun getPauseResumeButtonEnabled(): Flow<Boolean>
-
-    /** Sets whether the floating widget's pause/resume button is shown. */
-    suspend fun setPauseResumeButtonEnabled(enabled: Boolean)
-
     /** Gets whether the widget panel shows live debug stats (speed, altitude, coords, tick rate). */
     fun getDebugStatsEnabled(): Flow<Boolean>
 
@@ -726,10 +720,6 @@ class AppPreferencesDataSource
         override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = pref(Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED, false)
 
         override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = setPref(Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED, enabled)
-
-        override fun getPauseResumeButtonEnabled(): Flow<Boolean> = pref(Keys.PAUSE_RESUME_BUTTON_ENABLED, false)
-
-        override suspend fun setPauseResumeButtonEnabled(enabled: Boolean) = setPref(Keys.PAUSE_RESUME_BUTTON_ENABLED, enabled)
 
         override fun getDebugStatsEnabled(): Flow<Boolean> = pref(Keys.DEBUG_STATS_ENABLED, false)
 

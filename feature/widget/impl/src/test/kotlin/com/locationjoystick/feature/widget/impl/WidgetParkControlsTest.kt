@@ -6,16 +6,6 @@ import org.junit.Test
 
 class WidgetParkControlsTest {
     @Test
-    fun `spoofing long-press shows Pause and Stop`() {
-        assertEquals(WidgetMasterPopupMode.PAUSE_AND_STOP, widgetMasterPopupMode(spoofingActive = true))
-    }
-
-    @Test
-    fun `parked long-press shows Start and Stop`() {
-        assertEquals(WidgetMasterPopupMode.START_AND_STOP, widgetMasterPopupMode(spoofingActive = false))
-    }
-
-    @Test
     fun `route icon is active for route replay and walk-to only`() {
         assertEquals(true, routeControlsActive(MockMode.ROUTE_REPLAY))
         assertEquals(true, routeControlsActive(MockMode.WALK_TO))

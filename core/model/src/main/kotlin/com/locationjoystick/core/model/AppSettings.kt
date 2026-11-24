@@ -30,7 +30,6 @@ data class AppSettings(
     val altitudeJitterRadiusMeters: Double = 1.5,
     val plantingRadiusMeters: Double = 35.0,
     val altitudeOverrideButtonEnabled: Boolean = false,
-    val pauseResumeButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
     val rememberLastLocation: Boolean = true,
     val floatingMapQuickWalk: Boolean = false,

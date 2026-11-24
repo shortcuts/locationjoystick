@@ -64,9 +64,6 @@ import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.isActive
 import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.feature.widget.impl.R
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /** Tint for disabled controls and ignored roam starts, still readable on the black circle. */
 private val WidgetIgnoredTint = Color.White.copy(alpha = 0.42f)
@@ -165,12 +162,7 @@ private val RoamingControlsState.isPaused: Boolean get() = movement.isPaused
 
 internal data class MasterToggleState(
     val spoofingActive: Boolean,
-    val stopPopupVisible: Boolean,
     val onToggle: () -> Unit,
-    val onLongPress: () -> Unit,
-    val onPark: () -> Unit,
-    val onStart: () -> Unit,
-    val onStop: () -> Unit,
 )
 
 internal data class PasteCaptureState(
@@ -194,6 +186,10 @@ internal sealed interface WidgetPanelSection {
 
     data class PauseResume(
         val parked: Boolean,
+        val onClick: () -> Unit,
+    ) : WidgetPanelSection
+
+    data class Stop(
         val onClick: () -> Unit,
     ) : WidgetPanelSection
 }
@@ -229,47 +225,24 @@ internal fun WidgetPanel(
                     .width(WidgetColumnWidth)
                     .height(WidgetButtonSlotHeight)
                     .pointerInput(Unit) {
-                        coroutineScope {
-                            val jobScope = this
-                            awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false)
-                                var isDragging = false
-                                var longPressFired = false
-                                var accumulatedDistance = 0f
-                                val longPressJob =
-                                    jobScope.launch {
-                                        delay(viewConfiguration.longPressTimeoutMillis)
-                                        if (!isDragging) {
-                                            longPressFired = true
-                                            masterToggle.onLongPress()
-                                        }
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            var isDragging = false
+                            var accumulatedDistance = 0f
+                            do {
+                                val event = awaitPointerEvent()
+                                val drag = event.changes.firstOrNull() ?: break
+                                val delta = drag.position - drag.previousPosition
+                                if (delta != Offset.Zero) {
+                                    if (!isDragging) {
+                                        accumulatedDistance += delta.getDistance()
+                                        if (accumulatedDistance > viewConfiguration.touchSlop) isDragging = true
                                     }
-                                try {
-                                    do {
-                                        val event = awaitPointerEvent()
-                                        val drag = event.changes.firstOrNull() ?: break
-                                        val delta = drag.position - drag.previousPosition
-                                        if (delta != Offset.Zero) {
-                                            if (!isDragging) {
-                                                accumulatedDistance += delta.getDistance()
-                                                if (accumulatedDistance > viewConfiguration.touchSlop) {
-                                                    isDragging = true
-                                                    longPressJob.cancel()
-                                                }
-                                            }
-                                            if (isDragging) {
-                                                onDrag(delta.x, delta.y)
-                                            }
-                                            drag.consume()
-                                        }
-                                    } while (event.changes.any { it.pressed })
-                                } finally {
-                                    longPressJob.cancel()
+                                    if (isDragging) onDrag(delta.x, delta.y)
+                                    drag.consume()
                                 }
-                                if (!isDragging && !longPressFired) {
-                                    masterToggle.onToggle()
-                                }
-                            }
+                            } while (event.changes.any { it.pressed })
+                            if (!isDragging) masterToggle.onToggle()
                         }
                     },
         ) {
@@ -288,36 +261,6 @@ internal fun WidgetPanel(
                         ),
                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                 )
-            }
-            WidgetSidePopup(visible = masterToggle.stopPopupVisible) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    when (widgetMasterPopupMode(masterToggle.spoofingActive)) {
-                        WidgetMasterPopupMode.PAUSE_AND_STOP -> {
-                            WidgetIconButton(
-                                icon = LjIcons.Pause,
-                                contentDescription = stringResource(R.string.widget_panel_content_pause_spoofing),
-                                tint = WidgetInactiveTint,
-                                onClick = masterToggle.onPark,
-                            )
-                        }
-
-                        WidgetMasterPopupMode.START_AND_STOP -> {
-                            WidgetIconButton(
-                                icon = LjIcons.PlayArrow,
-                                contentDescription = stringResource(R.string.widget_panel_content_start_spoofing),
-                                tint = LjSuccess,
-                                onClick = masterToggle.onStart,
-                            )
-                        }
-                    }
-                    WidgetIconButton(
-                        icon = LjIcons.Stop,
-                        contentDescription = stringResource(R.string.widget_panel_content_stop_spoofing),
-                        tint = MaterialTheme.colorScheme.error,
-                        enabled = true,
-                        onClick = masterToggle.onStop,
-                    )
-                }
             }
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -536,6 +479,15 @@ internal fun WidgetPanel(
                                     },
                                 ),
                             tint = if (section.parked) LjSuccess else WidgetInactiveTint,
+                            onClick = section.onClick,
+                        )
+                    }
+
+                    is WidgetPanelSection.Stop -> {
+                        WidgetIconButton(
+                            icon = LjIcons.Stop,
+                            contentDescription = stringResource(R.string.widget_panel_content_stop_spoofing),
+                            tint = MaterialTheme.colorScheme.error,
                             onClick = section.onClick,
                         )
                     }

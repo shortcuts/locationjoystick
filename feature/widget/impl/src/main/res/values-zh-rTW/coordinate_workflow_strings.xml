@@ -9,8 +9,6 @@
     <string name="map_floating_view_unlock_map_rotation">"解鎖地圖旋轉"</string>
     <string name="map_floating_view_lock_north_at_top">"鎖定正北朝上"</string>
     <string name="map_floating_view_paste_coordinates">"貼上座標"</string>
-    <string name="widget_panel_content_pause_spoofing">"暫停模擬"</string>
-    <string name="widget_panel_content_start_spoofing">"開始模擬"</string>
     <string name="widget_panel_content_stop_spoofing">"停止模擬"</string>
     <string name="widget_panel_content_stop_roaming">"停止漫遊"</string>
     <string name="widget_panel_content_open_capture">"開啟擷取"</string>
