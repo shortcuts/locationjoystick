@@ -23,7 +23,7 @@ enum class AppFeature(
     ROAMING(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
     SEARCH(setOf(FeatureSurface.MAP)),
     PASTE_COORDINATES(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
-    CAPTURE_COORDINATES(setOf(FeatureSurface.MAP)),
+    CAPTURE_COORDINATES(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
     DRAW_LINE(setOf(FeatureSurface.MAP)),
     SPEED_CYCLE(setOf(FeatureSurface.WIDGET)),
     ;

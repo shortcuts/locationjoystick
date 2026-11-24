@@ -60,7 +60,7 @@ import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
 
 /** Keys for the panel's independent expand/collapse StateFlows, held by [PanelExpandFlows]. */
-private enum class PanelExpandKey { ROUTE, ROAMING, PASTE_CAPTURE, ALTITUDE }
+private enum class PanelExpandKey { ROUTE, ROAMING, ALTITUDE }
 
 /**
  * Holds one collapsed/expanded [MutableStateFlow] per [PanelExpandKey], replacing five
@@ -347,7 +347,6 @@ class FloatingWidgetService :
             val mockLocationState by barMockLocationState.collectAsStateWithLifecycle(initialValue = MockLocationState.IDLE)
             val routeExpanded by panelExpand.flow(PanelExpandKey.ROUTE).collectAsStateWithLifecycle()
             val roamingExpanded by panelExpand.flow(PanelExpandKey.ROAMING).collectAsStateWithLifecycle()
-            val pasteCaptureExpanded by panelExpand.flow(PanelExpandKey.PASTE_CAPTURE).collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by tapToWalk.visible.collectAsStateWithLifecycle(initialValue = false)
@@ -400,13 +399,6 @@ class FloatingWidgetService :
                             if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
                             isPanelExpandedFlow.value = !isPanelExpandedFlow.value
                         },
-                    )
-
-                val pasteCapture =
-                    PasteCaptureState(
-                        expanded = pasteCaptureExpanded,
-                        onLongPress = { panelExpand.toggle(PanelExpandKey.PASTE_CAPTURE) },
-                        onCaptureShortcut = { openCaptureScreen() },
                     )
 
                 val sections =
@@ -463,7 +455,6 @@ class FloatingWidgetService :
                     hasPendingCompletion = hasPendingCompletion,
                     masterToggle = masterToggle,
                     onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
-                    pasteCapture = pasteCapture,
                     sections = sections,
                     debugStats = if (debugStatsEnabled) debugStats else null,
                     reconnectStatus = reconnectStatus,
@@ -497,7 +488,6 @@ class FloatingWidgetService :
 
     private fun onFeatureButtonClicked(feature: AppFeature) {
         if (!isSpoofingActive()) return
-        panelExpand.collapse(PanelExpandKey.PASTE_CAPTURE)
         when (feature) {
             AppFeature.JOYSTICK_TOGGLE -> {
                 toggleJoystick()
@@ -531,12 +521,15 @@ class FloatingWidgetService :
                 onRoamingIconClicked()
             }
 
-            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE -> {}
+            AppFeature.CAPTURE_COORDINATES -> {
+                openCaptureScreen()
+            }
+
+            AppFeature.SEARCH, AppFeature.DRAW_LINE -> {}
         }
     }
 
     private fun openCaptureScreen() {
-        panelExpand.collapse(PanelExpandKey.PASTE_CAPTURE)
         isPanelExpandedFlow.value = false
         panelPresenter.hidePanelView()
         try {

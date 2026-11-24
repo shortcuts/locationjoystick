@@ -11,7 +11,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -82,7 +82,6 @@ private fun WidgetIconButton(
     tint: Color,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    onLongClick: (() -> Unit)? = null,
     stateDescription: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -102,12 +101,11 @@ private fun WidgetIconButton(
                 Modifier
                     .size(WidgetTouchTargetSize)
                     .semantics { stateDescription?.let { this.stateDescription = it } }
-                    .combinedClickable(
+                    .clickable(
                         enabled = enabled,
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
                         onClick = onClick,
-                        onLongClick = onLongClick,
                     ),
         ) {
             Box(
@@ -165,12 +163,6 @@ internal data class MasterToggleState(
     val onToggle: () -> Unit,
 )
 
-internal data class PasteCaptureState(
-    val expanded: Boolean,
-    val onLongPress: () -> Unit,
-    val onCaptureShortcut: () -> Unit,
-)
-
 internal sealed interface WidgetPanelSection {
     data class TapToWalk(
         val active: Boolean,
@@ -208,7 +200,6 @@ internal fun WidgetPanel(
     hasPendingCompletion: Boolean,
     masterToggle: MasterToggleState,
     onFeatureClicked: (AppFeature) -> Unit,
-    pasteCapture: PasteCaptureState,
     sections: List<WidgetPanelSection>,
     debugStats: DebugStats? = null,
     reconnectStatus: ReconnectStatus? = null,
@@ -401,35 +392,21 @@ internal fun WidgetPanel(
                     val icon = featureIcon(feature, joystickLocked, activeProfileId)
                     val isJoystickIcon = feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK
                     val iconTint = if (isJoystickIcon && joystickMoving) LjSuccess else WidgetInactiveTint
-                    Box {
-                        WidgetIconButton(
-                            icon = icon,
-                            contentDescription =
-                                if (joystickInputIgnored &&
-                                    (feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK)
-                                ) {
-                                    "${feature.toContentDescription()} — won't move while a route or roam is playing"
-                                } else {
-                                    feature.toContentDescription()
-                                },
-                            tint = iconTint,
-                            enabled = controlsEnabled,
-                            // While spoofing, joystick show/lock still launch the overlay; movement no-ops.
-                            onClick = { onFeatureClicked(feature) },
-                            onLongClick = if (feature == AppFeature.PASTE_COORDINATES) pasteCapture.onLongPress else null,
-                        )
-                        if (feature == AppFeature.PASTE_COORDINATES) {
-                            WidgetSidePopup(visible = pasteCapture.expanded) {
-                                WidgetIconButton(
-                                    icon = LjIcons.AddLocationAlt,
-                                    contentDescription = stringResource(R.string.widget_panel_content_open_capture),
-                                    tint = WidgetInactiveTint,
-                                    enabled = controlsEnabled,
-                                    onClick = pasteCapture.onCaptureShortcut,
-                                )
-                            }
-                        }
-                    }
+                    WidgetIconButton(
+                        icon = icon,
+                        contentDescription =
+                            if (joystickInputIgnored &&
+                                (feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK)
+                            ) {
+                                "${feature.toContentDescription()} — won't move while a route or roam is playing"
+                            } else {
+                                feature.toContentDescription()
+                            },
+                        tint = iconTint,
+                        enabled = controlsEnabled,
+                        // While spoofing, joystick show/lock still launch the overlay; movement no-ops.
+                        onClick = { onFeatureClicked(feature) },
+                    )
                 }
             }
             sections.forEach { section ->
@@ -554,7 +531,8 @@ private fun featureIcon(
         AppFeature.MAP_FLOATING -> LjIcons.Map
         AppFeature.PASTE_COORDINATES -> LjIcons.ContentPaste
         AppFeature.ROAMING -> LjIcons.Explore
-        AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE -> {
+        AppFeature.CAPTURE_COORDINATES -> LjIcons.AddLocationAlt
+        AppFeature.SEARCH, AppFeature.DRAW_LINE -> {
             error("$feature is map-only and never appears in the widget panel")
         }
     }
@@ -569,7 +547,8 @@ private fun AppFeature.toContentDescription(): String =
         AppFeature.SPEED_CYCLE -> stringResource(R.string.widget_feature_speed_cycle_cd)
         AppFeature.MAP_FLOATING -> stringResource(R.string.widget_feature_open_map_cd)
         AppFeature.PASTE_COORDINATES -> stringResource(R.string.widget_paste_coordinates)
-        AppFeature.ROAMING, AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES, AppFeature.DRAW_LINE ->
+        AppFeature.CAPTURE_COORDINATES -> stringResource(R.string.widget_panel_content_open_capture)
+        AppFeature.ROAMING, AppFeature.SEARCH, AppFeature.DRAW_LINE ->
             error(
                 "$this is map-only and never appears in the widget panel",
             )

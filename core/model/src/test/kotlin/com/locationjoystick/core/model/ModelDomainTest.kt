@@ -39,7 +39,7 @@ class ModelDomainTest {
     fun `AppFeature surfaces and default enabled sets are correct`() {
         assertEquals(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP), AppFeature.PASTE_COORDINATES.surfaces)
         assertEquals(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP), AppFeature.ROAMING.surfaces)
-        assertEquals(setOf(FeatureSurface.MAP), AppFeature.CAPTURE_COORDINATES.surfaces)
+        assertEquals(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP), AppFeature.CAPTURE_COORDINATES.surfaces)
         assertFalse(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.PASTE_COORDINATES))
         assertTrue(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.CAPTURE_COORDINATES))
         assertFalse(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.PASTE_COORDINATES))

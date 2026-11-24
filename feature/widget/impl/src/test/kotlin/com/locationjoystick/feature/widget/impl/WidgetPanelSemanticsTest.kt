@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -30,10 +31,12 @@ class WidgetPanelSemanticsTest {
         hasPendingCompletion: Boolean = false,
         spoofingActive: Boolean = true,
         sections: List<WidgetPanelSection> = emptyList(),
+        features: List<AppFeature> = listOf(AppFeature.ROUTES),
+        onFeatureClicked: (AppFeature) -> Unit = {},
     ) {
         composeRule.setContent {
             WidgetPanel(
-                features = listOf(AppFeature.ROUTES),
+                features = features,
                 joystickLocked = false,
                 joystickMoving = false,
                 activeProfileId = "",
@@ -53,8 +56,7 @@ class WidgetPanelSemanticsTest {
                 isPanelExpanded = true,
                 hasPendingCompletion = hasPendingCompletion,
                 masterToggle = MasterToggleState(spoofingActive, {}),
-                onFeatureClicked = {},
-                pasteCapture = PasteCaptureState(false, {}, {}),
+                onFeatureClicked = onFeatureClicked,
                 sections = sections,
                 onDrag = { _, _ -> },
             )
@@ -94,5 +96,21 @@ class WidgetPanelSemanticsTest {
         composeRule.onNodeWithContentDescription("Resume spoofing").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Stop spoofing").assertIsEnabled().performClick()
         assertEquals(1, stops)
+    }
+
+    @Test
+    fun `capture button opens capture`() {
+        val clicked = mutableListOf<AppFeature>()
+        setPanel(features = listOf(AppFeature.CAPTURE_COORDINATES), onFeatureClicked = { clicked += it })
+        composeRule.onNodeWithContentDescription("Open capture").assertIsDisplayed().performClick()
+        assertEquals(listOf(AppFeature.CAPTURE_COORDINATES), clicked)
+    }
+
+    @Test
+    fun `paste button has no long click`() {
+        setPanel(features = listOf(AppFeature.PASTE_COORDINATES))
+        composeRule
+            .onNodeWithContentDescription("Paste coordinates")
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
     }
 }

@@ -47,7 +47,7 @@ The paste sheet is a bottom sheet, not a full-screen dimmer, so taps above it re
 
 - It can shrink to a bar, so the user can switch apps and copy. Shrinking makes the window non-focusable so the other app can take focus. The form stays alive while shrunk, so typed text is kept.
 - Clipboard paste appends a line, as on the other paste surfaces.
-- A long-press on the paste button offers a shortcut to the Capture screen. A short tap still opens paste.
+- Capture is its own opt-in widget button that opens the Capture screen. A long-press on the paste button once did this; nobody could discover it.
 
 Teleporting from the paste sheet is a plain position jump and does not call the routing service. Walking via roads does, and can fall back to a straight walk when routing is unavailable. A teleport during spoofing aborts any road-following start that is still pending, so a late result cannot undo the jump.
 
