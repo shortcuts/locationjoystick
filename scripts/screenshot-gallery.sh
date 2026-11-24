@@ -77,7 +77,7 @@ MARKETING_ONLY=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output)          OUTPUT_DIR="$2"; shift 2 ;;
-    --device)          ADB_DEVICE="-s $2"; shift 2 ;;
+    --device)          ADB_DEVICE="-s $2"; export ANDROID_SERIAL="$2"; shift 2 ;;
     --auto)            AUTO=true; shift ;;
     --steps)           STEPS_FILTER="$2"; shift 2 ;;
     --marketing-only)  MARKETING_ONLY=true; shift ;;
@@ -827,6 +827,8 @@ go_idle() {
     fi
     rm -f "$dump"
   fi
+  # The What's new chip would show in every capture; closing it acknowledges the version for good.
+  tap_text_exact "Dismiss" >/dev/null &&wait_s 1 "Chip closing" || true
 }
 
 # Grant the Tap to Walk accessibility service over adb (test device only).
@@ -914,6 +916,11 @@ if ! $ADB devices | grep -q "device$"; then
   echo "Error: no device found. Connect a device or pass --device <serial>."
   exit 1
 fi
+if [[ -z "$ADB_DEVICE" && -z "${ANDROID_SERIAL:-}" && $($ADB devices | grep -c "device$") -gt 1 ]]; then
+  echo "Error: several devices attached. Pick one with --device <serial>:"
+  $ADB devices | grep "device$"
+  exit 1
+fi
 
 DEVICE_MODEL=$($ADB shell getprop ro.product.model | tr -d '\r')
 SCREEN_SIZE=$($ADB shell wm size | awk '{print $NF}')
@@ -934,11 +941,8 @@ trap demo_mode_exit EXIT
 # Ensure app is installed
 log "Checking app installation..."
 if ! $ADB shell pm list packages 2>/dev/null | grep -q "$PACKAGE"; then
-  echo ""
-  echo "Error: $PACKAGE not installed."
-  echo "Run 'make install-on-phone' to build and install the debug APK,"
-  echo "then re-run this script."
-  exit 1
+  log "$PACKAGE not installed — installing the debug APK..."
+  ./gradlew :app:installGithubDebug
 fi
 
 # Screen height for Y-threshold disambiguation of IdleScreen card taps.

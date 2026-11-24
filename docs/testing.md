@@ -52,7 +52,7 @@ Helpers are in the smoke test helper file.
 
 ## Driving the app on a device (agents)
 
-Use any attached `adb devices` entry. Never ask the user for device state: every step below runs over adb. `scripts/screenshot-gallery.sh` and the smoke `BaseSmokeTest.setup` encode the same flow; the code wins if this section disagrees.
+Use any attached `adb devices` entry. Never ask the user for device state: every step below runs over adb. With several devices attached, pass `--device <serial>` to the screenshot script, or export `ANDROID_SERIAL` for `adb` and Gradle; without one the script stops and lists the devices. `scripts/screenshot-gallery.sh` and the smoke `BaseSmokeTest.setup` encode the same flow; the code wins if this section disagrees.
 
 1. **Unlock.** `adb shell input keyevent KEYCODE_WAKEUP`, then a full-height swipe up, for example `adb shell input swipe 540 1900 540 400 300` on a 1080x2340 screen. Check `adb shell dumpsys window | grep isKeyguardShowing` reads `false`. `wm dismiss-keyguard` and short swipes fail on a PIN-less lock screen.
 2. **Run a smoke test.** `make smoke-test-one TEST_FILE=app/src/androidTest/kotlin/com/locationjoystick/app/smoke/<Name>.kt`. No other device state is needed. `HiltTestRunner` clears the app's DataStore in-process (the shell user cannot delete app-private files, so a stale flag skips onboarding and every test times out) and grants location, overlay, mock location and notifications over adb, then `BaseSmokeTest.setup` taps through onboarding once per run. An unlocked, awake screen is the only precondition. In a git worktree, copy `local.properties` from the main checkout first, or Gradle reports "SDK location not found".
