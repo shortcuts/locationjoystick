@@ -454,19 +454,7 @@ internal fun MapFloatingView(
                     .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .floatingMapResizeGesture(
-                            resizable = compact,
-                            onTap = onToggleExpanded,
-                            onResizeStart = onResizeStart,
-                            onResize = onResize,
-                            onResizeEnd = onResizeEnd,
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
+            IconButton(onClick = onToggleExpanded) {
                 Icon(
                     if (compact) LjIcons.Fullscreen else LjIcons.FullscreenExit,
                     contentDescription =
@@ -482,12 +470,9 @@ internal fun MapFloatingView(
                         Modifier
                             .size(48.dp)
                             .floatingMapResizeGesture(
-                                resizable = true,
-                                onTap = {},
                                 onResizeStart = onResizeStart,
                                 onResize = onResize,
                                 onResizeEnd = onResizeEnd,
-                                immediate = true,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {

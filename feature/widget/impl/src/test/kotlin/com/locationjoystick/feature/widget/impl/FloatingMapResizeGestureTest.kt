@@ -24,31 +24,25 @@ class FloatingMapResizeGestureTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setHandle(
-        immediate: Boolean,
-        events: MutableList<String>,
-    ) {
+    private fun setHandle(events: MutableList<String>) {
         composeRule.setContent {
             Box(
                 Modifier
                     .size(100.dp)
                     .testTag("handle")
                     .floatingMapResizeGesture(
-                        resizable = true,
-                        onTap = { events += "tap" },
                         onResizeStart = { _, _ -> events += "start" },
                         onResize = { _, _ -> events += "resize" },
                         onResizeEnd = { events += "end" },
-                        immediate = immediate,
                     ),
             )
         }
     }
 
     @Test
-    fun `immediate handle resizes on drag without a long press`() {
+    fun `drag resizes without a long press`() {
         val events = mutableListOf<String>()
-        setHandle(immediate = true, events = events)
+        setHandle(events)
         composeRule.onNodeWithTag("handle").performTouchInput {
             down(center)
             moveBy(
@@ -58,20 +52,5 @@ class FloatingMapResizeGestureTest {
             up()
         }
         assertEquals(listOf("start", "resize", "end"), events)
-    }
-
-    @Test
-    fun `default gesture does not resize on a quick drag`() {
-        val events = mutableListOf<String>()
-        setHandle(immediate = false, events = events)
-        composeRule.onNodeWithTag("handle").performTouchInput {
-            down(center)
-            moveBy(
-                androidx.compose.ui.geometry
-                    .Offset(-40f, 40f),
-            )
-            up()
-        }
-        assertEquals(emptyList<String>(), events)
     }
 }
