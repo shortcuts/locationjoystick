@@ -23,11 +23,11 @@ internal fun rewriteApk(
     val manifest = apk.androidManifest
 
     // Only provider authorities and permission names derive from the package; other names are dex classes.
-    manifest.applicationElement.listElements("provider").forEach { provider ->
+    manifest.applicationElement.getElements("provider").forEach { provider ->
         rename(provider as ResXmlElement, "authorities") { renameAuthorities(it, oldPkg, record.packageId) }
     }
     listOf("permission", "uses-permission", "uses-permission-sdk-23").forEach { tag ->
-        manifest.manifestElement.listElements(tag).forEach { permission ->
+        manifest.manifestElement.getElements(tag).forEach { permission ->
             rename(permission as ResXmlElement, "name") { renameWithPackage(it, oldPkg, record.packageId) ?: it }
         }
     }
@@ -54,7 +54,7 @@ private const val ORIGINAL_LINK_HOST = "locationjoystick.shrtcts.fr"
 // The host's asset-links file lists the original's signature, so verified links cannot work in a clone.
 internal fun dropOriginalLinkFilters(manifest: AndroidManifestBlock) =
     dropIntentFilters(manifest, "activity", filter = { filter ->
-        filter.listElements("data").any { data ->
+        filter.getElements("data").asSequence().any { data ->
             val element = data as ResXmlElement
             element.searchAttributeByName("scheme")?.valueAsString == ORIGINAL_SCHEME ||
                 element.searchAttributeByName("host")?.valueAsString == ORIGINAL_LINK_HOST
@@ -73,7 +73,7 @@ private fun dropIntentFilters(
     component: (ResXmlElement) -> Boolean = { true },
     filter: (ResXmlElement) -> Boolean = { true },
 ) {
-    manifest.applicationElement.listElements(tag).forEach { c ->
+    manifest.applicationElement.getElements(tag).forEach { c ->
         val element = c as ResXmlElement
         if (component(element)) {
             element.removeElementsIf { it is ResXmlElement && it.name == "intent-filter" && filter(it) }

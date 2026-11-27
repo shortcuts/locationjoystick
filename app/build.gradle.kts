@@ -30,18 +30,19 @@ android {
         }
     }
     // The API smoke test diffs the live routes against the public reference, so ship that page (only) to the test APK.
-    sourceSets.getByName("androidTest").assets.srcDir(
+    sourceSets.getByName("androidTest").assets.directories.add(
         layout.buildDirectory
             .get()
             .dir("generated/docsAssets")
-            .asFile,
+            .asFile.path,
     )
 }
 
-val copyApiDocs by tasks.registering(Copy::class) {
-    from(rootProject.file("docs/wiki/control-api.html"))
-    into(layout.buildDirectory.dir("generated/docsAssets"))
-}
+val copyApiDocs =
+    tasks.register<Copy>("copyApiDocs") {
+        from(rootProject.file("docs/wiki/control-api.html"))
+        into(layout.buildDirectory.dir("generated/docsAssets"))
+    }
 tasks.matching { it.name.endsWith("AndroidTestAssets") }.configureEach { dependsOn(copyApiDocs) }
 
 // AGP names these per flavor; the unqualified names stay the contract for make and CI.
