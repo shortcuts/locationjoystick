@@ -80,7 +80,7 @@ internal class ExportShareSession(
         job.start()
     }
 
-    fun stop() {
+    fun stop(): Job {
         val previous = current.job
         val job =
             scope.launch(Dispatchers.IO, CoroutineStart.LAZY) {
@@ -102,6 +102,7 @@ internal class ExportShareSession(
             }
         transition { s -> ShareState.Stopping(job, s.code) }
         job.start()
+        return job
     }
 
     private inline fun transition(next: (ShareState) -> ShareState?) {

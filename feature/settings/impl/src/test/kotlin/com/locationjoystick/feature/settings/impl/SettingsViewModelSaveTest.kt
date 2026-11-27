@@ -44,6 +44,7 @@ import io.mockk.slot
 import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -488,9 +489,15 @@ class SettingsViewModelSaveTest {
                 assertTrue(inPrepare.await(5, TimeUnit.SECONDS))
                 viewModel.stopQrExport()
                 release.countDown()
-                withContext(Dispatchers.Default) { withTimeout(5_000) { viewModel.isPreparingQrExport.first { !it } } }
+                // The stop job runs on IO and may land after prepare ends; wait for both.
+                withContext(Dispatchers.Default) {
+                    withTimeout(5_000) {
+                        viewModel.isPreparingQrExport.first { !it }
+                        while ("stop" !in calls) delay(10)
+                    }
+                }
 
-                assertFalse(calls.toString(), calls.lastOrNull() == "start")
+                assertEquals(calls.toString(), "stop", calls.last())
             } finally {
                 unmockkObject(NetworkUtils)
             }

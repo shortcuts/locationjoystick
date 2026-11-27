@@ -71,10 +71,7 @@ class ExportShareSessionTest {
             CompletableDeferred<Unit>().await()
         }
         runBlocking { served.await() }
-        session.stop()
-        val stopping = session.current
-        assertTrue(stopping is ShareState.Stopping)
-        awaitJob(stopping.job!!)
+        awaitJob(session.stop())
         assertEquals(ShareState.Idle, session.current)
         verify { server.stop() }
         verify { nsd.stopAdvertising("tok") }
@@ -82,22 +79,17 @@ class ExportShareSessionTest {
 
     @Test
     fun `stop from idle still tears down and returns to idle`() {
-        session.stop()
-        awaitJob(session.current.job!!)
+        awaitJob(session.stop())
         assertEquals(ShareState.Idle, session.current)
         verify { server.stop() }
     }
 
     @Test
     fun `start after stop waits and a later stop wins`() {
-        session.stop()
-        val stopJob = session.current.job!!
+        val stopJob = session.stop()
         session.start { }
         val startJob = session.current.job!!
-        session.stop()
-        val last = session.current
-        assertTrue(last is ShareState.Stopping)
-        awaitJob(last.job!!)
+        awaitJob(session.stop())
         assertTrue(stopJob.isCompleted && startJob.isCompleted)
         assertEquals(ShareState.Idle, session.current)
     }
@@ -114,8 +106,7 @@ class ExportShareSessionTest {
         session.start { CompletableDeferred<Unit>().await() }
         val s = session.current as ShareState.Starting
         assertEquals("old", s.code)
-        session.stop()
-        awaitJob(session.current.job!!)
+        awaitJob(session.stop())
         verify { nsd.stopAdvertising("old") }
         assertSame(ShareState.Idle, session.current)
     }

@@ -802,7 +802,9 @@ class SettingsViewModel
             }
         }
 
-        fun stopQrExport() = exportShare.stop()
+        fun stopQrExport() {
+            exportShare.stop()
+        }
 
         fun onQrScanned(url: String) {
             val uri = url.toUri()
