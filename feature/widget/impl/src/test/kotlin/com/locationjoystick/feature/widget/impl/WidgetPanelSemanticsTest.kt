@@ -78,24 +78,18 @@ class WidgetPanelSemanticsTest {
     }
 
     @Test
-    fun `stop and pause are shown while spoofing`() {
-        var stops = 0
-        setPanel(sections = listOf(WidgetPanelSection.PauseResume(false) {}, WidgetPanelSection.Stop { stops++ }))
+    fun `pause is shown while spoofing`() {
+        setPanel(sections = listOf(WidgetPanelSection.PauseResume(false) {}))
         composeRule.onNodeWithContentDescription("Pause spoofing").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Stop spoofing").assertIsDisplayed().performClick()
-        assertEquals(1, stops)
+        composeRule.onNodeWithContentDescription("Stop spoofing").assertDoesNotExist()
     }
 
     @Test
-    fun `stop stays enabled while parked`() {
-        var stops = 0
-        setPanel(
-            spoofingActive = false,
-            sections = listOf(WidgetPanelSection.PauseResume(true) {}, WidgetPanelSection.Stop { stops++ }),
-        )
-        composeRule.onNodeWithContentDescription("Resume spoofing").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Stop spoofing").assertIsEnabled().performClick()
-        assertEquals(1, stops)
+    fun `resume stays enabled while parked`() {
+        var clicks = 0
+        setPanel(spoofingActive = false, sections = listOf(WidgetPanelSection.PauseResume(true) { clicks++ }))
+        composeRule.onNodeWithContentDescription("Resume spoofing").assertIsEnabled().performClick()
+        assertEquals(1, clicks)
     }
 
     @Test

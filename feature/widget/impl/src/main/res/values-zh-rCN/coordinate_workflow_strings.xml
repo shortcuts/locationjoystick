@@ -9,7 +9,6 @@
     <string name="map_floating_view_unlock_map_rotation">"解锁地图旋转"</string>
     <string name="map_floating_view_lock_north_at_top">"锁定正北朝上"</string>
     <string name="map_floating_view_paste_coordinates">"粘贴坐标"</string>
-    <string name="widget_panel_content_stop_spoofing">"停止模拟"</string>
     <string name="widget_panel_content_stop_roaming">"停止漫游"</string>
     <string name="widget_panel_content_open_capture">"打开采集"</string>
     <string name="widget_panel_content_2f_6f">"%1$.2f, %2$.6f"</string>

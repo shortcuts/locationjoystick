@@ -10,12 +10,13 @@ Key files: the widget module's service and panel presenter, and the settings scr
 - It starts automatically when spoofing starts, provided the overlay permission is granted. There is no separate start button.
 - Enabled features are a set. Display order is a separate list. See "Configurability".
 
-### Pause and stop
+### Pause
 
-The widget panel always carries a Pause button (Start while parked) and a Stop button. Neither depends on a setting or a gesture.
+The widget panel always carries a Pause button (Start while parked). It does not depend on a setting or a gesture.
 
-- **Pause** parks mock location: spoofing stops, and the joystick and any route, walk or roam stop with it. The widget stays on screen and its controls fade until Start. Start resumes at the last location.
-- **Stop** ends everything and removes the widget.
+**Pause** parks mock location: spoofing stops, and the joystick and any route, walk or roam stop with it. The widget stays on screen and its controls fade until Start. Start resumes at the last location.
+
+The widget has no Stop button. Stopping spoofing from the app or the notification removes the widget.
 
 Pause is not the same as the paused state of a route. A paused route keeps pushing a frozen fix. A parked widget removes the mock provider altogether, so the app does not look like it is still spoofing.
 
@@ -104,11 +105,11 @@ An optional button in the widget panel opens an inline numeric field with the cu
 
 The panel's overlay window is non-focusable by design, so it never takes focus from the app underneath. The altitude field is the one exception: while it is open, the window becomes focusable, so the keyboard can appear. It goes back to non-focusable when the field closes.
 
-## Pause and stop buttons
+## Pause button
 
-Both are panel sections, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the buttons must not show there.
+It is a panel section, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the button must not show there.
 
-They are the only controls that stay enabled while parked. The others fade. Pause becomes Start, the way back, so a faded button would strand the user. Stop is the only way to remove the widget.
+It is the only control that stays enabled while parked. The others fade. Pause becomes Start, the way back, so a faded button would strand the user.
 
 A long-press popup on the round button once offered the same park. It was removed because a hidden gesture and a setting duplicated one path.
 

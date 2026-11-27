@@ -430,16 +430,6 @@ class FloatingWidgetService :
                                 },
                             ),
                         )
-                        add(
-                            WidgetPanelSection.Stop(
-                                onClick = {
-                                    mapController.stopSpoofing()
-                                    // Close immediately. After Pause the mock service is already IDLE, so
-                                    // its overlay collector will not run again; Stop still must dismiss us.
-                                    stopSelf()
-                                },
-                            ),
-                        )
                     }
 
                 WidgetPanel(

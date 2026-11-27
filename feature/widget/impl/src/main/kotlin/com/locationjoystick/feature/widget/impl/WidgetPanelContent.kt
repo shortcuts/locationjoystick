@@ -180,10 +180,6 @@ internal sealed interface WidgetPanelSection {
         val parked: Boolean,
         val onClick: () -> Unit,
     ) : WidgetPanelSection
-
-    data class Stop(
-        val onClick: () -> Unit,
-    ) : WidgetPanelSection
 }
 
 @Composable
@@ -456,15 +452,6 @@ internal fun WidgetPanel(
                                     },
                                 ),
                             tint = if (section.parked) LjSuccess else WidgetInactiveTint,
-                            onClick = section.onClick,
-                        )
-                    }
-
-                    is WidgetPanelSection.Stop -> {
-                        WidgetIconButton(
-                            icon = LjIcons.Stop,
-                            contentDescription = stringResource(R.string.widget_panel_content_stop_spoofing),
-                            tint = MaterialTheme.colorScheme.error,
                             onClick = section.onClick,
                         )
                     }
