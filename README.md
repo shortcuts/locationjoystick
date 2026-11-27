@@ -55,6 +55,7 @@ Move a floating joystick, long-press the map to walk somewhere, replay a saved r
 - Pick your game during setup to hide the features it does not need. See [game setup](https://locationjoystick.shrtcts.fr/game-setup.html).
 - Reconnect a Bluetooth accessory when it drops. This is optional. See [reconnect accessory](https://locationjoystick.shrtcts.fr/reconnect-accessory.html).
 - Install a renamed copy of the app so other apps do not see its name. This is only in the GitHub download. See [Privacy Mode](https://locationjoystick.shrtcts.fr/privacy-mode.html).
+- Update the app from Settings in one tap. This is only in the GitHub download, and it also updates a renamed copy.
 - [Back up](https://locationjoystick.shrtcts.fr/backup-transfer.html) routes, favorites, and settings to a file. Move them to a new phone with a QR code or a short code.
 - Control the app from scripts with the [Control API](https://locationjoystick.shrtcts.fr/control-api.html).
 

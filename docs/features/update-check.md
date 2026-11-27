@@ -13,6 +13,10 @@ Key files: the app module's update popup and view model, the update check reposi
 - Shown on the home screen only, opposite the What's New badge ([whats-new.md](whats-new.md)). Both use the same pill badge.
 - No settings toggle. The check state is per device and is not part of the exported settings.
 
+## Installing the update
+
+The GitHub build also has Settings, App update. It downloads and installs the release in place, in the original and in a Privacy Mode copy. See [privacy-mode.md](privacy-mode.md). The badge still opens the release page.
+
 ## Not yet
 
 The badge always opens the GitHub release page, including on Play Store installs. A Play Store link is planned. Nothing here hardcodes a Play Store URL.

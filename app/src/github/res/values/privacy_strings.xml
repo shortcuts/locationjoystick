@@ -16,4 +16,12 @@
     <string name="privacy_installed">Your copy is installed. It is a separate app with its own favorites and routes. Move them with Backup &amp; Transfer. In Developer options, pick the copy as the mock location app. You can uninstall this app after you export your data.</string>
     <string name="privacy_failed">Could not install your copy: %1$s</string>
     <string name="privacy_disclosure">Privacy Mode only hides the name of this app from other apps. The copy is a separate app with its own data. You must pick the copy as the mock location app in Developer options yourself. Apps that read the mock location setting can still see it.</string>
+    <string name="app_update_title">App update</string>
+    <string name="app_update_description">Install the latest version from GitHub</string>
+    <string name="app_update_current">Installed version: %1$s</string>
+    <string name="app_update_button">Update now</string>
+    <string name="app_update_needs_permission">Allow this app to install apps, then tap Update now again.</string>
+    <string name="app_update_preparing">Downloading the latest version. This takes a moment.</string>
+    <string name="app_update_up_to_date">You have the latest version.</string>
+    <string name="app_update_failed">Could not update: %1$s</string>
 </resources>

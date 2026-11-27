@@ -16,4 +16,12 @@
     <string name="privacy_installed">副本已安装。它是独立的应用，有自己的收藏和路线。请用“备份与传输”迁移。请在开发者选项中将副本选为模拟位置应用。导出数据后，你可以卸载本应用。</string>
     <string name="privacy_failed">无法安装副本：%1$s</string>
     <string name="privacy_disclosure">隐私模式只会对其他应用隐藏本应用的名称。副本是独立的应用，有自己的数据。你必须自行在开发者选项中将副本选为模拟位置应用。读取模拟位置设置的应用仍然能看到它。</string>
+    <string name="app_update_title">应用更新</string>
+    <string name="app_update_description">从 GitHub 安装最新版本</string>
+    <string name="app_update_current">已安装版本：%1$s</string>
+    <string name="app_update_button">立即更新</string>
+    <string name="app_update_needs_permission">请允许本应用安装应用，然后再次点按“立即更新”。</string>
+    <string name="app_update_preparing">正在下载最新版本，请稍候。</string>
+    <string name="app_update_up_to_date">已是最新版本。</string>
+    <string name="app_update_failed">无法更新：%1$s</string>
 </resources>

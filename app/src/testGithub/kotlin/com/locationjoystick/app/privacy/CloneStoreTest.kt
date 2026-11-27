@@ -2,7 +2,9 @@ package com.locationjoystick.app.privacy
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -52,5 +54,23 @@ class CloneStoreTest {
         val odd = record.copy(name = "Café\nnotes")
         store.save(odd, createSigningKey(odd.packageId))
         assertEquals(odd, store.read())
+    }
+
+    @Test
+    fun `payload carries record key and origin into another store`() {
+        val signer = createSigningKey(record.packageId)
+        val copy = CloneStore(tmp.newFolder("f"))
+        assertTrue(copy.importPayload(encodePayload(record, signer, setOf("aa", "bb"))))
+        assertEquals(record, copy.read())
+        assertArrayEquals(signer.first.encoded, copy.loadSigner()!!.first.encoded)
+        assertEquals(setOf("aa", "bb"), copy.origin())
+    }
+
+    @Test
+    fun `garbage payload is refused and stores nothing`() {
+        val copy = CloneStore(tmp.newFolder("g"))
+        assertFalse(copy.importPayload("packageId=x".toByteArray()))
+        assertNull(copy.read())
+        assertEquals(emptySet<String>(), copy.origin())
     }
 }

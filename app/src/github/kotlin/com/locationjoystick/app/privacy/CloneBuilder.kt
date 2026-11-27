@@ -61,7 +61,9 @@ class CloneBuilder
             val unsigned = File(dir, "clone-unsigned.apk")
             val signed = File(dir, "clone.apk.tmp")
             try {
-                rewriteApk(File(context.applicationInfo.sourceDir), context.packageName, record, unsigned)
+                // The copy updates itself later, so it carries its key and the original's signers inside its APK.
+                val payload = encodePayload(record, signer, installedSignerDigests(context))
+                rewriteApk(File(context.applicationInfo.sourceDir), context.packageName, record, unsigned, payload)
                 signApk(unsigned, signed, signer.first, signer.second)
             } finally {
                 unsigned.delete()

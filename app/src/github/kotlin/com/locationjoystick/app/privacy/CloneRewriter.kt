@@ -16,6 +16,7 @@ internal fun rewriteApk(
     oldPkg: String,
     record: CloneRecord,
     out: File,
+    payload: ByteArray? = null,
 ) {
     val apk = ApkModule.loadApkFile(source)
     apk.packageName = record.packageId
@@ -40,8 +41,12 @@ internal fun rewriteApk(
 
     // Stale v1 data would fail the v2-only signature check.
     apk.zipEntryMap.removeIf(Pattern.compile("^META-INF/(MANIFEST\\.MF|[^/]+\\.(SF|RSA|DSA|EC))$"))
+    payload?.let { apk.zipEntryMap.add(ByteInputSource(it, "assets/$PAYLOAD_ASSET")) }
     apk.writeApk(out)
 }
+
+// A neutral name: other apps can list the copy's assets.
+internal const val PAYLOAD_ASSET = "u.bin"
 
 private const val ORIGINAL_SCHEME = "locationjoystick"
 private const val ORIGINAL_LINK_HOST = "locationjoystick.shrtcts.fr"

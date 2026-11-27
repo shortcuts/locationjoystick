@@ -30,9 +30,12 @@ The disclosure and the wiki page say so.
 - **Install permission checked before the build.** A missing "Install unknown apps" grant sends the user to that system screen. The user taps Start again. An automatic resume would run a hidden 57 MB build on return from a system screen.
 - **Remove uses the result code.** `ACTION_UNINSTALL_PACKAGE` with `EXTRA_RETURN_RESULT`. `RESULT_OK` and `RESULT_FIRST_USER` (the clone is already gone) clear the key and record. Detecting an installed clone would need `QUERY_ALL_PACKAGES`, a heavier permission than this flow needs.
 - **The original stays.** The app never uninstalls itself. The post-install note tells the user how to move data and that they may uninstall the original.
+- **The copy updates itself.** Settings, App update (`AppUpdater`) downloads the latest GitHub release APK in both the original and a copy. A copy rewrites that APK with its own record and signs it with its own key. Before, only the original could update a copy, so uninstalling the original stranded the copy on its version.
+- **The key travels inside the copy.** The builder adds the record, the key and the original's signer digests as an APK asset. The copy moves them to its private store at its first update. Its own rewrite omits the asset, so the key leaves the APK at that update. Until then, an app that can see the copy can read the key from its APK; Android still asks the user to confirm any install. The safer alternative, a hand-off from the original at first launch, fails when the user uninstalls the original before opening the copy.
+- **Signer check before install.** A download installs only when its signers match the original's: the installed signers in the original, the stored digests in a copy. A copy cannot read the original's signature from its own APK, because its own key signs it.
 - **Key per device.** The clone key never enters an export or QR transfer. See [export-import.md](export-import.md).
 - **R8.** `app/proguard-rules.pro` keeps ARSCLib, apksig and BouncyCastle. R8 removed the builder when nothing called it, and these libraries reach classes by reflection and provider lookup.
 
 ## Stored state
 
-`filesDir/privacy-clone/` holds the clone record and key (`CloneStore`). `filesDir/privacy-mode/flags.properties` holds the switch. `cacheDir/privacy-clone/clone.apk` is deleted at each terminal install status.
+`filesDir/privacy-clone/` holds the clone record and key (`CloneStore`), and in a copy also the original's signer digests. `filesDir/privacy-mode/flags.properties` holds the switch. `cacheDir/privacy-clone/clone.apk` is deleted at each terminal install status. App update writes its APK to the same path, so the same cleanup covers it.
