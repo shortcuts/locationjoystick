@@ -1171,6 +1171,63 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `getPauseResumeButtonEnabled defaults to false`() =
+        runTest {
+            repository.getPauseResumeButtonEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setPauseResumeButtonEnabled persists true`() =
+        runTest {
+            repository.setPauseResumeButtonEnabled(true)
+            repository.getPauseResumeButtonEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getFloatingMapShareButtonEnabled defaults to true`() =
+        runTest {
+            repository.getFloatingMapShareButtonEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setFloatingMapShareButtonEnabled persists false`() =
+        runTest {
+            repository.setFloatingMapShareButtonEnabled(false)
+            repository.getFloatingMapShareButtonEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getFloatingMapNorthLockButtonEnabled defaults to true`() =
+        runTest {
+            repository.getFloatingMapNorthLockButtonEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setFloatingMapNorthLockButtonEnabled persists false`() =
+        runTest {
+            repository.setFloatingMapNorthLockButtonEnabled(false)
+            repository.getFloatingMapNorthLockButtonEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `getAltitudeJitterRadius defaults to ALTITUDE_SIGMA_METERS`() =
         runTest {
             repository.getAltitudeJitterRadius().test {
@@ -1839,6 +1896,30 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
         altitudeOverrideButtonEnabledFlow.value = enabled
+    }
+
+    private val pauseResumeButtonEnabledFlow = MutableStateFlow(false)
+
+    override fun getPauseResumeButtonEnabled(): Flow<Boolean> = pauseResumeButtonEnabledFlow
+
+    override suspend fun setPauseResumeButtonEnabled(enabled: Boolean) {
+        pauseResumeButtonEnabledFlow.value = enabled
+    }
+
+    private val floatingMapShareButtonEnabledFlow = MutableStateFlow(true)
+
+    override fun getFloatingMapShareButtonEnabled(): Flow<Boolean> = floatingMapShareButtonEnabledFlow
+
+    override suspend fun setFloatingMapShareButtonEnabled(enabled: Boolean) {
+        floatingMapShareButtonEnabledFlow.value = enabled
+    }
+
+    private val floatingMapNorthLockButtonEnabledFlow = MutableStateFlow(true)
+
+    override fun getFloatingMapNorthLockButtonEnabled(): Flow<Boolean> = floatingMapNorthLockButtonEnabledFlow
+
+    override suspend fun setFloatingMapNorthLockButtonEnabled(enabled: Boolean) {
+        floatingMapNorthLockButtonEnabledFlow.value = enabled
     }
 
     private val debugStatsEnabledFlow = MutableStateFlow(false)

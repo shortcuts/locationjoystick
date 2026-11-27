@@ -145,6 +145,8 @@ internal fun MapFloatingView(
     onSavePastedRoute: ((name: String, points: List<LatLng>) -> Unit)? = null,
     onStartPastedRoute: ((points: List<LatLng>, config: RouteStartConfig) -> Unit)? = null,
     quickWalk: Boolean = false,
+    showShareButton: Boolean = true,
+    showNorthLockButton: Boolean = true,
     hideTeleportFeatures: Boolean = false,
     walkAiming: Boolean = false,
     showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -504,22 +506,36 @@ internal fun MapFloatingView(
             verticalArrangement = Arrangement.spacedBy(LjSpacing.sm, Alignment.Bottom),
             horizontalAlignment = Alignment.End,
         ) {
-            LjMapIconButton(
-                icon = LjIcons.NorthUp,
-                contentDescription =
-                    stringResource(
+            if (showNorthLockButton) {
+                LjMapIconButton(
+                    icon = LjIcons.NorthUp,
+                    contentDescription =
+                        stringResource(
+                            if (northLocked) {
+                                R.string.map_floating_view_unlock_map_rotation
+                            } else {
+                                R.string.map_floating_view_lock_north_at_top
+                            },
+                        ),
+                    containerColor =
                         if (northLocked) {
-                            R.string.map_floating_view_unlock_map_rotation
+                            MaterialTheme.colorScheme.tertiary
                         } else {
-                            R.string.map_floating_view_lock_north_at_top
+                            ActivityState.IDLE.containerColor(
+                                MaterialTheme.colorScheme,
+                            )
                         },
-                    ),
-                containerColor =
-                    if (northLocked) MaterialTheme.colorScheme.tertiary else ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
-                contentColor =
-                    if (northLocked) MaterialTheme.colorScheme.onTertiary else ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
-                onClick = { northLocked = !northLocked },
-            )
+                    contentColor =
+                        if (northLocked) {
+                            MaterialTheme.colorScheme.onTertiary
+                        } else {
+                            ActivityState.IDLE.contentColor(
+                                MaterialTheme.colorScheme,
+                            )
+                        },
+                    onClick = { northLocked = !northLocked },
+                )
+            }
             if (!isFollowingCamera.value) {
                 LjMapIconButton(
                     icon = LjIcons.MyLocation,
@@ -541,20 +557,24 @@ internal fun MapFloatingView(
                     },
                 )
             }
-            LjShareLocationAction(
-                onCopyCoordinates = { copyCoordinatesToClipboard(shareContext, currentPosition) },
-                onShareLink = {
-                    shareLocationLink(shareContext, currentPosition)
-                    if (currentPosition != null) onDismiss()
-                },
-            )
-            LjMapIconButton(
-                icon = LjIcons.Favorite,
-                contentDescription = stringResource(R.string.overlay_open_favorites_cd),
-                containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
-                contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
-                onClick = { showFavoritesPicker = true },
-            )
+            if (showShareButton) {
+                LjShareLocationAction(
+                    onCopyCoordinates = { copyCoordinatesToClipboard(shareContext, currentPosition) },
+                    onShareLink = {
+                        shareLocationLink(shareContext, currentPosition)
+                        if (currentPosition != null) onDismiss()
+                    },
+                )
+            }
+            if (AppFeature.FAVORITES in enabledMapFabFeatures) {
+                LjMapIconButton(
+                    icon = LjIcons.Favorite,
+                    contentDescription = stringResource(R.string.overlay_open_favorites_cd),
+                    containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                    contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
+                    onClick = { showFavoritesPicker = true },
+                )
+            }
             MapFloatingRouteControlsRow(
                 enabledMapFabFeatures = enabledMapFabFeatures,
                 isRouteReplay = isRouteReplay,
@@ -571,7 +591,7 @@ internal fun MapFloatingView(
                 onOpenRoutes = onOpenRoutes,
             )
             val roamState = activityState(isRoaming, isRoamingPaused)
-            if (isRoaming || !routePlaying) {
+            if (isRoaming || (!routePlaying && AppFeature.ROAMING in enabledMapFabFeatures)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
                     androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
                         Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
@@ -611,16 +631,18 @@ internal fun MapFloatingView(
                     )
                 }
             }
-            LjMapIconButton(
-                icon = LjIcons.Search,
-                contentDescription = stringResource(R.string.overlay_search_location_cd),
-                containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
-                contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
-                onClick = {
-                    showPasteCoordinates = false
-                    showSearch = !showSearch
-                },
-            )
+            if (AppFeature.SEARCH in enabledMapFabFeatures) {
+                LjMapIconButton(
+                    icon = LjIcons.Search,
+                    contentDescription = stringResource(R.string.overlay_search_location_cd),
+                    containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                    contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
+                    onClick = {
+                        showPasteCoordinates = false
+                        showSearch = !showSearch
+                    },
+                )
+            }
             if (AppFeature.PASTE_COORDINATES in enabledMapFabFeatures) {
                 LjMapIconButton(
                     icon = LjIcons.ContentPaste,

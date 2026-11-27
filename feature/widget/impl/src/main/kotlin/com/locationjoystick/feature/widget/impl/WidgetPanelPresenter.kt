@@ -481,6 +481,9 @@ internal class WidgetPanelPresenter(
             val shared by mapController.sharedState.collectAsStateWithLifecycle()
             val initialPosition = remember { mapController.sharedState.value.currentPosition }
             val quickWalk by settingsRepository.getFloatingMapQuickWalk().collectAsStateWithLifecycle(initialValue = false)
+            val showShareButton by settingsRepository.getFloatingMapShareButtonEnabled().collectAsStateWithLifecycle(initialValue = true)
+            val showNorthLockButton by
+                settingsRepository.getFloatingMapNorthLockButtonEnabled().collectAsStateWithLifecycle(initialValue = true)
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -567,6 +570,8 @@ internal class WidgetPanelPresenter(
                     mapController.startPastedRouteReplay(points, config)
                 },
                 quickWalk = quickWalk,
+                showShareButton = showShareButton,
+                showNorthLockButton = showNorthLockButton,
                 hideTeleportFeatures = hideTeleportFeatures,
                 walkAiming = aiming,
                 showRouteJumpButtons = showRouteJumpButtons,

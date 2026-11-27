@@ -58,6 +58,9 @@ class SettingsExportCodecV1FixtureTest {
         assertEquals(AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT, result.settings.realElevationEnabled)
         assertEquals(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS, result.settings.altitudeJitterRadiusMeters, 0.0001)
         assertEquals(false, result.settings.altitudeOverrideButtonEnabled)
+        assertEquals(false, result.settings.pauseResumeButtonEnabled)
+        assertEquals(true, result.settings.floatingMapShareButtonEnabled)
+        assertEquals(true, result.settings.floatingMapNorthLockButtonEnabled)
     }
 
     @Test
@@ -78,12 +81,18 @@ class SettingsExportCodecV1FixtureTest {
                         realElevationEnabled = false,
                         altitudeJitterRadiusMeters = 1.5,
                         altitudeOverrideButtonEnabled = true,
+                        pauseResumeButtonEnabled = true,
+                        floatingMapShareButtonEnabled = false,
+                        floatingMapNorthLockButtonEnabled = false,
                     ),
             )
         val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original))
         assertEquals(false, parsed.settings.realElevationEnabled)
         assertEquals(1.5, parsed.settings.altitudeJitterRadiusMeters, 0.0001)
         assertEquals(true, parsed.settings.altitudeOverrideButtonEnabled)
+        assertEquals(true, parsed.settings.pauseResumeButtonEnabled)
+        assertEquals(false, parsed.settings.floatingMapShareButtonEnabled)
+        assertEquals(false, parsed.settings.floatingMapNorthLockButtonEnabled)
     }
 
     @Test

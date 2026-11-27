@@ -357,6 +357,8 @@ class FloatingWidgetService :
             )
             val isAltitudeOverrideButtonVisible by
                 settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val isPauseResumeButtonVisible by
+                settingsRepository.getPauseResumeButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isAltitudeExpanded by panelExpand.flow(PanelExpandKey.ALTITUDE).collectAsStateWithLifecycle()
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
@@ -422,14 +424,17 @@ class FloatingWidgetService :
                                 ),
                             )
                         }
-                        add(
-                            WidgetPanelSection.PauseResume(
-                                parked = !masterToggle.spoofingActive,
-                                onClick = {
-                                    if (masterToggle.spoofingActive) parkSpoofingKeepWidget() else mapController.startSpoofing()
-                                },
-                            ),
-                        )
+                        // Parked keeps it shown even if switched off meanwhile: it is the only way back.
+                        if (isPauseResumeButtonVisible || !masterToggle.spoofingActive) {
+                            add(
+                                WidgetPanelSection.PauseResume(
+                                    parked = !masterToggle.spoofingActive,
+                                    onClick = {
+                                        if (masterToggle.spoofingActive) parkSpoofingKeepWidget() else mapController.startSpoofing()
+                                    },
+                                ),
+                            )
+                        }
                     }
 
                 WidgetPanel(

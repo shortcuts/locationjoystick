@@ -102,6 +102,9 @@ internal object SettingsExportCodec {
         settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
         settingsObj.put("plantingRadiusMeters", data.settings.plantingRadiusMeters)
         settingsObj.put("altitudeOverrideButtonEnabled", data.settings.altitudeOverrideButtonEnabled)
+        settingsObj.put("pauseResumeButtonEnabled", data.settings.pauseResumeButtonEnabled)
+        settingsObj.put("floatingMapShareButtonEnabled", data.settings.floatingMapShareButtonEnabled)
+        settingsObj.put("floatingMapNorthLockButtonEnabled", data.settings.floatingMapNorthLockButtonEnabled)
         settingsObj.put("debugStatsEnabled", data.settings.debugStatsEnabled)
         settingsObj.put("activeSpeedProfileId", data.settings.activeSpeedProfileId)
         settingsObj.put("mapFollowsLocation", data.settings.mapFollowsLocation)
@@ -304,6 +307,9 @@ internal object SettingsExportCodec {
         val plantingRadiusMeters =
             settingsObj.optDouble("plantingRadiusMeters", AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
         val altitudeOverrideButtonEnabled = settingsObj.optBoolean("altitudeOverrideButtonEnabled", false)
+        val pauseResumeButtonEnabled = settingsObj.optBoolean("pauseResumeButtonEnabled", false)
+        val floatingMapShareButtonEnabled = settingsObj.optBoolean("floatingMapShareButtonEnabled", true)
+        val floatingMapNorthLockButtonEnabled = settingsObj.optBoolean("floatingMapNorthLockButtonEnabled", true)
         val debugStatsEnabled = settingsObj.optBoolean("debugStatsEnabled", false)
         val defaults = AppSettings()
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
@@ -387,6 +393,9 @@ internal object SettingsExportCodec {
                 altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
                 plantingRadiusMeters = plantingRadiusMeters,
                 altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
+                pauseResumeButtonEnabled = pauseResumeButtonEnabled,
+                floatingMapShareButtonEnabled = floatingMapShareButtonEnabled,
+                floatingMapNorthLockButtonEnabled = floatingMapNorthLockButtonEnabled,
                 debugStatsEnabled = debugStatsEnabled,
                 activeSpeedProfileId = settingsObj.optString("activeSpeedProfileId", defaults.activeSpeedProfileId),
                 mapFollowsLocation = settingsObj.optBoolean("mapFollowsLocation", defaults.mapFollowsLocation),

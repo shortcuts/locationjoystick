@@ -383,6 +383,18 @@ fun SettingsRoute(
                     viewModel.setAltitudeOverrideButtonEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetPauseResumeButtonEnabled -> {
+                    viewModel.setPauseResumeButtonEnabled(action.enabled)
+                }
+
+                is SettingsAction.SetFloatingMapShareButtonEnabled -> {
+                    viewModel.setFloatingMapShareButtonEnabled(action.enabled)
+                }
+
+                is SettingsAction.SetFloatingMapNorthLockButtonEnabled -> {
+                    viewModel.setFloatingMapNorthLockButtonEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetDebugStatsEnabled -> {
                     viewModel.setDebugStatsEnabled(action.enabled)
                 }

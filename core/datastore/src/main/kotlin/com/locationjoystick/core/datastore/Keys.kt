@@ -104,5 +104,8 @@ internal object Keys {
     val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
     val PLANTING_RADIUS_METERS = doublePreferencesKey("planting_radius_meters")
     val ALTITUDE_OVERRIDE_BUTTON_ENABLED = booleanPreferencesKey("altitude_override_button_enabled")
+    val PAUSE_RESUME_BUTTON_ENABLED = booleanPreferencesKey("pause_resume_button_enabled")
+    val FLOATING_MAP_SHARE_BUTTON_ENABLED = booleanPreferencesKey("floating_map_share_button_enabled")
+    val FLOATING_MAP_NORTH_LOCK_BUTTON_ENABLED = booleanPreferencesKey("floating_map_north_lock_button_enabled")
     val DEBUG_STATS_ENABLED = booleanPreferencesKey("debug_stats_enabled")
 }

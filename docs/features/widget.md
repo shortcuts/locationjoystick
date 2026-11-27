@@ -12,7 +12,7 @@ Key files: the widget module's service and panel presenter, and the settings scr
 
 ### Pause
 
-The widget panel always carries a Pause button (Start while parked). It does not depend on a setting or a gesture.
+The widget panel can carry a Pause button (Start while parked). It is off by default; Settings → Menus turns it on.
 
 **Pause** parks mock location: spoofing stops, and the joystick and any route, walk or roam stop with it. The widget stays on screen and its controls fade until Start. Start resumes at the last location.
 
@@ -76,7 +76,8 @@ The floating map is a map view inside an overlay window ([map.md](map.md), [map-
 
 - It renders in texture mode. The default surface view punches a transparent hole, so the map shows no streets over the game.
 - It opens compact, so taps outside its window reach the game. Expand switches the same window to a larger layout without recreating the map.
-- North lock starts on: bearing is held at zero and rotation gestures are disabled, while panning still works. Unlocking restores the normal gestures and does not force a saved bearing.
+- North lock starts on: bearing is held at zero and rotation gestures are disabled, while panning still works. Unlocking restores the normal gestures and does not force a saved bearing. Hiding the north lock button therefore leaves the map locked north.
+- The share and north lock buttons have their own Menus switches, not `AppFeature` entries: the main map has neither button, so a map checkbox would be wrong there.
 - A drag on the resize button beside the close button resizes the compact window at once. The window's left and bottom edges stay fixed and the top-right corner follows the finger. The gesture reads raw screen coordinates (`floatingMapResizeGesture`): the button sits on the moving corner, so local deltas would under-count. The expand button is a plain button that toggles expanded.
 - Size and position persist in DataStore (`FloatingMapRect`) and are clamped on every read and after rotation. Leaving fullscreen resets the window to the app default and clears the stored value. The rect is device-specific pixels, so it is not part of export or import.
 - The icon column scrolls when the window is too short. The move, expand and close controls sit outside the scroll area so they stay reachable at the minimum size.
@@ -85,7 +86,7 @@ The floating map is a map view inside an overlay window ([map.md](map.md), [map-
 
 ### Route controls on the floating map
 
-The floating map's button column shows a route button when the routes feature is enabled on the map, or when a route is playing.
+The floating map's button column shows a route button when the routes feature is enabled on the map, or when a route is playing. Favorites, roaming, search, paste and draw line follow the same map toggles, so one setting governs both maps. Roaming stays shown while a roam runs, so it can be stopped.
 
 - Tapping it while a route plays expands Pause/Resume and Stop beside it.
 - Tapping it while idle opens the routes picker.
@@ -109,7 +110,7 @@ The panel's overlay window is non-focusable by design, so it never takes focus f
 
 It is a panel section, not an `AppFeature`, because the shared feature list also feeds the floating map's button column and the button must not show there.
 
-It is the only control that stays enabled while parked. The others fade. Pause becomes Start, the way back, so a faded button would strand the user.
+It is the only control that stays enabled while parked. The others fade. Pause becomes Start, the way back, so a faded button would strand the user. For the same reason Start stays shown while parked even if the setting is turned off.
 
 A long-press popup on the round button once offered the same park. It was removed because a hidden gesture and a setting duplicated one path.
 

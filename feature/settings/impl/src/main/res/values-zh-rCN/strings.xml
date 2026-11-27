@@ -148,6 +148,12 @@
     <string name="settings_menus_show_route_jump_buttons_desc">"在路线回放控制栏中添加“上一个途经点／下一个途经点”按钮，可在途经点之间立即瞬移。默认关闭。"</string>
     <string name="settings_menus_show_altitude_override_button">"显示海拔覆盖按钮"</string>
     <string name="settings_menus_show_altitude_override_button_desc">"在悬浮窗中添加一个按钮，可随时手动输入固定海拔。默认关闭。"</string>
+    <string name="settings_menus_show_pause_resume_button">"显示暂停按钮"</string>
+    <string name="settings_menus_show_pause_resume_button_desc">"在悬浮窗中添加一个按钮，可暂停和恢复模拟定位。恢复后回到上次模拟的位置。默认关闭。"</string>
+    <string name="settings_menus_show_floating_map_share_button">"在悬浮地图上显示分享按钮"</string>
+    <string name="settings_menus_show_floating_map_share_button_desc">"在悬浮地图上添加一个按钮，可复制或分享模拟位置。默认开启。"</string>
+    <string name="settings_menus_show_floating_map_north_lock_button">"在悬浮地图上显示锁定正北按钮"</string>
+    <string name="settings_menus_show_floating_map_north_lock_button_desc">"在悬浮地图上添加一个按钮，可保持正北朝上。默认开启。"</string>
     <string name="settings_menus_capture">"采集"</string>
     <string name="settings_menus_capture_desc">"将其他应用中的地图链接收集到列表、立即跳转，或两者兼有 — 与捕获页面上的设置相同。深层链接（geo:、google.navigation: 以及分享到本应用的链接）始终自动生效，此处无需任何设置。"</string>
     <string name="settings_menus_capture_browser_automatic">"自动"</string>

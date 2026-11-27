@@ -551,6 +551,18 @@ class SettingsViewModel
             save { settingsRepository.setAltitudeOverrideButtonEnabled(enabled) }
         }
 
+        fun setPauseResumeButtonEnabled(enabled: Boolean) {
+            save { settingsRepository.setPauseResumeButtonEnabled(enabled) }
+        }
+
+        fun setFloatingMapShareButtonEnabled(enabled: Boolean) {
+            save { settingsRepository.setFloatingMapShareButtonEnabled(enabled) }
+        }
+
+        fun setFloatingMapNorthLockButtonEnabled(enabled: Boolean) {
+            save { settingsRepository.setFloatingMapNorthLockButtonEnabled(enabled) }
+        }
+
         fun setDebugStatsEnabled(enabled: Boolean) {
             save { settingsRepository.setDebugStatsEnabled(enabled) }
         }

@@ -201,11 +201,17 @@ class SettingsViewModelSaveTest {
             viewModel.setRealismRealElevationEnabled(false)
             viewModel.setAltitudeJitterRadius(2.5)
             viewModel.setAltitudeOverrideButtonEnabled(true)
+            viewModel.setPauseResumeButtonEnabled(true)
+            viewModel.setFloatingMapShareButtonEnabled(false)
+            viewModel.setFloatingMapNorthLockButtonEnabled(false)
 
             assertEquals(60.0, fakeDataSource.written.settings.plantingRadiusMeters, 0.001)
             assertFalse(fakeDataSource.written.settings.realElevationEnabled)
             assertEquals(2.5, fakeDataSource.written.settings.altitudeJitterRadiusMeters, 0.001)
             assertTrue(fakeDataSource.written.settings.altitudeOverrideButtonEnabled)
+            assertTrue(fakeDataSource.written.settings.pauseResumeButtonEnabled)
+            assertFalse(fakeDataSource.written.settings.floatingMapShareButtonEnabled)
+            assertFalse(fakeDataSource.written.settings.floatingMapNorthLockButtonEnabled)
             assertEquals(0, fakeDataSource.applySnapshotCallCount)
         }
 
@@ -966,6 +972,21 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = editSettings { copy(altitudeOverrideButtonEnabled = enabled) }
+
+    override fun getPauseResumeButtonEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setPauseResumeButtonEnabled(enabled: Boolean) = editSettings { copy(pauseResumeButtonEnabled = enabled) }
+
+    override fun getFloatingMapShareButtonEnabled(): Flow<Boolean> = flowOf(true)
+
+    override suspend fun setFloatingMapShareButtonEnabled(enabled: Boolean) = editSettings { copy(floatingMapShareButtonEnabled = enabled) }
+
+    override fun getFloatingMapNorthLockButtonEnabled(): Flow<Boolean> = flowOf(true)
+
+    override suspend fun setFloatingMapNorthLockButtonEnabled(enabled: Boolean) =
+        editSettings {
+            copy(floatingMapNorthLockButtonEnabled = enabled)
+        }
 
     override fun getDebugStatsEnabled(): Flow<Boolean> = flowOf(false)
 

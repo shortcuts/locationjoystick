@@ -418,6 +418,18 @@ class SettingsRepository
 
         suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = dataSource.setAltitudeOverrideButtonEnabled(enabled)
 
+        fun getPauseResumeButtonEnabled(): Flow<Boolean> = dataSource.getPauseResumeButtonEnabled()
+
+        suspend fun setPauseResumeButtonEnabled(enabled: Boolean) = dataSource.setPauseResumeButtonEnabled(enabled)
+
+        fun getFloatingMapShareButtonEnabled(): Flow<Boolean> = dataSource.getFloatingMapShareButtonEnabled()
+
+        suspend fun setFloatingMapShareButtonEnabled(enabled: Boolean) = dataSource.setFloatingMapShareButtonEnabled(enabled)
+
+        fun getFloatingMapNorthLockButtonEnabled(): Flow<Boolean> = dataSource.getFloatingMapNorthLockButtonEnabled()
+
+        suspend fun setFloatingMapNorthLockButtonEnabled(enabled: Boolean) = dataSource.setFloatingMapNorthLockButtonEnabled(enabled)
+
         fun getDebugStatsEnabled(): Flow<Boolean> = dataSource.getDebugStatsEnabled()
 
         suspend fun setDebugStatsEnabled(enabled: Boolean) = dataSource.setDebugStatsEnabled(enabled)

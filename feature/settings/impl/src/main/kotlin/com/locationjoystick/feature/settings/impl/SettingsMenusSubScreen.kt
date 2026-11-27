@@ -330,6 +330,30 @@ private fun AppFeaturesSection(
         title = stringResource(R.string.settings_menus_show_altitude_override_button),
         description = stringResource(R.string.settings_menus_show_altitude_override_button_desc),
     )
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
+        checked = uiState.settings.pauseResumeButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetPauseResumeButtonEnabled(it)) },
+        title = stringResource(R.string.settings_menus_show_pause_resume_button),
+        description = stringResource(R.string.settings_menus_show_pause_resume_button_desc),
+    )
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
+        checked = uiState.settings.floatingMapShareButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetFloatingMapShareButtonEnabled(it)) },
+        title = stringResource(R.string.settings_menus_show_floating_map_share_button),
+        description = stringResource(R.string.settings_menus_show_floating_map_share_button_desc),
+    )
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
+        checked = uiState.settings.floatingMapNorthLockButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetFloatingMapNorthLockButtonEnabled(it)) },
+        title = stringResource(R.string.settings_menus_show_floating_map_north_lock_button),
+        description = stringResource(R.string.settings_menus_show_floating_map_north_lock_button_desc),
+    )
 }
 
 private fun Modifier.graphicsLayerTranslationY(ty: Float): Modifier = this.then(Modifier.graphicsLayer { translationY = ty })
