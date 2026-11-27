@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.2.0](https://github.com/shortcuts/locationjoystick/compare/v1.1.1...v1.2.0) (2026-11-27)
+
+
+### Features
+
+* **api:** expose teleport cooldown and stop time before a jump ([a2aad71](https://github.com/shortcuts/locationjoystick/commit/a2aad71e467772a87bc9f2288e7931e158d408ac))
+* **map:** draw a freehand line on the map and floating map ([e18d817](https://github.com/shortcuts/locationjoystick/commit/e18d81782ace5b1def9c0da93190d6abbcf07693))
+* **map:** show standing teleport cooldown countdown and finish time ([a00093a](https://github.com/shortcuts/locationjoystick/commit/a00093ab7d52353d1b9a6f4ddccb342a0b78fe44))
+* **privacy:** let the app and its copy update themselves from GitHub ([420999d](https://github.com/shortcuts/locationjoystick/commit/420999d22adb3b39b767215517dffc77879008a2))
+* **widget:** add drag handle to resize the floating map ([c248715](https://github.com/shortcuts/locationjoystick/commit/c248715501f7b59b665c6079af1053c8ea7c6259))
+* **widget:** add optional pause/resume button to the floating widget ([ce700a9](https://github.com/shortcuts/locationjoystick/commit/ce700a96d835c42df09a6656948c4ef0e7c944c7))
+* **widget:** add visible Capture button, drop paste long-press shortcut ([f7e22f8](https://github.com/shortcuts/locationjoystick/commit/f7e22f8783942b28a603ce5756aa0f7c2c042c6b))
+* **widget:** drop the panel Stop button, keep Pause ([3b589bf](https://github.com/shortcuts/locationjoystick/commit/3b589bf2a6d75ef90b562037aa865278c71b293b))
+* **widget:** make every widget and floating map shortcut configurable ([06dcdf5](https://github.com/shortcuts/locationjoystick/commit/06dcdf56c32284d6a604ac78a2568a07a8d45844))
+* **widget:** replace long-press pause/stop popup with panel buttons ([275d387](https://github.com/shortcuts/locationjoystick/commit/275d387b95339334a704b1d3cf489b745d54ff59))
+
+
+### Bug Fixes
+
+* **docs:** move the pause button changelog entry to 1.1.2 ([fbae2ee](https://github.com/shortcuts/locationjoystick/commit/fbae2ee4eb040cc3517660c108425e54879a4a2a))
+* **location:** store the keep-widget flag before park tears down ([97538b6](https://github.com/shortcuts/locationjoystick/commit/97538b61857661e5cf29b7ede50003767003b114))
+* **map:** keep the true end point of a capped drawn line ([8131262](https://github.com/shortcuts/locationjoystick/commit/8131262acddaa7e7e75e7557f69fc128d9dd5d39))
+* **map:** keep the walk line when a walk replaces a walk ([e78eb0a](https://github.com/shortcuts/locationjoystick/commit/e78eb0a361e2bc9ec9c7f9e36b99dbf49d7de73f))
+* **routes:** raise GPX route cap to 10,000 points ([dcf8fa7](https://github.com/shortcuts/locationjoystick/commit/dcf8fa7cac1aa8d64acb1ea7fd6db8a772d2efc9))
+* **scripts:** screenshot script installs the app, closes the What's new chip, rejects ambiguous devices ([6eb6993](https://github.com/shortcuts/locationjoystick/commit/6eb6993e1c9f562542f2064ea020da0f59407458))
+
 ## [1.1.1](https://github.com/shortcuts/locationjoystick/compare/v1.1.0...v1.1.1) (2026-11-17)
 
 
