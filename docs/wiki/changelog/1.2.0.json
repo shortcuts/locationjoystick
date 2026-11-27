@@ -1,12 +1,15 @@
 {
-  "version": "1.1.2",
-  "date": "2026-11-23",
+  "version": "1.2.0",
+  "date": "2026-11-27",
   "entries": [
     { "category": "feat", "scope": "Settings", "summary": "New Settings > App update in the GitHub download. Tap Update now to download and install the latest version. It also works in a Privacy Mode copy, even after you uninstall the original." },
     { "category": "feat", "scope": "Widget", "summary": "New switch, Show pause button, under Settings > Menus. It adds a widget button that pauses your fake location and resumes it at the same place. It replaces the press-and-hold menu on the round button. It is off by default and does not show on the floating map." },
     { "category": "fix", "scope": "Widget", "summary": "The floating map now hides Favorites, Roaming and Search when you turn them off for the map in Settings > Menus." },
     { "category": "feat", "scope": "Widget", "summary": "New switches under Settings > Menus hide the share button and the north arrow on the floating map. Both are on by default." },
     { "category": "feat", "scope": "Widget", "summary": "Capture now has its own widget button. It is off by default. Turn it on in Settings, Menus. It replaces the press-and-hold shortcut on the paste button." },
-    { "category": "fix", "scope": "Routes", "summary": "Large GPX routes now import. A GPS Joystick export with thousands of points no longer gets skipped." }
+    { "category": "fix", "scope": "Routes", "summary": "Large GPX routes now import. A GPS Joystick export with thousands of points no longer gets skipped." },
+    { "category": "feat", "scope": "Map", "summary": "New Draw a line tool. Turn it on, then drag your finger on the map or the floating map. When you let go, you can walk the line or save it as a route." },
+    { "category": "feat", "scope": "Map", "summary": "The map now shows a countdown while the game's teleport cooldown is still running, and the time it ends. It stays after you press Stop." },
+    { "category": "fix", "scope": "Map", "summary": "The walk line no longer disappears when a new walk replaces the one in progress." }
   ]
 }
