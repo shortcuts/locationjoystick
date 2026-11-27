@@ -938,12 +938,10 @@ fi
 demo_mode_enter
 trap demo_mode_exit EXIT
 
-# Ensure app is installed
-log "Checking app installation..."
-if ! $ADB shell pm list packages 2>/dev/null | grep -q "$PACKAGE"; then
-  log "$PACKAGE not installed — installing the debug APK..."
-  ./gradlew :app:installGithubDebug
-fi
+# An install over an old build keeps its data and its version, so start from this commit with no data.
+log "Reinstalling the debug APK from this commit..."
+$ADB uninstall "$PACKAGE" >/dev/null 2>&1 || true
+./gradlew :app:installGithubDebug
 
 # Screen height for Y-threshold disambiguation of IdleScreen card taps.
 SCREEN_W=$(echo "$SCREEN_SIZE" | awk -F'x' '{print $1}')

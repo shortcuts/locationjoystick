@@ -77,10 +77,14 @@ wiki-serve:
 
 SMOKE_TEST_CLASS = $(subst /,.,$(patsubst app/src/androidTest/kotlin/%,%,$(patsubst %.kt,%,$(TEST_FILE))))
 
-smoke-test:
+# adb install -r keeps old app data, so each run starts from a fresh install of this commit (docs/testing.md).
+uninstall-from-phones:
+	@for s in $${ANDROID_SERIAL:-$$(adb devices | awk 'NR>1 && $$2=="device" {print $$1}')}; do adb -s $$s uninstall com.locationjoystick.app >/dev/null 2>&1 || true; done
+
+smoke-test: uninstall-from-phones
 	./gradlew :app:connectedGithubDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.locationjoystick.app.smoke
 
-smoke-test-one:
+smoke-test-one: uninstall-from-phones
 	./gradlew :app:connectedGithubDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=$(SMOKE_TEST_CLASS)
 
 # Uninstalls the app first, which deletes its data (docs/testing.md).
