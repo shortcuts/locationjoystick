@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/shortcuts/locationjoystick/compare/v1.2.0...v1.2.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **cooldown:** count only positions the game saw ([5432fc8](https://github.com/shortcuts/locationjoystick/commit/5432fc856d038a18d175c65e18e47b2fffeb4cda))
+
 ## [1.2.0](https://github.com/shortcuts/locationjoystick/compare/v1.1.1...v1.2.0) (2026-11-27)
 
 
