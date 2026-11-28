@@ -6,6 +6,7 @@ import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.routing.RouteReplayEngine
 import com.locationjoystick.core.routing.TeleportRouteEngine
@@ -28,6 +29,7 @@ private const val TAG = "TeleportUseCase"
  * 1. Fire an [AppConstants.ServiceConstants.ACTION_UPDATE_POSITION] intent to MockLocationService.
  * 2. Persist [SettingsRepository.setLastLocation] so the last position is remembered.
  * 3. Persist [SettingsRepository.recordTeleport] for cooldown tracking and the standing countdown.
+ *    Steps 2 and 3 run only while spoofing is on; an idle tap moves the marker, not the game.
  * 4. Record [SettingsRepository.addSpoofHistory] for user-initiated jumps (not route-start preludes).
  *
  * Both [com.locationjoystick.feature.map.impl.MapViewModel] and
@@ -76,8 +78,11 @@ class TeleportUseCase
                 // The live position is fresher while spoofing runs; the saved one covers a stopped session.
                 val previous = locationRepository.currentPosition.value ?: settingsRepository.getLastLocation().first()
                 serviceStarter.start(intent)
-                settingsRepository.setLastLocation(position)
-                settingsRepository.recordTeleport(previous, position)
+                // While idle the game sees nothing: the jump happens at Start, which records it.
+                if (locationRepository.mockLocationState.value != MockLocationState.IDLE) {
+                    settingsRepository.setLastLocation(position)
+                    settingsRepository.recordTeleport(previous, position)
+                }
                 if (resetMovement) {
                     settingsRepository.addSpoofHistory(position.latitude, position.longitude, System.currentTimeMillis())
                 }
@@ -135,7 +140,7 @@ class TeleportUseCase
                     }
                 }
             return combine(
-                settingsRepository.getLastTeleportTime().onStart { emit(0L) },
+                settingsRepository.getCooldownClock().onStart { emit(0L) },
                 settingsRepository.getLastLocation().onStart { emit(null) },
                 ticker,
             ) { lastTeleportMs, lastLocation, _ ->
@@ -158,7 +163,7 @@ class TeleportUseCase
                     }
                 }
             return combine(
-                settingsRepository.getLastTeleportTime(),
+                settingsRepository.getCooldownClock(),
                 settingsRepository.getLastLocation(),
                 favoritesFlow,
                 ticker,

@@ -118,7 +118,7 @@ class GroupSyncViewModel
          * every other teleport (Favorites, map long-press); see CooldownEngine. */
         val cooldownState: StateFlow<CooldownState> =
             combine(
-                settingsRepository.getLastTeleportTime(),
+                settingsRepository.getCooldownClock(),
                 locationRepository.currentPosition,
                 groupRepository.leaderPosition,
                 tickerFlow(30_000L),

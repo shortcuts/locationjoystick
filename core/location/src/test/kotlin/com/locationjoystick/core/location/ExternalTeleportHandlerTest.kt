@@ -56,12 +56,11 @@ class ExternalTeleportHandlerTest {
         }
 
     @Test
-    fun `idle starts the service and persists the point`() =
+    fun `idle starts the service at the point`() =
         runTest {
             state.value = MockLocationState.IDLE
             handler.handle(point.latitude, point.longitude)
             verify { starter.start(intent) }
-            coVerify { settings.setLastLocation(point) }
             coVerify(exactly = 0) { teleport.execute(any()) }
         }
 
@@ -71,6 +70,5 @@ class ExternalTeleportHandlerTest {
             handler.handle(null, point.longitude)
             coVerify(exactly = 0) { teleport.execute(any()) }
             verify(exactly = 0) { starter.start(any()) }
-            coVerify(exactly = 0) { settings.setLastLocation(any()) }
         }
 }

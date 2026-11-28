@@ -243,14 +243,23 @@ class SettingsRepository
 
         suspend fun setLastStopTime(ms: Long) = dataSource.setLastStopTime(ms)
 
-        /** Writes the teleport clock and the end of its advised cooldown together, so the two never disagree. */
+        /**
+         * When the game last saw the old position: the later of the last teleport and the last Stop.
+         * A Stop must count, or a long session that ends without a teleport would show no cooldown.
+         */
+        fun getCooldownClock(): Flow<Long> = combine(getLastTeleportTime(), getLastStopTime()) { teleport, stop -> maxOf(teleport, stop) }
+
+        /**
+         * Writes the teleport clock and the end of its advised cooldown together, so the two never disagree.
+         * [sinceMs] is when the game last saw [from]; a Start after a Stop passes the Stop time.
+         */
         suspend fun recordTeleport(
             from: LatLng?,
             to: LatLng,
+            sinceMs: Long = System.currentTimeMillis(),
         ) {
-            val now = System.currentTimeMillis()
-            dataSource.setLastTeleportTime(now)
-            dataSource.setLastCooldownEndTime(CooldownEngine.endMs(now, from, to))
+            dataSource.setLastTeleportTime(sinceMs)
+            dataSource.setLastCooldownEndTime(CooldownEngine.endMs(sinceMs, from, to))
         }
 
         fun getMapFollowsLocation(): Flow<Boolean> = dataSource.getMapFollowsLocation()

@@ -18,6 +18,7 @@ import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.AgpsResetter
+import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
 import com.locationjoystick.core.data.GroupRepository
@@ -554,6 +555,7 @@ class MockLocationService : Service() {
         val command = intent.toServiceCommand(positionRef.get()) ?: return START_STICKY
         when (command) {
             is ServiceCommand.Start -> {
+                recordStartJump(LatLng(command.lat, command.lon))
                 startSpoofing(command.lat, command.lon)
                 // Safety net: a leader whose service was destroyed (OS kill) must serve followers again.
                 serviceScope.launch {
@@ -731,6 +733,21 @@ class MockLocationService : Service() {
         // any further orphan cleanup happens at process death when the JVM GC collects the singleton.
         serviceScope.cancel()
         super.onDestroy()
+    }
+
+    /**
+     * Idle taps move the marker without telling the game, so the jump is the Start. It runs from the
+     * saved position, which only spoofing writes, and counts from the Stop time. Read before the
+     * first tick persists the new position.
+     */
+    private fun recordStartJump(to: LatLng) {
+        if (state.value == MockLocationState.RUNNING) return
+        serviceScope.launch {
+            val from = settingsRepository.getLastLocation().first()
+            val stoppedAt = settingsRepository.getLastStopTime().first()
+            if (from == null || stoppedAt == 0L || CooldownEngine.endMs(stoppedAt, from, to) == 0L) return@launch
+            settingsRepository.recordTeleport(from, to, stoppedAt)
+        }
     }
 
     fun startSpoofing(

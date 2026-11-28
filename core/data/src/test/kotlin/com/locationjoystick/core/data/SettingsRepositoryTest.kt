@@ -805,6 +805,24 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `recordTeleport counts from the given time`() =
+        runTest {
+            repository.recordTeleport(LatLng(0.0, 0.0), LatLng(0.01, 0.0), sinceMs = 1_000L)
+            assertEquals(1_000L, repository.getLastTeleportTime().first())
+            assertEquals(121_000L, repository.getLastCooldownEndTime().first())
+        }
+
+    @Test
+    fun `cooldown clock is the later of the last teleport and the last stop`() =
+        runTest {
+            repository.setLastTeleportTime(1_000L)
+            repository.setLastStopTime(5_000L)
+            assertEquals(5_000L, repository.getCooldownClock().first())
+            repository.setLastTeleportTime(9_000L)
+            assertEquals(9_000L, repository.getCooldownClock().first())
+        }
+
+    @Test
     fun `recordTeleport stores no end without a previous position`() =
         runTest {
             repository.recordTeleport(null, LatLng(0.01, 0.0))

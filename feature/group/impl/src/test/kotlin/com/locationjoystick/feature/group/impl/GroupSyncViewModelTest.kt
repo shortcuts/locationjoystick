@@ -101,7 +101,7 @@ class GroupSyncViewModelTest {
         locationRepository = mockk(relaxed = true)
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
         lastTeleportTimeFlow = MutableStateFlow(0L)
-        every { settingsRepository.getLastTeleportTime() } returns lastTeleportTimeFlow
+        every { settingsRepository.getCooldownClock() } returns lastTeleportTimeFlow
 
         groupStateFlow = MutableStateFlow(GroupState.None)
         pendingInviteFlow = MutableSharedFlow(replay = 1)

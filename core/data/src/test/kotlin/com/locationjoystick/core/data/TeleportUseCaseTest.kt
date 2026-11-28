@@ -51,7 +51,7 @@ class TeleportUseCaseTest {
     @Test
     fun `cooldownFor emits Ready when no teleport has occurred`() =
         runTest {
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+            every { settingsRepository.getCooldownClock() } returns flowOf(0L)
             every { settingsRepository.getLastLocation() } returns flowOf(null)
 
             useCase.cooldownFor(LatLng(35.0, 139.0)).test {
@@ -64,7 +64,7 @@ class TeleportUseCaseTest {
     fun `cooldownFor emits Ready when origin equals target`() =
         runTest {
             val target = LatLng(35.0, 139.0)
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(System.currentTimeMillis())
+            every { settingsRepository.getCooldownClock() } returns flowOf(System.currentTimeMillis())
             every { settingsRepository.getLastLocation() } returns flowOf(target)
 
             useCase.cooldownFor(target).test {
@@ -77,7 +77,7 @@ class TeleportUseCaseTest {
     fun `cooldownFor emits Cooling when teleport was recent and target is far away`() =
         runTest {
             val recentTime = System.currentTimeMillis() - 500L
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(recentTime)
+            every { settingsRepository.getCooldownClock() } returns flowOf(recentTime)
             every { settingsRepository.getLastLocation() } returns flowOf(LatLng(0.0, 0.0))
 
             useCase.cooldownFor(LatLng(10.0, 10.0)).test {
@@ -89,7 +89,7 @@ class TeleportUseCaseTest {
     @Test
     fun `cooldownsFor emits Ready for all favorites when no teleport occurred`() =
         runTest {
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+            every { settingsRepository.getCooldownClock() } returns flowOf(0L)
             every { settingsRepository.getLastLocation() } returns flowOf(null)
 
             val favorites =
@@ -110,7 +110,7 @@ class TeleportUseCaseTest {
     @Test
     fun `cooldownsFor emits empty map for empty favorites list`() =
         runTest {
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+            every { settingsRepository.getCooldownClock() } returns flowOf(0L)
             every { settingsRepository.getLastLocation() } returns flowOf(null)
 
             useCase.cooldownsFor(flowOf(emptyList())).test {
@@ -122,7 +122,7 @@ class TeleportUseCaseTest {
     @Test
     fun `cooldownsFor keys map by favorite id`() =
         runTest {
-            every { settingsRepository.getLastTeleportTime() } returns flowOf(System.currentTimeMillis() - 500L)
+            every { settingsRepository.getCooldownClock() } returns flowOf(System.currentTimeMillis() - 500L)
             every { settingsRepository.getLastLocation() } returns flowOf(LatLng(0.0, 0.0))
 
             val favorites =
@@ -188,14 +188,27 @@ class TeleportUseCaseTest {
         }
 
     @Test
-    fun `execute records the teleport from the saved position when stopped`() =
+    fun `execute records nothing while idle because the game never saw the tap`() =
         runTest {
-            val saved = LatLng(1.0, 2.0)
-            every { settingsRepository.getLastLocation() } returns flowOf(saved)
+            every { settingsRepository.getLastLocation() } returns flowOf(LatLng(1.0, 2.0))
 
             useCase.execute(LatLng(10.0, 20.0))
 
-            coVerify(exactly = 1) { settingsRepository.recordTeleport(saved, LatLng(10.0, 20.0)) }
+            coVerify(exactly = 0) { settingsRepository.recordTeleport(any(), any(), any()) }
+            coVerify(exactly = 0) { settingsRepository.setLastLocation(any()) }
+        }
+
+    @Test
+    fun `execute records the teleport from the live position while spoofing`() =
+        runTest {
+            val live = LatLng(1.0, 2.0)
+            locationRepository.updatePosition(live.latitude, live.longitude)
+            locationRepository.sendSpoofingEvent(SpoofingEvent.START)
+
+            useCase.execute(LatLng(10.0, 20.0))
+
+            coVerify(exactly = 1) { settingsRepository.recordTeleport(live, LatLng(10.0, 20.0)) }
+            coVerify(exactly = 1) { settingsRepository.setLastLocation(LatLng(10.0, 20.0)) }
         }
 
     @Test

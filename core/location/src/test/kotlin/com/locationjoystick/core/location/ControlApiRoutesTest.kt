@@ -63,6 +63,7 @@ class ControlApiRoutesTest {
         every { settingsRepository.getLastLocation() } returns flowOf(null)
         every { settingsRepository.getLastStopTime() } returns flowOf(0L)
         every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+        every { settingsRepository.getCooldownClock() } returns flowOf(0L)
         every { settingsRepository.getLastCooldownEndTime() } returns flowOf(0L)
         every { realLocationRepository.lastKnownRealPosition() } returns null
         every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(Route(id = "r1", name = "R", waypoints = emptyList()))
@@ -157,7 +158,7 @@ class ControlApiRoutesTest {
     @Test
     fun `teleport cooldown read reports the target cooldown without moving`() {
         val now = System.currentTimeMillis()
-        every { settingsRepository.getLastTeleportTime() } returns flowOf(now - 10_000L)
+        every { settingsRepository.getCooldownClock() } returns flowOf(now - 10_000L)
         every { mapController.cooldownForPosition(LatLng(1.5, 2.5)) } returns flowOf(CooldownState.Cooling(50, 60, 1234.0))
         val (code, body) = call("teleport/cooldown?lat=1.5&lon=2.5", "GET", null)
         assertEquals(200, code)

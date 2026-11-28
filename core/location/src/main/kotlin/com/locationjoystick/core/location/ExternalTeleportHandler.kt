@@ -41,7 +41,6 @@ class ExternalTeleportHandler
                     serviceStarter.start(
                         MockLocationIntentBuilder.startSpoofing(context, decision.point.latitude, decision.point.longitude),
                     )
-                    settingsRepository.setLastLocation(decision.point)
                 }
                 is ExternalTeleportDecision.Ignore -> Log.w(TAG, "ignored: ${decision.reason}")
             }

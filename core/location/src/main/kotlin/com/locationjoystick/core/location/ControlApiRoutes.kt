@@ -192,7 +192,7 @@ class ControlApiRoutes
             if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return BAD_COORDS
             val target = LatLng(lat, lon)
             val state = runCatching { runBlocking { mapController.cooldownForPosition(target).first() } }.getOrNull()
-            val lastTeleportAt = runBlocking { settingsRepository.getLastTeleportTime().first() }
+            val lastTeleportAt = runBlocking { settingsRepository.getCooldownClock().first() }
             val cooldown = JSONObject()
             if (state is CooldownState.Cooling) {
                 cooldown

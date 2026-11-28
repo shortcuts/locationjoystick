@@ -95,7 +95,7 @@ class FavoritesViewModel
         /** Cooldown states keyed by favorite ID, refreshed every 30 seconds. */
         val cooldownStates: StateFlow<Map<String, CooldownState>> =
             combine(
-                settingsRepository.getLastTeleportTime(),
+                settingsRepository.getCooldownClock(),
                 settingsRepository.getLastLocation(),
                 tickerFlow(30_000L),
             ) { teleportTime, lastLoc, _ ->
